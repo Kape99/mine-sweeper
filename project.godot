@@ -23,6 +23,7 @@ GlobaState="*res://Scripts/global_state.gd"
 [display]
 
 window/size/viewport_width=480
+window/size/viewport_height=800
 window/size/initial_position_type=0
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"

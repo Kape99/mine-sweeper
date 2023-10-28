@@ -26,17 +26,19 @@ func _scroll_left():
 		animation_label.text = display_difficulty[selected_difficulty]
 		selected_difficulty -= 1
 		selected_difficulty %= display_difficulty.size()
-		difficulty_label.text = display_difficulty[selected_difficulty]
-		animation_player.play_backwards("scroll")
+		animation_label.text = display_difficulty[selected_difficulty]
+		animation_player.play("scroll")
 		is_animating = true
 
 
 func _scroll_right():
 	if not is_animating:
+		animation_label.text = display_difficulty[selected_difficulty]
 		selected_difficulty += 1
 		selected_difficulty %= display_difficulty.size()
-		animation_label.text = display_difficulty[selected_difficulty]
-		animation_player.play("scroll")
+		difficulty_label.text = display_difficulty[selected_difficulty]
+
+		animation_player.play_backwards("scroll")
 		is_animating = true
 
 
