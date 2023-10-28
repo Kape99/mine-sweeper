@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="500"
+   height="500"
+   viewBox="0 0 132.29166 132.29167"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="mine.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.25433413"
+     inkscape:cx="-690.03716"
+     inkscape:cy="882.6971"
+     inkscape:window-width="1920"
+     inkscape:window-height="1024"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <inkscape:path-effect
+       effect="fill_between_many"
+       method="originald"
+       linkedpaths="#path2813,0,1|#path2816,0,1|#path2819,0,1|#path2822,0,1|#path2825,0,1"
+       id="path-effect2837" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       inkscape:original-d="M 0,0"
+       inkscape:path-effect="#path-effect2837"
+       d="M 0,0"
+       id="path2839"
+       class="UnoptimicedTransforms"
+       style="fill:#ffffff;fill-opacity:1" />
+    <path
+       id="path2813"
+       style="fill:#ffffff;fill-opacity:1;stroke-width:0.264583"
+       class="UnoptimicedTransforms"
+       d="M 83.824858,2.4515299 75.208846,17.375167 a 49.609371,49.609375 0 0 1 28.642694,16.535425 l 8.6155,-14.922604 A 66.145836,66.145836 0 0 0 83.824858,2.4515299 Z M 28.447876,98.367122 19.82463,113.30368 a 66.145836,66.145836 0 0 0 28.642179,16.53646 L 57.090055,114.9041 A 49.609371,49.609375 0 0 1 28.447876,98.367122 Z"
+       transform="matrix(0.89999998,0,0,0.89999998,6.6145847,6.6162897)" />
+    <path
+       id="path2813-7"
+       style="fill:#ffffff;fill-opacity:1;stroke-width:0.264583"
+       class="UnoptimicedTransforms"
+       d="M 48.466809,2.4515299 A 66.145836,66.145836 0 0 0 19.82463,18.987988 l 8.623246,14.936556 A 49.609371,49.609375 0 0 1 57.090055,17.387569 Z M 103.85154,98.381075 A 49.609371,49.609375 0 0 1 75.208846,114.9165 l 8.636165,14.95774 a 66.145836,66.145836 0 0 0 28.643209,-16.53439 z"
+       transform="matrix(0.89999998,0,0,0.89999998,6.6145847,6.6162897)" />
+    <path
+       id="path2813-5"
+       style="fill:#ffffff;fill-opacity:1;stroke-width:0.264583"
+       class="UnoptimicedTransforms"
+       d="M 2.1456055,49.609375 A 66.145836,66.145836 0 0 0 0,66.145833 66.145836,66.145836 0 0 0 2.1456055,82.682292 H 19.392615 A 49.609371,49.609375 0 0 1 16.536458,66.145833 49.609371,49.609375 0 0 1 19.392615,49.609375 Z m 110.7663645,0 a 49.609371,49.609375 0 0 1 2.84324,16.536458 49.609371,49.609375 0 0 1 -2.84324,16.536459 h 17.27595 a 66.145836,66.145836 0 0 0 2.10375,-16.536459 66.145836,66.145836 0 0 0 -2.14561,-16.536458 z"
+       transform="matrix(0.89999998,0,0,0.89999998,6.6145847,6.6162897)" />
+    <path
+       id="path2816-3-5"
+       style="fill:#ffffff;fill-opacity:1;stroke-width:0.396874"
+       class="UnoptimicedTransforms"
+       d="M 66.145835,41.341159 A 24.804689,24.804687 0 0 0 41.341151,66.145844 24.804689,24.804687 0 0 0 66.145835,90.950528 24.804689,24.804687 0 0 0 90.95052,66.145844 24.804689,24.804687 0 0 0 66.145835,41.341159 Z m -0.196782,5.466049 A 19.348965,19.348966 74.999999 0 1 84.841275,61.147293 19.348965,19.348966 74.999999 0 1 71.159566,84.844656 19.348965,19.348966 74.999999 0 1 47.461922,71.162948 19.348965,19.348966 74.999999 0 1 61.14363,47.465585 19.348965,19.348966 74.999999 0 1 65.949053,46.807208 Z"
+       transform="matrix(1.6000002,0,0,1.6000002,-39.687515,-39.687528)" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;stroke-width:0.396874"
+       d="M 90.950525,66.145844 A 24.804689,24.804687 0 0 1 66.145836,90.950531 24.804689,24.804687 0 0 1 41.341146,66.145844 24.804689,24.804687 0 0 1 66.145836,41.341156 24.804689,24.804687 0 0 1 90.950525,66.145844 Z"
+       id="path2816-3"
+       class="UnoptimicedTransforms"
+       transform="matrix(0.69232944,-0.18550913,0.18550913,0.69232944,8.0804662,32.621775)" />
+  </g>
+</svg>
