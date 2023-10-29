@@ -1,6 +1,9 @@
 class_name DifficultySelector extends Node
 
-var selected_difficulty = 1
+var selected_difficulty = 1:
+	set(value):
+		selected_difficulty = value
+		GlobaState.selected_difficulty = value
 var display_difficulty: Array = ["Easy", "Medium", "Hard"]
 
 @onready var difficulty_label: Label = $Difficulty
@@ -19,6 +22,7 @@ func _ready():
 	right_button.connect("pressed", _scroll_right)
 	animation_player.connect("animation_finished", _animation_finished)
 	difficulty_label.text = display_difficulty[selected_difficulty]
+	animation_label.text = display_difficulty[selected_difficulty]
 
 
 func _scroll_left():

@@ -30,6 +30,13 @@ func get_board_size():
 	return board_grid.get_size()
 
 
+func clear():
+	_is_game_started = false
+	board_grid.columns = cols
+	for cell in board_grid.get_children():
+		cell.free()
+
+
 func start_game(cols: int, rows: int, mines: int):
 	self.cols = cols
 	self.rows = rows
@@ -38,11 +45,7 @@ func start_game(cols: int, rows: int, mines: int):
 
 
 func reset():
-	_is_game_started = false
-	board_grid.columns = cols
-	for cell in board_grid.get_children():
-		cell.free()
-
+	clear()
 	var board = []
 	for row in rows:
 		board.append([])
