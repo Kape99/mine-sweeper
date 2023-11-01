@@ -1,0 +1,88 @@
+[gd_scene load_steps=6 format=3 uid="uid://dexqrifikxeii"]
+
+[ext_resource type="Script" path="res://Scripts/Gameplay/cell.gd" id="1_aje50"]
+[ext_resource type="Script" path="res://Scripts/FSM/state_machine.gd" id="2_f1pm8"]
+[ext_resource type="Script" path="res://Scripts/FSM/States/UnknownState.gd" id="3_1jm1u"]
+[ext_resource type="Script" path="res://Scripts/FSM/States/DefuseState.gd" id="4_ry46k"]
+[ext_resource type="Script" path="res://Scripts/FSM/States/ExploredState.gd" id="5_asfg1"]
+
+[node name="SquareCell" type="MarginContainer"]
+custom_minimum_size = Vector2(34, 30)
+offset_top = 5.0
+offset_right = 34.0
+offset_bottom = 35.0
+pivot_offset = Vector2(17, 15)
+script = ExtResource("1_aje50")
+
+[node name="Area2D" type="Area2D" parent="."]
+position = Vector2(0, 15)
+metadata/_edit_group_ = true
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Area2D"]
+polygon = PackedVector2Array(-17, -10, 0, -20, 17, -10, 17, 10, 0, 20, -17, 10)
+
+[node name="Polygon2D" type="Polygon2D" parent="Area2D"]
+polygon = PackedVector2Array(-17, -10, 0, -20, 17, -10, 17, 10, 0, 20, -17, 10)
+
+[node name="Node2D" type="Node2D" parent="Area2D"]
+
+[node name="Content" type="Control" parent="Area2D/Node2D"]
+layout_mode = 3
+anchors_preset = 0
+size_flags_horizontal = 6
+size_flags_vertical = 6
+mouse_filter = 1
+
+[node name="Label" type="Label" parent="Area2D/Node2D/Content"]
+modulate = Color(0.545098, 0.831373, 0.313726, 1)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.0
+offset_top = -11.5
+offset_right = 5.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="Area2D/Node2D/Content"]
+modulate = Color(0.545098, 0.831373, 0.313726, 1)
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -11.0
+offset_top = -10.0
+offset_right = 11.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(15, 15)
+expand_mode = 1
+stretch_mode = 4
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("2_f1pm8")
+initial_state = NodePath("Unknown")
+
+[node name="Unknown" type="Node" parent="StateMachine"]
+script = ExtResource("3_1jm1u")
+
+[node name="Defused" type="Node" parent="StateMachine"]
+script = ExtResource("4_ry46k")
+
+[node name="Explored" type="Node" parent="StateMachine"]
+script = ExtResource("5_asfg1")
+
+[node name="Timer" type="Timer" parent="."]
+
+[connection signal="input_event" from="Area2D" to="." method="_on_area_2d_input_event" flags=18]
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

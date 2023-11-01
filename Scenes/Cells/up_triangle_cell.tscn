@@ -9,7 +9,7 @@
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_t1sig"]
 
 [node name="UpTriangleCell" type="MarginContainer"]
-custom_minimum_size = Vector2(25, 42)
+custom_minimum_size = Vector2(25, 44)
 offset_left = 12.5
 offset_right = 37.5
 offset_bottom = 42.0
@@ -18,7 +18,7 @@ script = ExtResource("1_vrav3")
 
 [node name="Area2D" type="Area2D" parent="."]
 material = SubResource("CanvasItemMaterial_t1sig")
-position = Vector2(12.5, 21)
+position = Vector2(12.5, 23)
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Area2D"]
 polygon = PackedVector2Array(25, 21, -25, 21, 0, -21)

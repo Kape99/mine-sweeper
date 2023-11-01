@@ -16,12 +16,10 @@ func enter() -> void:
 		Input.vibrate_handheld(500)
 
 		owner._cell_icon.texture = preload("res://Asset/Icons/mine.svg")
+		owner._cell_icon.modulate = Color.INDIAN_RED
 	else:
-		Input.vibrate_handheld(100)
-
 		if owner.nearby != 0:
 			owner._cell_text.text = str(owner.nearby)
-		owner.emit_signal("cell_explored", owner, owner.nearby == 0)
 
 
 func exit() -> void:

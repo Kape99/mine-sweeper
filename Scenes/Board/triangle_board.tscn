@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://bm3kqjpcuai8y"]
 
-[ext_resource type="Script" path="res://Scripts/Gameplay/triangle_board.gd" id="1_kykep"]
+[ext_resource type="Script" path="res://Scripts/Board/triangle_board.gd" id="1_fnqup"]
 [ext_resource type="PackedScene" uid="uid://1lbca81bmmr8" path="res://Scenes/Cells/up_triangle_cell.tscn" id="2_rvjpo"]
 [ext_resource type="PackedScene" uid="uid://blgl3aaby1fec" path="res://Scenes/Cells/down_triangle_cell.tscn" id="3_1dm8f"]
 
@@ -12,7 +12,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
-script = ExtResource("1_kykep")
+script = ExtResource("1_fnqup")
 cols = 11
 rows = 12
 cells = Array[PackedScene]([ExtResource("2_rvjpo"), ExtResource("3_1dm8f")])
@@ -27,6 +27,6 @@ grow_vertical = 2
 
 [node name="Board" type="GridContainer" parent="CenterContainer"]
 layout_mode = 2
-theme_override_constants/h_separation = 1
-theme_override_constants/v_separation = 1
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
 columns = 10

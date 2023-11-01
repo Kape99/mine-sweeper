@@ -5,9 +5,7 @@ class_name CellBase extends Container
 @onready var _cell_fsm: StateMachine = $StateMachine
 @onready var _cell_triangle: Polygon2D = $Area2D/Polygon2D
 
-signal cell_explored(cell: CellBase, sould_propagate: bool)
-signal cell_defused(cell: CellBase, is_defused: bool)
-signal cell_exploded(cell: CellBase)
+signal cell_pressed(cell: CellBase, nearby: int)
 
 # If it is set to -1 it means it is a MINE
 # Otherwhise it represent the number of MINES nearby
@@ -22,24 +20,33 @@ var coord: Vector2i
 
 var touch_position: Vector2
 
+var pressed = false
+
 
 func _ready():
 	_cell_fsm.setup()
 
 
+func defuse():
+	_cell_fsm.defuse()
+
+
 func explore():
+	Input.vibrate_handheld(100)
 	_cell_fsm.explore()
 
 
-func _handle_press():
-	if GlobaState._defusing:
-		_cell_fsm.defuse()
-	else:
-		_cell_fsm.explore()
+func explore_delayed(delay: float):
+	$Timer.wait_time = delay
+	$Timer.start()
 
 
 func _on_area_2d_input_event(_viewport, event, _shape_idx):
 	if event as InputEventScreenTouch and event.pressed:
 		touch_position = event.position
 	if event as InputEventScreenTouch and not event.pressed and touch_position.distance_to(event.position) < 5:
-		_handle_press()
+		emit_signal("cell_pressed", self, nearby)
+
+
+func _on_timer_timeout():
+	_cell_fsm.explore()

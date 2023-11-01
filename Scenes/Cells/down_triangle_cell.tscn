@@ -7,7 +7,7 @@
 [ext_resource type="Script" path="res://Scripts/FSM/States/ExploredState.gd" id="5_pffn6"]
 
 [node name="DownTriangleCell" type="MarginContainer"]
-custom_minimum_size = Vector2(25, 42)
+custom_minimum_size = Vector2(25, 44)
 offset_left = 12.5
 offset_right = 37.5
 offset_bottom = 42.0
@@ -24,11 +24,18 @@ polygon = PackedVector2Array(25, -21, -25, -21, 0, 21)
 polygon = PackedVector2Array(-25, -21, 25, -21, 0, 21)
 
 [node name="Node2D" type="Node2D" parent="Area2D"]
-position = Vector2(0, -5)
+position = Vector2(0, -7)
+metadata/_edit_group_ = true
 
 [node name="Content" type="Control" parent="Area2D/Node2D"]
 layout_mode = 3
-anchors_preset = 0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
 size_flags_horizontal = 6
 size_flags_vertical = 6
 mouse_filter = 1
@@ -42,9 +49,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -5.0
-offset_top = -11.5
+offset_top = -13.0
 offset_right = 5.0
-offset_bottom = 11.5
+offset_bottom = 10.0
 grow_horizontal = 2
 grow_vertical = 2
 horizontal_alignment = 1
@@ -52,21 +59,20 @@ vertical_alignment = 1
 
 [node name="TextureRect" type="TextureRect" parent="Area2D/Node2D/Content"]
 modulate = Color(0.545098, 0.831373, 0.313726, 1)
+custom_minimum_size = Vector2(25, 25)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -11.0
-offset_top = -10.0
-offset_right = 11.0
-offset_bottom = 10.0
+offset_left = -12.5
+offset_top = -12.5
+offset_right = 12.5
+offset_bottom = 12.5
 grow_horizontal = 2
 grow_vertical = 2
-pivot_offset = Vector2(11, 0)
 expand_mode = 1
-stretch_mode = 4
 
 [node name="StateMachine" type="Node" parent="."]
 script = ExtResource("2_kckiu")
@@ -81,4 +87,7 @@ script = ExtResource("4_7p7cw")
 [node name="Explored" type="Node" parent="StateMachine"]
 script = ExtResource("5_pffn6")
 
+[node name="Timer" type="Timer" parent="."]
+
 [connection signal="input_event" from="Area2D" to="." method="_on_area_2d_input_event" flags=18]
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
