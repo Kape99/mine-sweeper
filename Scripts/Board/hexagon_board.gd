@@ -27,9 +27,9 @@ func _get_nearby_cells(cell: CellBase, distance: int = 1):
 				# Skip self
 				continue
 			if target_coord.y != row:
-				if target_coord.y % 2 and target_coord.x > col:
+				if target_coord.y % 2 and target_coord.x > col + distance - 1:
 					continue
-				if not target_coord.y % 2 and target_coord.x < col:
+				if not target_coord.y % 2 and target_coord.x < col + distance - 1:
 					continue
 			nearby_cells.append(board_state[row][col])
 	return nearby_cells

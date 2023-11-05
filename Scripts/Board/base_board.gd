@@ -85,7 +85,7 @@ func _explore_nearby(cell: CellBase):
 
 
 func _place_mines(cell: CellBase):
-	var invalid_cells = _get_nearby_cells(cell)
+	var invalid_cells = _get_nearby_cells(cell, 2)
 	invalid_cells.append(cell)
 	var max_position = rows * cols - 1
 	var placed_mine = 0

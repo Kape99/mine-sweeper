@@ -7,7 +7,7 @@ var _defusing: bool = false
 #var accent_color: Color = Color("8bd450")
 
 var selected_difficulty = 1
-var difficulties: Dictionary = {0: Vector3i(9, 12, 10), 1: Vector3i(13, 18, 40), 2: Vector3i(19, 22, 150)}
+var difficulties: Dictionary = {0: Vector3i(9, 12, 50), 1: Vector3i(13, 18, 40), 2: Vector3i(19, 22, 150)}
 
 var selected_board: int = 1
 

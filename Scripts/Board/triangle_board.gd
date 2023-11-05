@@ -26,7 +26,7 @@ func _get_nearby_cells(cell: CellBase, distance: int = 1):
 			if Vector2i(col, row) == target_coord:
 				# Skip self
 				continue
-			if col < target_coord.x - 1 or col > target_coord.x + 1:
+			if col + 1 < target_coord.x or col - 1 > target_coord.x:
 				if row < target_coord.y and not target_index % 2:
 					continue
 				elif row > target_coord.y and target_index % 2:
