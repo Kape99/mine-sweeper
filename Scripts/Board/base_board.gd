@@ -5,19 +5,17 @@ extends Node
 @export var rows: int = 10
 @export var mines: int = 10
 
+var _explored: int = 0
+
 @onready var board_grid: GridContainer = $CenterContainer/Board
 
 @export var cells: Array[PackedScene]
 
 signal on_defuse_changed(defuse_value: int)
 signal on_game_started(mines_number: int)
+signal game_finished(is_win: bool, time: float)
 
 var board_state
-
-var _defused_count: int = 0:
-	set(value):
-		_defused_count = value
-		emit_signal("on_defuse_changed", _defused_count)
 
 var _is_game_started: bool = false
 
@@ -27,6 +25,7 @@ func get_board_size():
 
 
 func clear():
+	_explored = 0
 	_is_game_started = false
 	board_grid.columns = cols
 	for cell in board_grid.get_children():
@@ -47,7 +46,6 @@ func reset():
 func first_move(starting_cell):
 	_is_game_started = true
 	_place_mines(starting_cell)
-	emit_signal("on_game_started", mines)
 
 
 func _on_cell_pressed(cell: CellBase, nearby: int):
@@ -57,29 +55,33 @@ func _on_cell_pressed(cell: CellBase, nearby: int):
 		if not _is_game_started:
 			first_move(cell)
 		cell.explore()
+		_explored += 1
 		if nearby == 0:
 			_explore_nearby(cell)
+	check_victory()
+
+
+func check_victory():
+	if _explored + mines == rows * cols:
+		print("win")
+		emit_signal("game_finished", true, 0)
 
 
 func _explore_nearby(cell: CellBase):
-	var found_new_cell = true
-	var checked = []
-	var to_be_explored = _get_nearby_cells(cell)
-	var new_cycle = []
-	while found_new_cell:
-		found_new_cell = false
-		for nearby_cell in to_be_explored:
-			if nearby_cell.nearby == 0 and checked.find(nearby_cell) == -1:
-				new_cycle.append(nearby_cell)
-				found_new_cell = true
-			checked.append(nearby_cell)
-		to_be_explored.clear()
-		for cicle in new_cycle:
-			to_be_explored.append_array(_get_nearby_cells(cicle))
-		new_cycle.clear()
-
-	for nearby_cell in checked:
+	var to_explore = []
+	var new_cells = _get_nearby_cells(cell)
+	while new_cells.size() > 0:
+		for around in new_cells:
+			if not to_explore.has(around):
+				to_explore.append(around)
+				if around.nearby == 0:
+					for appo in _get_nearby_cells(around):
+						if !new_cells.has(appo):
+							new_cells.append(appo)
+		new_cells.clear()
+	for nearby_cell in to_explore:
 		nearby_cell.explore_delayed((nearby_cell.coord - cell.coord).length() * .1)
+		_explored += 1
 
 
 func _place_mines(cell: CellBase):

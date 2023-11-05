@@ -6,16 +6,22 @@ extends Node
 
 @onready var main_menu = $GUI/Screen/MainMenu
 @onready var board_gui = $GUI/Screen/BoardGUI
-@onready var start_button = $GUI/Screen/MainMenu/VBoxContainer/StartButton
-
+@onready var start_button = $GUI/Screen/MainMenu/DiffiucltySelector/StartButton
 @onready var camera: CameraController = $Camera
 @onready var defuse_button: TextureButton = $GUI/Screen/BoardGUI/DefuseButton
 
 
 func _ready():
 	start_button.connect("pressed", _load_game)
-
 	defuse_button.connect("toggled", _toggle_defuse)
+	triangle_board.connect("game_finished", _game_finished)
+	sqare_board.connect("game_finished", _game_finished)
+	hexagon_board.connect("game_finished", _game_finished)
+	%BackToMenu.connect("pressed", _on_button_pressed)
+
+
+func _game_finished(is_win: bool, time: float):
+	$GUI/Screen/FinalScreen.visible = true
 
 
 func _toggle_defuse(is_active):
@@ -32,9 +38,11 @@ func _load_game():
 	elif GlobaState.selected_board == 2:
 		hexagon_board.start_game(GlobaState.get_cols(), GlobaState.get_rows(), GlobaState.get_mines())
 		hexagon_board.visible = true
-	# TODO animation
 	main_menu.visible = false
 	board_gui.visible = true
+
+
+#	place camera
 
 
 func _on_button_pressed():
@@ -46,3 +54,4 @@ func _on_button_pressed():
 	sqare_board.visible = false
 	hexagon_board.visible = false
 	board_gui.visible = false
+	$GUI/Screen/FinalScreen.visible = false

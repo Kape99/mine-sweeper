@@ -27,7 +27,7 @@ polygon = PackedVector2Array(25, 21, -25, 21, 0, -21)
 polygon = PackedVector2Array(-25, 21, 25, 21, 0, -21)
 
 [node name="Node2D" type="Node2D" parent="Area2D"]
-position = Vector2(0, 5)
+position = Vector2(0, 7)
 
 [node name="Content" type="Control" parent="Area2D/Node2D"]
 layout_mode = 3
@@ -55,6 +55,7 @@ vertical_alignment = 1
 
 [node name="TextureRect" type="TextureRect" parent="Area2D/Node2D/Content"]
 modulate = Color(0.545098, 0.831373, 0.313726, 1)
+custom_minimum_size = Vector2(25, 25)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

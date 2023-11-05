@@ -15,7 +15,7 @@ pivot_offset = Vector2(17, 15)
 script = ExtResource("1_aje50")
 
 [node name="Area2D" type="Area2D" parent="."]
-position = Vector2(0, 15)
+position = Vector2(-2, 15)
 metadata/_edit_group_ = true
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Area2D"]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://df4602v1smvil"]
+[gd_scene load_steps=21 format=3 uid="uid://df4602v1smvil"]
 
 [ext_resource type="StyleBox" uid="uid://dfbwulumv8xih" path="res://Asset/transparent.stylebox" id="1_bdqyu"]
 [ext_resource type="Texture2D" uid="uid://chyy03erxduyq" path="res://Asset/Icons/arrow_left.svg" id="1_mc8na"]
@@ -11,10 +11,10 @@
 [ext_resource type="PackedScene" uid="uid://dipn0o44pqy7g" path="res://Scenes/Board/hexagon_board.tscn" id="5_o0uy7"]
 [ext_resource type="Texture2D" uid="uid://cqghprgxdo207" path="res://Asset/Icons/mine.svg" id="7_tg1sk"]
 [ext_resource type="Texture2D" uid="uid://byvxq2ywx88yg" path="res://Asset/Icons/flag.svg" id="8_f8rh8"]
-[ext_resource type="Texture2D" uid="uid://bxivktvnwj3gl" path="res://Asset/Icons/hexagon_border.svg" id="9_4xb7r"]
-[ext_resource type="Texture2D" uid="uid://bi7qvbabi0ujq" path="res://Asset/Icons/triangle_border.svg" id="9_6j3kf"]
 [ext_resource type="Texture2D" uid="uid://4iu435cfille" path="res://Asset/Icons/arrow_up.svg" id="9_itd5s"]
+[ext_resource type="Texture2D" uid="uid://c1o7c4oabirit" path="res://Asset/Icons/square_border.svg" id="10_531cw"]
 [ext_resource type="Texture2D" uid="uid://bipy5rstfs7n8" path="res://Asset/Icons/arrow_down.svg" id="12_wjp3c"]
+[ext_resource type="Shader" path="res://blur.gdshader" id="15_7gvo6"]
 
 [sub_resource type="Animation" id="Animation_u34sw"]
 length = 0.001
@@ -166,12 +166,15 @@ _data = {
 "scroll_board": SubResource("Animation_311lf")
 }
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_e68ls"]
+shader = ExtResource("15_7gvo6")
+shader_parameter/lod = 4.0
+
 [node name="Base" type="Node"]
 script = ExtResource("1_smbv4")
 
 [node name="Camera" type="Camera2D" parent="."]
 position = Vector2(240, 401)
-editor_draw_limits = true
 script = ExtResource("2_uj4in")
 
 [node name="TriangleBoard" parent="." instance=ExtResource("4_5adgf")]
@@ -181,6 +184,7 @@ visible = false
 visible = false
 
 [node name="HexagonBoard" parent="." instance=ExtResource("5_o0uy7")]
+visible = false
 
 [node name="GUI" type="CanvasLayer" parent="."]
 
@@ -204,17 +208,14 @@ grow_horizontal = 2
 grow_vertical = 2
 metadata/_edit_lock_ = true
 
-[node name="VBoxContainer" type="VBoxContainer" parent="GUI/Screen/MainMenu"]
-layout_mode = 2
-
-[node name="DiffiucltySelector" type="Control" parent="GUI/Screen/MainMenu/VBoxContainer"]
+[node name="DiffiucltySelector" type="Control" parent="GUI/Screen/MainMenu"]
 custom_minimum_size = Vector2(400, 400)
 layout_mode = 2
 mouse_filter = 1
 script = ExtResource("4_5cnv1")
 metadata/_edit_group_ = true
 
-[node name="LeftDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/VBoxContainer/DiffiucltySelector"]
+[node name="LeftDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 4
@@ -225,6 +226,7 @@ offset_right = 32.0
 offset_bottom = 16.0
 grow_vertical = 2
 size_flags_horizontal = 0
+focus_mode = 0
 texture_normal = ExtResource("1_mc8na")
 texture_pressed = ExtResource("1_mc8na")
 texture_hover = ExtResource("1_mc8na")
@@ -232,7 +234,7 @@ texture_focused = ExtResource("1_mc8na")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="Difficulty" type="Label" parent="GUI/Screen/MainMenu/VBoxContainer/DiffiucltySelector"]
+[node name="Difficulty" type="Label" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 1
 anchors_preset = 8
@@ -250,7 +252,7 @@ theme_override_font_sizes/font_size = 24
 text = "Extreme"
 horizontal_alignment = 1
 
-[node name="DifficultyFake" type="Label" parent="GUI/Screen/MainMenu/VBoxContainer/DiffiucltySelector"]
+[node name="DifficultyFake" type="Label" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
 modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 1
@@ -269,7 +271,7 @@ theme_override_font_sizes/font_size = 24
 text = "Extreme"
 horizontal_alignment = 1
 
-[node name="RightDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/VBoxContainer/DiffiucltySelector"]
+[node name="RightDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 6
@@ -283,6 +285,7 @@ offset_bottom = 16.0
 grow_horizontal = 0
 grow_vertical = 2
 size_flags_horizontal = 0
+focus_mode = 0
 texture_normal = ExtResource("2_pgp2b")
 texture_pressed = ExtResource("2_pgp2b")
 texture_hover = ExtResource("2_pgp2b")
@@ -290,7 +293,7 @@ texture_focused = ExtResource("2_pgp2b")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="BoardTypeUp" type="TextureButton" parent="GUI/Screen/MainMenu/VBoxContainer/DiffiucltySelector"]
+[node name="BoardTypeUp" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 5
@@ -301,6 +304,7 @@ offset_right = 32.0
 offset_bottom = 64.0
 grow_horizontal = 2
 size_flags_horizontal = 0
+focus_mode = 0
 texture_normal = ExtResource("9_itd5s")
 texture_pressed = ExtResource("9_itd5s")
 texture_hover = ExtResource("9_itd5s")
@@ -308,7 +312,7 @@ texture_focused = ExtResource("9_itd5s")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="BoardIcon" type="TextureRect" parent="GUI/Screen/MainMenu/VBoxContainer/DiffiucltySelector"]
+[node name="BoardIcon" type="TextureRect" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
 modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 8
@@ -322,10 +326,10 @@ offset_right = 125.001
 offset_bottom = 525.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("9_4xb7r")
+texture = ExtResource("10_531cw")
 expand_mode = 2
 
-[node name="BoardIcon2" type="TextureRect" parent="GUI/Screen/MainMenu/VBoxContainer/DiffiucltySelector"]
+[node name="BoardIcon2" type="TextureRect" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -338,10 +342,10 @@ offset_right = 125.0
 offset_bottom = 124.999
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("9_6j3kf")
+texture = ExtResource("10_531cw")
 expand_mode = 2
 
-[node name="BoardTypeDown" type="TextureButton" parent="GUI/Screen/MainMenu/VBoxContainer/DiffiucltySelector"]
+[node name="BoardTypeDown" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 7
@@ -355,6 +359,7 @@ offset_right = 32.0
 grow_horizontal = 2
 grow_vertical = 0
 size_flags_horizontal = 0
+focus_mode = 0
 texture_normal = ExtResource("12_wjp3c")
 texture_pressed = ExtResource("12_wjp3c")
 texture_hover = ExtResource("12_wjp3c")
@@ -362,16 +367,27 @@ texture_focused = ExtResource("12_wjp3c")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="Animation" type="AnimationPlayer" parent="GUI/Screen/MainMenu/VBoxContainer/DiffiucltySelector"]
+[node name="Animation" type="AnimationPlayer" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
 reset_on_save = false
 libraries = {
 "": SubResource("AnimationLibrary_5ly7q")
 }
 
-[node name="StartButton" type="Button" parent="GUI/Screen/MainMenu/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Play		"
+[node name="StartButton" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 0
 
 [node name="BoardGUI" type="Control" parent="GUI/Screen"]
 visible = false
@@ -418,6 +434,42 @@ theme_override_styles/normal = ExtResource("1_bdqyu")
 theme_override_styles/hover = ExtResource("1_bdqyu")
 theme_override_styles/pressed = ExtResource("1_bdqyu")
 text = "Reset
+"
+
+[node name="FinalScreen" type="ColorRect" parent="GUI/Screen"]
+visible = false
+material = SubResource("ShaderMaterial_e68ls")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0)
+
+[node name="CenterContainer" type="CenterContainer" parent="GUI/Screen/FinalScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GUI/Screen/FinalScreen/CenterContainer"]
+layout_mode = 2
+
+[node name="MainTitle" type="Label" parent="GUI/Screen/FinalScreen/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Congratulation"
+
+[node name="Time" type="Label" parent="GUI/Screen/FinalScreen/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Congratulation"
+
+[node name="BackToMenu" type="Button" parent="GUI/Screen/FinalScreen/CenterContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back to Menu
 "
 
 [connection signal="pressed" from="GUI/Screen/BoardGUI/Reset" to="." method="_on_button_pressed"]
