@@ -10,6 +10,12 @@ func _unhandled_input(event):
 		_handle_touch(event)
 	elif event is InputEventScreenDrag:
 		_handle_drag(event)
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_WHEEL_UP:
+		zoom *= 1.05
+		zoom = zoom.clamp(Vector2(.5, .5), Vector2(2, 2))
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		zoom *= .95
+		zoom = zoom.clamp(Vector2(.5, .5), Vector2(2, 2))
 
 
 func _handle_touch(event: InputEventScreenTouch):
@@ -21,7 +27,7 @@ func _handle_touch(event: InputEventScreenTouch):
 
 func _handle_drag(event: InputEventScreenDrag):
 	if touch_points.size() == 1:
-		offset -= event.relative / zoom.x
+		position -= event.relative / zoom.x
 		touch_points[event.index] = event.position
 
 	if touch_points.size() == 2:
@@ -41,7 +47,7 @@ func _handle_drag(event: InputEventScreenDrag):
 		var delta_pos = drag_vector.dot(new_vector) / new_vector.length() * new_vector.normalized()
 
 		print(delta_pos)
-		offset -= (drag_vector / 2) / zoom.x
+		position -= (drag_vector / 2) / zoom.x
 
 		var delta_scale = new_vector.length() / old_vector.length()
 		print(delta_scale)
@@ -50,9 +56,10 @@ func _handle_drag(event: InputEventScreenDrag):
 		touch_points[event.index] = new_point
 
 
-func set_limits(center, extent):
+func set_limits(position, size):
+	position = Vector2(0, 0)
+	scale = Vector2(1, 1)
+	print(position)
+	print(size)
+
 	pass
-#	limit_left = center.x - extent.x - MARGIN
-#	limit_top = center.y - extent.y - MARGIN
-#	limit_right = center.x + extent.x + MARGIN
-#	limit_bottom = center.y + extent.y + MARGIN

@@ -16,15 +16,19 @@ func reset():
 
 
 func _get_nearby_cells(cell: CellBase, distance: int = 1):
+	if distance == 0:
+		return {}
 	var target_coord: Vector2i = cell.coord
 	var target_index: int = cell.get_index()
-	var nearby_cells = []
-	for col in range(target_coord.x - distance, target_coord.x + distance + 1):
-		for row in range(target_coord.y - distance, target_coord.y + distance + 1):
+	var nearby_cells: Dictionary = {}
+	for col in range(target_coord.x - 1, target_coord.x + 1 + 1):
+		for row in range(target_coord.y - 1, target_coord.y + 1 + 1):
 			if not _is_valid(col, row):
 				continue
 			if Vector2i(col, row) == target_coord:
 				# Skip self
 				continue
-			nearby_cells.append(board_state[row][col])
+			nearby_cells.merge({board_state[row][col]: false})
+	for nearby in nearby_cells:
+		nearby_cells.merge(_get_nearby_cells(nearby, distance - 1))
 	return nearby_cells

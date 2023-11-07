@@ -1,22 +1,21 @@
 extends Node
 
-@onready var triangle_board = $TriangleBoard
-@onready var sqare_board = $SquareBoard
-@onready var hexagon_board = $HexagonBoard
-
 @onready var main_menu = $GUI/Screen/MainMenu
 @onready var board_gui = $GUI/Screen/BoardGUI
 @onready var start_button = $GUI/Screen/MainMenu/DiffiucltySelector/StartButton
 @onready var camera: CameraController = $Camera
 @onready var defuse_button: TextureButton = $GUI/Screen/BoardGUI/DefuseButton
 
+var triangle_board_scene = load("res://Scenes/Board/triangle_board.tscn")
+var square_board_scene = load("res://Scenes/Board/square_board.tscn")
+var hexagon_board_scene = load("res://Scenes/Board/hexagon_board.tscn")
+
+var board: BaseBoard
+
 
 func _ready():
 	start_button.connect("pressed", _load_game)
 	defuse_button.connect("toggled", _toggle_defuse)
-	triangle_board.connect("game_finished", _game_finished)
-	sqare_board.connect("game_finished", _game_finished)
-	hexagon_board.connect("game_finished", _game_finished)
 	%BackToMenu.connect("pressed", _on_button_pressed)
 
 
@@ -30,28 +29,27 @@ func _toggle_defuse(is_active):
 
 func _load_game():
 	if GlobaState.selected_board == 0:
-		triangle_board.start_game(GlobaState.get_cols(), GlobaState.get_rows(), GlobaState.get_mines())
-		triangle_board.visible = true
+		board = triangle_board_scene.instantiate()
 	elif GlobaState.selected_board == 1:
-		sqare_board.start_game(GlobaState.get_cols(), GlobaState.get_rows(), GlobaState.get_mines())
-		sqare_board.visible = true
+		board = square_board_scene.instantiate()
 	elif GlobaState.selected_board == 2:
-		hexagon_board.start_game(GlobaState.get_cols(), GlobaState.get_rows(), GlobaState.get_mines())
-		hexagon_board.visible = true
+		board = hexagon_board_scene.instantiate()
+	add_child(board)
+	var game_data = GlobaState.get_game_data()
+
+	board.start_game(game_data.cols, game_data.rows, game_data.mines)
+
 	main_menu.visible = false
 	board_gui.visible = true
 
-
-#	place camera
+	# TODO fix reset the camera and limit the movement
+	camera.set_limits(board.get_board_position(), board.get_board_size())
 
 
 func _on_button_pressed():
-	triangle_board.clear()
-	sqare_board.clear()
-	hexagon_board.clear()
+	board.free()
+
 	main_menu.visible = true
-	triangle_board.visible = false
-	sqare_board.visible = false
-	hexagon_board.visible = false
+
 	board_gui.visible = false
 	$GUI/Screen/FinalScreen.visible = false

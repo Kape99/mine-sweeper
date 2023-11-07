@@ -32,7 +32,6 @@ func defuse():
 
 
 func explore():
-	Input.vibrate_handheld(100)
 	_cell_fsm.explore()
 
 
@@ -44,7 +43,8 @@ func explore_delayed(delay: float):
 func _on_area_2d_input_event(_viewport, event, _shape_idx):
 	if event as InputEventScreenTouch and event.pressed:
 		touch_position = event.position
-	if event as InputEventScreenTouch and not event.pressed and touch_position.distance_to(event.position) < 10:
+	if event as InputEventScreenTouch and not event.pressed and touch_position.distance_to(event.position) < 15:
+		Input.vibrate_handheld(100)
 		emit_signal("cell_pressed", self, nearby)
 
 

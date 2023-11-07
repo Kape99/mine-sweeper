@@ -1,5 +1,5 @@
 class_name BaseBoard
-extends Node
+extends Control
 
 @export var cols: int = 10
 @export var rows: int = 10
@@ -22,6 +22,10 @@ var _is_game_started: bool = false
 
 func get_board_size():
 	return board_grid.get_size()
+
+
+func get_board_position():
+	return board_grid.position
 
 
 func clear():
@@ -69,24 +73,21 @@ func check_victory():
 
 func _explore_nearby(cell: CellBase):
 	var to_explore = []
-	var new_cells = _get_nearby_cells(cell)
-	while new_cells.size() > 0:
-		for around in new_cells:
-			if not to_explore.has(around):
-				to_explore.append(around)
-				if around.nearby == 0:
-					for appo in _get_nearby_cells(around):
-						if !new_cells.has(appo):
-							new_cells.append(appo)
-		new_cells.clear()
-	for nearby_cell in to_explore:
-		nearby_cell.explore_delayed((nearby_cell.coord - cell.coord).length() * .1)
+	var new_cells: Dictionary = _get_nearby_cells(cell)
+	var size = 0
+	while new_cells.size() > size:
+		size = new_cells.size()
+		for nearby in new_cells.keys():
+			if nearby.nearby == 0:
+				new_cells.merge(_get_nearby_cells(nearby))
+	for nearby_cell in new_cells.keys():
 		_explored += 1
+		nearby_cell.explore_delayed((nearby_cell.coord - cell.coord).length() * .1)
 
 
 func _place_mines(cell: CellBase):
-	var invalid_cells = _get_nearby_cells(cell, 2)
-	invalid_cells.append(cell)
+	var invalid_cells = _get_nearby_cells(cell, 1)
+	invalid_cells.merge({cell: false})
 	var max_position = rows * cols - 1
 	var placed_mine = 0
 	while placed_mine < mines:
@@ -94,15 +95,14 @@ func _place_mines(cell: CellBase):
 		var possible_cell = board_grid.get_child(position)
 		if not invalid_cells.has(possible_cell):
 			possible_cell.nearby = -1
-			invalid_cells.append(possible_cell)
+			invalid_cells.merge({possible_cell: false})
 			placed_mine += 1
-
 			for cell_to_update in _get_nearby_cells(possible_cell):
 				cell_to_update.nearby = 1
 
 
-func _get_nearby_cells(cell: CellBase, distance: int = 1):
-	pass
+func _get_nearby_cells(cell: CellBase, distance: int = 1) -> Dictionary:
+	return {}
 
 
 func _is_valid(col: int, row: int):
