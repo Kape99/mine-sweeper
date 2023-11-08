@@ -40,7 +40,7 @@ func explore() -> void:
 # and calls its enter function.
 # It optionally takes a `msg` dictionary to pass to the next state's enter() function.
 func transition_to(target_state_name: String) -> void:
-	# print_debug("Transition to :", target_state_name)
+#	print_debug("Transition to :", target_state_name)
 	# Safety check, you could use an assert() here to report an error if the
 	# state name is incorrect.
 	# We don't use an assert here to help with code reuse.

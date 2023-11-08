@@ -1,7 +1,5 @@
 class_name CameraController extends Camera2D
 
-const MARGIN = 100
-
 var touch_points: Dictionary = {}
 
 
@@ -59,7 +57,3 @@ func _handle_drag(event: InputEventScreenDrag):
 func set_limits(position, size):
 	position = Vector2(0, 0)
 	scale = Vector2(1, 1)
-	print(position)
-	print(size)
-
-	pass

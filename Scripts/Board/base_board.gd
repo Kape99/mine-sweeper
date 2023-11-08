@@ -40,10 +40,40 @@ func start_game(cols: int, rows: int, mines: int):
 	self.cols = cols
 	self.rows = rows
 	self.mines = mines
+
+	print_debug("Game starting")
+	print_debug("Cols: ", cols, " Rows: ", rows)
+	print_debug("Number of cells: ", cols * rows, " Mines: ", mines)
+
 	reset()
 
 
+func _connect_signals(cell: CellBase):
+	cell.connect("cell_pressed", _on_cell_pressed)
+	cell.connect("cell_explored", _handle_explored)
+	cell.connect("cell_defused", _handle_defuse)
+	cell.connect("cell_exploded", _handle_explosion)
+
+
 func reset():
+	pass
+
+
+func _handle_explored(cell: CellBase):
+	print_debug("cell : ", cell.coord, " has been explored!")
+	_explored += 1
+	print_debug("explored count: ", _explored)
+
+	# TODO check victory
+	pass
+
+
+func _handle_defuse(cell: CellBase, is_defused: bool):
+	pass
+
+
+func _handle_explosion(cell: CellBase):
+	print_debug("cell :", cell.coord, " is exploded! GameOver")
 	pass
 
 
@@ -59,16 +89,8 @@ func _on_cell_pressed(cell: CellBase, nearby: int):
 		if not _is_game_started:
 			first_move(cell)
 		cell.explore()
-		_explored += 1
 		if nearby == 0:
 			_explore_nearby(cell)
-	check_victory()
-
-
-func check_victory():
-	if _explored + mines == rows * cols:
-		print("win")
-		emit_signal("game_finished", true, 0)
 
 
 func _explore_nearby(cell: CellBase):
@@ -81,7 +103,6 @@ func _explore_nearby(cell: CellBase):
 			if nearby.nearby == 0:
 				new_cells.merge(_get_nearby_cells(nearby))
 	for nearby_cell in new_cells.keys():
-		_explored += 1
 		nearby_cell.explore_delayed((nearby_cell.coord - cell.coord).length() * .1)
 
 

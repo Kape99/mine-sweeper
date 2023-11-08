@@ -7,6 +7,10 @@ class_name CellBase extends Container
 
 signal cell_pressed(cell: CellBase, nearby: int)
 
+signal cell_explored(cell: CellBase)
+signal cell_defused(cell: CellBase, is_defused: bool)
+signal cell_exploded(cell: CellBase)
+
 # If it is set to -1 it means it is a MINE
 # Otherwhise it represent the number of MINES nearby
 var nearby: int = 0:

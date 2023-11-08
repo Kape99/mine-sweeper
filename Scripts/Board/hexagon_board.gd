@@ -10,7 +10,7 @@ func reset():
 			var cell_istance: CellBase = cells[row % 2].instantiate()
 			board_grid.add_child(cell_istance)
 			cell_istance.coord = Vector2i(col, row)
-			cell_istance.connect("cell_pressed", _on_cell_pressed)
+			_connect_signals(cell_istance)
 			board[row].append(cell_istance)
 	board_state = board
 

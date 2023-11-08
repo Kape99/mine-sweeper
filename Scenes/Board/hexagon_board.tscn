@@ -13,6 +13,9 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 script = ExtResource("1_mq3fw")
+cols = null
+rows = null
+mines = null
 cells = Array[PackedScene]([ExtResource("2_gm7ww"), ExtResource("3_rh4e8")])
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
