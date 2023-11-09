@@ -7,6 +7,8 @@ extends Control
 
 var _explored: int = 0
 
+var _defused_count: int = 0
+
 @onready var board_grid: GridContainer = $CenterContainer/Board
 
 @export var cells: Array[PackedScene]
@@ -30,6 +32,7 @@ func get_board_position():
 
 func clear():
 	_explored = 0
+	_defused_count = 0
 	_is_game_started = false
 	board_grid.columns = cols
 	for cell in board_grid.get_children():
@@ -69,7 +72,11 @@ func _handle_explored(cell: CellBase):
 
 
 func _handle_defuse(cell: CellBase, is_defused: bool):
-	pass
+	if is_defused:
+		_defused_count += 1
+	else:
+		_defused_count -= 1
+	emit_signal("on_defuse_changed", _defused_count)
 
 
 func _handle_explosion(cell: CellBase):
@@ -80,6 +87,7 @@ func _handle_explosion(cell: CellBase):
 func first_move(starting_cell):
 	_is_game_started = true
 	_place_mines(starting_cell)
+	emit_signal("on_game_started", mines)
 
 
 func _on_cell_pressed(cell: CellBase, nearby: int):

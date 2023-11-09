@@ -1,7 +1,7 @@
 extends Node
 
 @onready var main_menu = $GUI/Screen/MainMenu
-@onready var board_gui = $GUI/Screen/BoardGUI
+@onready var board_gui: BoardGUI = $GUI/Screen/BoardGUI
 @onready var start_button = $GUI/Screen/MainMenu/DiffiucltySelector/StartButton
 @onready var camera: CameraController = $Camera
 @onready var defuse_button: TextureButton = $GUI/Screen/BoardGUI/DefuseButton
@@ -14,9 +14,11 @@ var board: BaseBoard
 
 
 func _ready():
+	board_gui.connect("reset", reset)
+	$GUI/Screen/BoardGUI/ButtonBackground.modulate = GlobaState.accent_color
+	defuse_button.modulate = GlobaState.background_color
 	start_button.connect("pressed", _load_game)
 	defuse_button.connect("toggled", _toggle_defuse)
-	%BackToMenu.connect("pressed", _on_button_pressed)
 
 
 func _game_finished(is_win: bool, time: float):
@@ -37,19 +39,27 @@ func _load_game():
 	add_child(board)
 	var game_data = GlobaState.get_game_data()
 
+	GlobaState._defusing = false
 	board.start_game(game_data.cols, game_data.rows, game_data.mines)
+	board.connect("on_game_started", game_started)
+	board.connect("on_defuse_changed", defused_changed)
 
 	main_menu.visible = false
-	board_gui.visible = true
-
 	# TODO fix reset the camera and limit the movement
 	camera.set_limits(board.get_board_position(), board.get_board_size())
 
 
-func _on_button_pressed():
+func defused_changed(defused: int):
+	board_gui.defused_mines = defused
+
+
+func game_started(mines: int):
+	board_gui.visible = true
+	board_gui.total_mines = mines
+
+
+func reset():
 	board.free()
-
 	main_menu.visible = true
-
 	board_gui.visible = false
 	$GUI/Screen/FinalScreen.visible = false

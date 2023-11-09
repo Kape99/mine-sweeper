@@ -11,7 +11,7 @@ func explore() -> void:
 
 
 func enter() -> void:
-	setup_colors(GlobaState.accent_color, GlobaState.base_color)
+	setup_colors(GlobaState.secondary_color, GlobaState.main_color)
 
 
 func exit() -> void:

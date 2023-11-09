@@ -25,7 +25,7 @@ func _handle_touch(event: InputEventScreenTouch):
 
 func _handle_drag(event: InputEventScreenDrag):
 	if touch_points.size() == 1:
-		position -= event.relative / zoom.x
+		offset -= event.relative / zoom.x
 		touch_points[event.index] = event.position
 
 	if touch_points.size() == 2:
@@ -45,7 +45,7 @@ func _handle_drag(event: InputEventScreenDrag):
 		var delta_pos = drag_vector.dot(new_vector) / new_vector.length() * new_vector.normalized()
 
 		print(delta_pos)
-		position -= (drag_vector / 2) / zoom.x
+		offset -= (drag_vector / 2) / zoom.x
 
 		var delta_scale = new_vector.length() / old_vector.length()
 		print(delta_scale)
@@ -55,5 +55,5 @@ func _handle_drag(event: InputEventScreenDrag):
 
 
 func set_limits(position, size):
-	position = Vector2(0, 0)
+	offset = Vector2(0, 0)
 	scale = Vector2(1, 1)

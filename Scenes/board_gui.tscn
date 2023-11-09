@@ -1,0 +1,117 @@
+[gd_scene load_steps=6 format=3 uid="uid://2ff3i6tuwxtr"]
+
+[ext_resource type="Script" path="res://Scripts/GUI/board_gui.gd" id="1_vdnex"]
+[ext_resource type="Texture2D" uid="uid://bkbm1d8nl8oo2" path="res://Asset/Icons/circle.svg" id="2_p2ubr"]
+[ext_resource type="Texture2D" uid="uid://cqghprgxdo207" path="res://Asset/Icons/mine.svg" id="3_jh2k8"]
+[ext_resource type="Texture2D" uid="uid://byvxq2ywx88yg" path="res://Asset/Icons/flag.svg" id="4_1xe88"]
+[ext_resource type="StyleBox" uid="uid://dfbwulumv8xih" path="res://Asset/transparent.stylebox" id="5_rt0ux"]
+
+[node name="BoardGUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_vdnex")
+
+[node name="ButtonBackground" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -50.0
+offset_top = -110.0
+offset_right = 50.0002
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+pivot_offset = Vector2(50, 50)
+texture = ExtResource("2_p2ubr")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="DefuseButton" type="TextureButton" parent="."]
+modulate = Color(0, 0.0705882, 1, 1)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -40.0
+offset_top = -100.0
+offset_right = 40.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+pivot_offset = Vector2(40, 40)
+focus_mode = 0
+toggle_mode = true
+texture_normal = ExtResource("3_jh2k8")
+texture_pressed = ExtResource("4_1xe88")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="Reset" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -66.0
+offset_top = 25.0
+offset_right = -23.0
+offset_bottom = 48.0
+grow_horizontal = 0
+focus_mode = 0
+theme_override_styles/normal = ExtResource("5_rt0ux")
+theme_override_styles/hover = ExtResource("5_rt0ux")
+theme_override_styles/pressed = ExtResource("5_rt0ux")
+text = "Reset
+"
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -50.0
+offset_top = 11.0
+offset_right = 53.0
+offset_bottom = 51.0
+grow_horizontal = 2
+
+[node name="ScoreBox" type="HBoxContainer" parent="ColorRect"]
+modulate = Color(0.960784, 0.909804, 0.717647, 1)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -37.5
+offset_top = -14.0
+offset_right = 37.5
+offset_bottom = 14.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="ScoreTracker" type="Label" parent="ColorRect/ScoreBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "00/00"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="MineIcon" type="TextureRect" parent="ColorRect/ScoreBox"]
+layout_mode = 2
+size_flags_horizontal = 10
+texture = ExtResource("3_jh2k8")
+expand_mode = 2
+stretch_mode = 4
+
+[connection signal="pressed" from="Reset" to="." method="_on_reset_pressed"]

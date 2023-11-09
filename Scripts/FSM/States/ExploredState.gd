@@ -11,12 +11,12 @@ func explore() -> void:
 
 
 func enter() -> void:
-	setup_colors(GlobaState.base_color, GlobaState.accent_color)
+	setup_colors(GlobaState.main_color, GlobaState.secondary_color)
 	if owner.nearby == -1:
 		Input.vibrate_handheld(500)
 
 		owner._cell_icon.texture = preload("res://Asset/Icons/mine.svg")
-		owner._cell_icon.modulate = Color.INDIAN_RED
+		owner._cell_icon.modulate = GlobaState.background_color
 
 		owner.emit_signal("cell_exploded", owner)
 

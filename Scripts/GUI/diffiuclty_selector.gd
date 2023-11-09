@@ -1,4 +1,4 @@
-class_name DifficultySelector extends Node
+class_name DifficultySelector extends Control
 
 var selected_difficulty = 1:
 	set(value):
@@ -35,6 +35,8 @@ var is_icon_animating = false
 
 
 func _ready():
+	modulate = GlobaState.accent_color
+
 	left_button.connect("pressed", _scroll_left)
 	right_button.connect("pressed", _scroll_right)
 	up_button.connect("pressed", _scroll_up)
