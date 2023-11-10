@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="500"
+   height="500"
+   viewBox="0 0 132.29166 132.29167"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="mine_button.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.0173365"
+     inkscape:cx="285.54957"
+     inkscape:cy="320.93609"
+     inkscape:window-width="1920"
+     inkscape:window-height="1024"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <inkscape:path-effect
+       effect="fill_between_many"
+       method="originald"
+       linkedpaths="#path2813,0,1|#path2816,0,1|#path2819,0,1|#path2822,0,1|#path2825,0,1"
+       id="path-effect2837" />
+    <inkscape:path-effect
+       effect="fill_between_many"
+       method="originald"
+       linkedpaths="#path2813,0,1"
+       id="path-effect2837-7"
+       is_visible="true"
+       lpeversion="0"
+       join="true"
+       close="true"
+       autoreverse="true" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="path1448"
+       style="fill:#ffffff;stroke-width:0.264583;fill-opacity:1"
+       d="M 66.145833 0 A 66.145836 66.145836 0 0 0 0 66.145833 A 66.145836 66.145836 0 0 0 66.145833 132.29167 A 66.145836 66.145836 0 0 0 132.29167 66.145833 A 66.145836 66.145836 0 0 0 66.145833 0 z M 66.159786 13.229167 A 54.938673 52.916667 0 0 1 79.894865 14.945858 L 79.894865 28.743465 A 41.204003 39.687496 0 0 0 66.159786 26.458333 A 41.204003 39.687496 0 0 0 52.425224 28.743465 L 52.425224 14.945858 A 54.938673 52.916667 0 0 1 66.159786 13.229167 z M 26.992151 29.088664 L 39.398112 35.987467 A 41.204003 39.687496 0 0 0 25.663033 58.901314 L 13.257589 52.002511 A 54.938673 52.916667 0 0 1 26.992151 29.088664 z M 105.32794 29.088664 A 54.938673 52.916667 0 0 1 119.0625 52.002511 L 106.65706 58.901314 A 41.204003 39.687496 0 0 0 92.921977 35.987467 L 105.32794 29.088664 z M 66.161336 30.867883 A 36.625782 35.277784 0 0 1 102.78752 66.145833 A 36.625782 35.277784 0 0 1 66.161336 101.42378 A 36.625782 35.277784 0 0 1 29.535665 66.145833 A 36.625782 35.277784 0 0 1 66.161336 30.867883 z M 66.827962 38.643119 A 28.570043 27.518533 1.9737086e-05 0 0 58.75352 39.573295 A 28.570043 27.518533 1.9737086e-05 0 0 38.551652 73.276664 A 28.570043 27.518533 1.9737086e-05 0 0 73.542281 92.734908 A 28.570043 27.518533 1.9737086e-05 0 0 94.716182 65.865747 A 28.570043 27.518533 1.9737086e-05 0 0 93.744149 59.031539 A 28.570043 27.518533 1.9737086e-05 0 0 66.827962 38.643119 z M 66.414034 50.344214 A 16.407255 15.803391 3.5970504e-05 0 1 82.009981 62.055644 A 16.407255 15.803391 3.5970504e-05 0 1 70.408105 81.410535 A 16.407255 15.803391 3.5970504e-05 0 1 50.313208 70.236023 A 16.407255 15.803391 3.5970504e-05 0 1 61.915084 50.881132 A 16.407255 15.803391 3.5970504e-05 0 1 66.414034 50.344214 z M 25.652698 73.396037 A 41.204003 39.687496 0 0 0 39.386226 96.3104 L 26.962179 103.21954 A 54.938673 52.916667 0 0 1 13.229167 80.305176 L 25.652698 73.396037 z M 106.66739 73.396037 L 119.0625 80.289156 A 54.938673 52.916667 0 0 1 105.32794 103.203 L 92.933346 96.3104 A 41.204003 39.687496 0 0 0 106.66739 73.396037 z M 52.425224 103.55854 A 41.204003 39.687496 0 0 0 66.159786 105.83333 A 41.204003 39.687496 0 0 0 79.894865 103.55854 L 79.894865 117.34581 A 54.938673 52.916667 0 0 1 66.159786 119.0625 A 54.938673 52.916667 0 0 1 52.425224 117.3794 L 52.425224 103.55854 z " />
+  </g>
+</svg>

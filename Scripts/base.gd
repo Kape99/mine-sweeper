@@ -15,8 +15,7 @@ var board: BaseBoard
 
 func _ready():
 	board_gui.connect("reset", reset)
-	$GUI/Screen/BoardGUI/ButtonBackground.modulate = GlobaState.accent_color
-	defuse_button.modulate = GlobaState.background_color
+	defuse_button.modulate = GlobaState.accent_color
 	start_button.connect("pressed", _load_game)
 	defuse_button.connect("toggled", _toggle_defuse)
 

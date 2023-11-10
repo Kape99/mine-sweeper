@@ -1,9 +1,9 @@
 [gd_scene load_steps=6 format=3 uid="uid://2ff3i6tuwxtr"]
 
 [ext_resource type="Script" path="res://Scripts/GUI/board_gui.gd" id="1_vdnex"]
-[ext_resource type="Texture2D" uid="uid://bkbm1d8nl8oo2" path="res://Asset/Icons/circle.svg" id="2_p2ubr"]
+[ext_resource type="Texture2D" uid="uid://b02ssfrvb6agc" path="res://Asset/Icons/mine_button.svg" id="2_x8sex"]
 [ext_resource type="Texture2D" uid="uid://cqghprgxdo207" path="res://Asset/Icons/mine.svg" id="3_jh2k8"]
-[ext_resource type="Texture2D" uid="uid://byvxq2ywx88yg" path="res://Asset/Icons/flag.svg" id="4_1xe88"]
+[ext_resource type="Texture2D" uid="uid://c8b8ytvm6tvf6" path="res://Asset/Icons/flower_button.svg" id="3_n6ckf"]
 [ext_resource type="StyleBox" uid="uid://dfbwulumv8xih" path="res://Asset/transparent.stylebox" id="5_rt0ux"]
 
 [node name="BoardGUI" type="Control"]
@@ -16,26 +16,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_vdnex")
 
-[node name="ButtonBackground" type="TextureRect" parent="."]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -50.0
-offset_top = -110.0
-offset_right = 50.0002
-offset_bottom = -10.0
-grow_horizontal = 2
-grow_vertical = 0
-pivot_offset = Vector2(50, 50)
-texture = ExtResource("2_p2ubr")
-expand_mode = 1
-stretch_mode = 4
-
 [node name="DefuseButton" type="TextureButton" parent="."]
-modulate = Color(0, 0.0705882, 1, 1)
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -51,8 +32,8 @@ grow_vertical = 0
 pivot_offset = Vector2(40, 40)
 focus_mode = 0
 toggle_mode = true
-texture_normal = ExtResource("3_jh2k8")
-texture_pressed = ExtResource("4_1xe88")
+texture_normal = ExtResource("2_x8sex")
+texture_pressed = ExtResource("3_n6ckf")
 ignore_texture_size = true
 stretch_mode = 4
 
