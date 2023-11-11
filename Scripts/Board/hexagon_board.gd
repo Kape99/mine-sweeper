@@ -14,13 +14,11 @@ func reset():
 			board[row].append(cell_istance)
 	board_state = board
 
-
-func _get_nearby_cells(cell: CellBase, distance: int = 1):
+func _get_nearby_cells(cell: CellBase, distance: int = 1, cell_list: Dictionary = {}):
 	if distance == 0:
-		return {}
+		return {cell: false}
 	var target_coord: Vector2i = cell.coord
 	var target_index: int = cell.get_index()
-	var nearby_cells: Dictionary = {}
 	for col in range(target_coord.x - 1, target_coord.x + 1 + 1):
 		for row in range(target_coord.y - 1, target_coord.y + 1 + 1):
 			if not _is_valid(col, row):
@@ -33,7 +31,5 @@ func _get_nearby_cells(cell: CellBase, distance: int = 1):
 					continue
 				if not target_coord.y % 2 and target_coord.x < col + distance - 1:
 					continue
-			nearby_cells.merge({board_state[row][col]: false})
-	for nearby in nearby_cells:
-		nearby_cells.merge(_get_nearby_cells(nearby, distance - 1))
-	return nearby_cells
+			cell_list.merge(_get_nearby_cells(board_state[row][col], distance - 1, cell_list))
+	return cell_list
