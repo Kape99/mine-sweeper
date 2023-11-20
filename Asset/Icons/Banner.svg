@@ -10,6 +10,9 @@
    sodipodi:docname="Banner.svg"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    xml:space="preserve"
+   inkscape:export-filename="Banner.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -106,7 +109,10 @@
        inkscape:transform-center-y="-16.933333"
        d="M 66.14584,15.345833 7.4868889,116.94583 H 124.80478 Z m -0.09922,7.07502 52.79523,91.215107 -105.392023,0.1142 z" /><g
        id="g5857"
-       transform="matrix(0.40469536,0,0,0.40469536,96.277648,66.246872)"><g
+       transform="matrix(0.40469536,0,0,0.40469536,96.277648,66.246872)"
+       inkscape:export-filename="Banner.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"><g
          id="g5847"><path
            id="path2813-7"
            style="fill:#cd5c08;fill-opacity:1;stroke-width:0.264583"
