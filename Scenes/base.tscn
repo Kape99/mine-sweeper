@@ -151,7 +151,7 @@ _data = {
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_e68ls"]
 shader = ExtResource("15_t7wxk")
-shader_parameter/lod = 4.0
+shader_parameter/lod = 2.0
 
 [node name="Base" type="Node"]
 script = ExtResource("1_smbv4")
@@ -397,12 +397,14 @@ grow_vertical = 2
 layout_mode = 2
 
 [node name="MainTitle" type="Label" parent="GUI/Screen/FinalScreen/CenterContainer/VBoxContainer"]
+modulate = Color(0.415686, 0.611765, 0.537255, 1)
 layout_mode = 2
-text = "Congratulation"
+theme_override_font_sizes/font_size = 32
+text = "Oh no!
 
-[node name="Time" type="Label" parent="GUI/Screen/FinalScreen/CenterContainer/VBoxContainer"]
-layout_mode = 2
-text = "Congratulation"
+try again"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="BackToMenu" type="Button" parent="GUI/Screen/FinalScreen/CenterContainer/VBoxContainer"]
 unique_name_in_owner = true

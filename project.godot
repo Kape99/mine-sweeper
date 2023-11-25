@@ -16,7 +16,7 @@ run/main_scene="res://Scenes/base.tscn"
 config/features=PackedStringArray("4.1", "Mobile")
 boot_splash/bg_color=Color(0.756863, 0.847059, 0.764706, 1)
 boot_splash/image="res://Asset/Icons/flag.svg"
-config/icon="res://Asset/Icons/Banner.svg"
+config/icon="res://Asset/Icons/Icon.svg"
 
 [autoload]
 

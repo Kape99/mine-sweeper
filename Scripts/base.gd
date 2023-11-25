@@ -18,6 +18,7 @@ func _ready():
 	defuse_button.modulate = GlobaState.accent_color
 	start_button.connect("pressed", _load_game)
 	defuse_button.connect("toggled", _toggle_defuse)
+	%BackToMenu.connect("pressed", reset)
 
 
 func _game_finished(is_win: bool, time: float):
@@ -42,6 +43,7 @@ func _load_game():
 	board.start_game(game_data.cols, game_data.rows, game_data.mines)
 	board.connect("on_game_started", game_started)
 	board.connect("on_defuse_changed", defused_changed)
+	board.connect("on_game_finished", _game_finished)
 
 	main_menu.visible = false
 	# TODO fix reset the camera and limit the movement
@@ -58,7 +60,8 @@ func game_started(mines: int):
 
 
 func reset():
-	board.free()
+	if board:
+		board.free()
 	main_menu.visible = true
 	board_gui.visible = false
 	$GUI/Screen/FinalScreen.visible = false

@@ -15,11 +15,12 @@ var _defused_count: int = 0
 
 signal on_defuse_changed(defuse_value: int)
 signal on_game_started(mines_number: int)
-signal game_finished(is_win: bool, time: float)
+signal on_game_finished(is_win: bool, time: float)
 
 var board_state
 
 var _is_game_started: bool = false
+var _is_game_over: bool = false
 
 
 func get_board_size():
@@ -34,6 +35,7 @@ func clear():
 	_explored = 0
 	_defused_count = 0
 	_is_game_started = false
+	_is_game_over = false
 	board_grid.columns = cols
 	for cell in board_grid.get_children():
 		cell.free()
@@ -80,8 +82,14 @@ func _handle_defuse(cell: CellBase, is_defused: bool):
 
 
 func _handle_explosion(cell: CellBase):
-	print_debug("cell :", cell.coord, " is exploded! GameOver")
-	pass
+	if not _is_game_over:
+		_is_game_over = true
+		print_debug("cell :", cell.coord, " is exploded! GameOver")
+		emit_signal("on_game_finished", false, 0.0)
+		for cel in board_grid.get_children():
+			if cel.nearby == -1:
+				cel.explore_delayed((cel.coord - cell.coord).length() * .1)
+		Input.vibrate_handheld(500)
 
 
 func first_move(starting_cell):

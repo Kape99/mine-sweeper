@@ -13,8 +13,6 @@ func explore() -> void:
 func enter() -> void:
 	setup_colors(GlobaState.main_color, GlobaState.secondary_color)
 	if owner.nearby == -1:
-		Input.vibrate_handheld(500)
-
 		owner._cell_icon.texture = preload("res://Asset/Icons/mine.svg")
 		owner._cell_icon.modulate = GlobaState.background_color
 

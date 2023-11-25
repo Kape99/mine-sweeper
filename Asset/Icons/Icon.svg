@@ -10,6 +10,9 @@
    sodipodi:docname="Icon.svg"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    xml:space="preserve"
+   inkscape:export-filename="Icon.png"
+   inkscape:export-xdpi="98.304001"
+   inkscape:export-ydpi="98.304001"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -24,9 +27,9 @@
      inkscape:deskcolor="#505050"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="2.9515419"
-     inkscape:cx="96.390295"
-     inkscape:cy="227.5082"
+     inkscape:zoom="0.93483437"
+     inkscape:cx="193.61719"
+     inkscape:cy="190.94292"
      inkscape:window-width="1920"
      inkscape:window-height="1024"
      inkscape:window-x="0"
@@ -112,11 +115,4 @@
            id="path3870"
            cx="66.159523"
            cy="66.145836"
-           r="7.3672996" /></g></g><text
-       xml:space="preserve"
-       transform="matrix(1.0047548,0,0,1.0047548,-52.596743,-149.28547)"
-       id="text12014"
-       style="white-space:pre;shape-inside:url(#rect12016);fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:1.002;stroke-dasharray:none;stroke-opacity:1"><tspan
-         x="32.15625"
-         y="204.67241"
-         id="tspan17656">MsineSweeper</tspan></text></g></svg>
+           r="7.3672996" /></g></g></g></svg>
