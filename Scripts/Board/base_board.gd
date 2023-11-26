@@ -22,6 +22,8 @@ var board_state
 var _is_game_started: bool = false
 var _is_game_over: bool = false
 
+var to_be_explored: int = 0
+
 
 func get_board_size():
 	return board_grid.get_size()
@@ -46,6 +48,8 @@ func start_game(cols: int, rows: int, mines: int):
 	self.rows = rows
 	self.mines = mines
 
+	to_be_explored = rows * cols - mines
+
 	print_debug("Game starting")
 	print_debug("Cols: ", cols, " Rows: ", rows)
 	print_debug("Number of cells: ", cols * rows, " Mines: ", mines)
@@ -69,8 +73,8 @@ func _handle_explored(cell: CellBase):
 	_explored += 1
 	print_debug("explored count: ", _explored)
 
-	# TODO check victory
-	pass
+	if to_be_explored == _explored:
+		emit_signal("on_game_finished", true, 0)
 
 
 func _handle_defuse(cell: CellBase, is_defused: bool):

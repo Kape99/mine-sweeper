@@ -22,6 +22,11 @@ func _ready():
 
 
 func _game_finished(is_win: bool, time: float):
+	if is_win:
+		$GUI/Screen/FinalScreen/CenterContainer/VBoxContainer/MainTitle.text = "Good job!"
+	else:
+		$GUI/Screen/FinalScreen/CenterContainer/VBoxContainer/MainTitle.text = "Oh no!"
+	board_gui.visible = false
 	$GUI/Screen/FinalScreen.visible = true
 
 

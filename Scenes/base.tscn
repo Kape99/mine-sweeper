@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://df4602v1smvil"]
+[gd_scene load_steps=21 format=3 uid="uid://df4602v1smvil"]
 
 [ext_resource type="Texture2D" uid="uid://chyy03erxduyq" path="res://Asset/Icons/arrow_left.svg" id="1_mc8na"]
 [ext_resource type="Script" path="res://Scripts/base.gd" id="1_smbv4"]
@@ -151,7 +151,17 @@ _data = {
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_e68ls"]
 shader = ExtResource("15_t7wxk")
-shader_parameter/lod = 2.0
+shader_parameter/lod = 56.112
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_t6nux"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_m86is"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nj83x"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_q62j5"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ixin1"]
 
 [node name="Base" type="Node"]
 script = ExtResource("1_smbv4")
@@ -375,7 +385,7 @@ visible = false
 layout_mode = 1
 
 [node name="FinalScreen" type="ColorRect" parent="GUI/Screen"]
-visible = false
+modulate = Color(0.263128, 0.415405, 0.358476, 1)
 material = SubResource("ShaderMaterial_e68ls")
 layout_mode = 1
 anchors_preset = 15
@@ -395,19 +405,68 @@ grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="GUI/Screen/FinalScreen/CenterContainer"]
 layout_mode = 2
+theme_override_constants/separation = 20
 
 [node name="MainTitle" type="Label" parent="GUI/Screen/FinalScreen/CenterContainer/VBoxContainer"]
-modulate = Color(0.415686, 0.611765, 0.537255, 1)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "Oh no!
-
-try again"
+Try again"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BackToMenu" type="Button" parent="GUI/Screen/FinalScreen/CenterContainer/VBoxContainer"]
-unique_name_in_owner = true
+[node name="HBoxContainer" type="HBoxContainer" parent="GUI/Screen/FinalScreen"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -106.0
+offset_top = -178.0
+offset_right = 102.0
+offset_bottom = -128.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="TextureRect2" type="TextureRect" parent="GUI/Screen/FinalScreen/HBoxContainer"]
 layout_mode = 2
-text = "Back to Menu
-"
+texture = ExtResource("1_mc8na")
+expand_mode = 2
+metadata/_edit_lock_ = true
+
+[node name="BackToMenu" type="Button" parent="GUI/Screen/FinalScreen/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 50)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_t6nux")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_m86is")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_nj83x")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_q62j5")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_ixin1")
+metadata/_edit_lock_ = true
+
+[node name="BackLabel" type="Label" parent="GUI/Screen/FinalScreen/HBoxContainer/BackToMenu"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -68.0
+offset_top = -72.0
+offset_right = 68.0
+offset_bottom = 72.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "Back"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_lock_ = true
+
+[node name="TextureRect" type="TextureRect" parent="GUI/Screen/FinalScreen/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("2_pgp2b")
+expand_mode = 2
+metadata/_edit_lock_ = true
