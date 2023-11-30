@@ -1,10 +1,11 @@
-[gd_scene load_steps=21 format=3 uid="uid://df4602v1smvil"]
+[gd_scene load_steps=22 format=3 uid="uid://df4602v1smvil"]
 
 [ext_resource type="Texture2D" uid="uid://chyy03erxduyq" path="res://Asset/Icons/arrow_left.svg" id="1_mc8na"]
 [ext_resource type="Script" path="res://Scripts/base.gd" id="1_smbv4"]
 [ext_resource type="Script" path="res://Scripts/GUI/camera_controller.gd" id="2_buixl"]
 [ext_resource type="Texture2D" uid="uid://b5ykkupxejast" path="res://Asset/Icons/arrow_right.svg" id="2_pgp2b"]
 [ext_resource type="Script" path="res://Scripts/GUI/diffiuclty_selector.gd" id="3_s3kjk"]
+[ext_resource type="Script" path="res://Scenes/Screen.gd" id="3_wqvgk"]
 [ext_resource type="Texture2D" uid="uid://4iu435cfille" path="res://Asset/Icons/arrow_up.svg" id="9_itd5s"]
 [ext_resource type="PackedScene" uid="uid://2ff3i6tuwxtr" path="res://Scenes/board_gui.tscn" id="9_rp1dr"]
 [ext_resource type="Texture2D" uid="uid://c1o7c4oabirit" path="res://Asset/Icons/square_border.svg" id="10_531cw"]
@@ -172,24 +173,17 @@ script = ExtResource("2_buixl")
 
 [node name="GUI" type="CanvasLayer" parent="."]
 
-[node name="Screen" type="Control" parent="GUI"]
-layout_mode = 3
+[node name="Screen" type="MarginContainer" parent="GUI"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-mouse_filter = 1
+mouse_filter = 2
+script = ExtResource("3_wqvgk")
 
 [node name="MainMenu" type="CenterContainer" parent="GUI/Screen"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 metadata/_edit_lock_ = true
 
 [node name="DiffiucltySelector" type="Control" parent="GUI/Screen/MainMenu"]
@@ -382,18 +376,13 @@ libraries = {
 
 [node name="BoardGUI" parent="GUI/Screen" instance=ExtResource("9_rp1dr")]
 visible = false
-layout_mode = 1
+layout_mode = 2
 
 [node name="FinalScreen" type="ColorRect" parent="GUI/Screen"]
 visible = false
 modulate = Color(0.263128, 0.415405, 0.358476, 1)
 material = SubResource("ShaderMaterial_e68ls")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 color = Color(1, 1, 1, 0)
 
 [node name="CenterContainer" type="CenterContainer" parent="GUI/Screen/FinalScreen"]
