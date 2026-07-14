@@ -5,7 +5,7 @@ class_name BaseBoard
 extends Control
 
 ## Delay multiplier (seconds per unit of grid distance) for the reveal wave animation.
-const REVEAL_DELAY_FACTOR: float = 0.1
+const REVEAL_DELAY_FACTOR: float = 0.02
 
 ## Haptic feedback duration (ms) when a mine explodes.
 const EXPLOSION_VIBRATION_MS: int = 500
@@ -141,11 +141,8 @@ func _reveal_mines_from(origin: CellBase) -> void:
 			return a.coord.distance_to(origin.coord) < b.coord.distance_to(origin.coord)
 	)
 	var tween: Tween = _create_tween()
-	var prev_dist: float = 0.0
 	for cel in mine_cells:
-		var dist: float = cel.coord.distance_to(origin.coord) * REVEAL_DELAY_FACTOR
-		tween.tween_callback(cel.explore).set_delay(dist - prev_dist)
-		prev_dist = dist
+		tween.tween_callback(cel.explore).set_delay(REVEAL_DELAY_FACTOR)
 
 
 ## Called on the very first click: places mines, then signals game start.
@@ -197,11 +194,8 @@ func _explore_nearby(cell: CellBase) -> void:
 			return a.coord.distance_to(cell.coord) < b.coord.distance_to(cell.coord)
 	)
 	var tween: Tween = _create_tween()
-	var prev_dist: float = 0.0
 	for neighbor_cell: CellBase in to_reveal:
-		var dist: float = neighbor_cell.coord.distance_to(cell.coord) * REVEAL_DELAY_FACTOR
-		tween.tween_callback(neighbor_cell.explore).set_delay(dist - prev_dist)
-		prev_dist = dist
+		tween.tween_callback(neighbor_cell.explore).set_delay(REVEAL_DELAY_FACTOR)
 
 
 ## Places mines using Fisher-Yates shuffle over valid positions — O(n) guaranteed.
