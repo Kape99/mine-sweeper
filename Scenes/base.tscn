@@ -379,6 +379,7 @@ visible = false
 layout_mode = 2
 
 [node name="FinalScreen" type="ColorRect" parent="GUI/Screen"]
+visible = false
 modulate = Color(0.263128, 0.415405, 0.358476, 1)
 material = SubResource("ShaderMaterial_e68ls")
 layout_mode = 2
