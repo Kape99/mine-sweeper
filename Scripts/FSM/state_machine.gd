@@ -1,53 +1,51 @@
-# Generic state machine. Initializes states and delegates engine callbacks
-# (_physics_process, _unhandled_input) to the active state.
+## Generic finite state machine for [CellBase] nodes.
+## Manages state transitions and delegates [method defuse] / [method explore]
+## calls to the active [BaseState].
 class_name StateMachine
 extends Node
 
-# Emitted when transitioning to a new state.
-signal transitioned(state_name)
+## Emitted after transitioning to a new state.
+signal transitioned(state_name: String)
 
+## Possible cell states (used for external queries, not for FSM logic).
 enum CellState {
 	UNKNOWN,
 	EXPLORED,
 	DEFUSED,
 }
 
-# Path to the initial active state.
-# We export it to be able to pick the initial state in the inspector.
+## Path to the initial active state node. Set in the inspector.
 @export var initial_state := NodePath()
 
-# The current active state. At the start of the game, we get the `initial_state`.
+## The currently active state.
 @onready var state: BaseState = get_node(initial_state)
 
 
+## Initializes all child states and enters the initial state.
+## Must be called after the owner is ready (awaits owner).
 func setup() -> void:
-	await (owner)
-	# The state machine assigns itself to the State objects' state_machine property.
-	for child in get_children():
+	await owner
+	for child: BaseState in get_children():
 		child.state_machine = self
 	state.enter()
 
 
+## Delegates a defuse action to the current state.
 func defuse() -> void:
 	state.defuse()
 
 
+## Delegates an explore action to the current state.
 func explore() -> void:
 	state.explore()
 
 
-# This function calls the current state's exit() function, then changes the active state,
-# and calls its enter function.
-# It optionally takes a `msg` dictionary to pass to the next state's enter() function.
+## Exits the current state, transitions to [param target_state_name], and enters it.
+## Silently returns if the target state node does not exist (allows reusable states
+## across different FSM configurations).
 func transition_to(target_state_name: String) -> void:
-	# Safety check, you could use an assert() here to report an error if the
-	# state name is incorrect.
-	# We don't use an assert here to help with code reuse.
-	# If you reuse a state in different state machines but you don't want them all,
-	# they won't be able to transition to states that aren't in the scene tree.
 	if not has_node(target_state_name):
 		return
-
 	state.exit()
 	state = get_node(target_state_name)
 	state.enter()

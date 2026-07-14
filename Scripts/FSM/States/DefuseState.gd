@@ -1,3 +1,5 @@
+## Flagged cell state — the player has marked this cell as a suspected mine.
+## Defusing again returns to [UnknownState]. Exploring is blocked while flagged.
 class_name DefuseState
 extends BaseState
 

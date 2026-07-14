@@ -1,101 +1,118 @@
-class_name DifficultySelector extends Control
+## Scrollable difficulty and board-type selector on the main menu.
+## Animates transitions between options using [AnimationPlayer] nodes.
+class_name DifficultySelector
+extends Control
 
-var selected_difficulty = 1:
+## Current difficulty index (0 = Easy, 1 = Medium, 2 = Hard). Synced to [GlobalState].
+var selected_difficulty: int = 1:
 	set(value):
 		selected_difficulty = value
 		GlobalState.selected_difficulty = value
 
-var selected_board = 1:
+## Current board type index (0 = Triangle, 1 = Square, 2 = Hexagon). Synced to [GlobalState].
+var selected_board: int = 1:
 	set(value):
 		selected_board = value
 		GlobalState.selected_board = value
 
-var display_difficulty: Array = ["Easy", "Medium", "Hard"]
-@onready var display_board: Array = [
+## Display labels for each difficulty level.
+var _display_difficulty: Array[String] = ["Easy", "Medium", "Hard"]
+
+## Icons for each board type, loaded at ready time.
+@onready var _display_board: Array[Texture2D] = [
 	preload("res://Asset/Icons/triangle_border.svg"),
 	preload("res://Asset/Icons/square_border.svg"),
-	preload("res://Asset/Icons/hexagon_border.svg")
+	preload("res://Asset/Icons/hexagon_border.svg"),
 ]
 
-@onready var left_label: Label = $Difficulty
-@onready var right_label: Label = $DifficultyFake
-@onready var up_icon: TextureRect = $BoardIcon
-@onready var down_icon: TextureRect = $BoardIcon2
+@onready var _left_label: Label = $Difficulty
+@onready var _right_label: Label = $DifficultyFake
+@onready var _up_icon: TextureRect = $BoardIcon
+@onready var _down_icon: TextureRect = $BoardIcon2
 
-@onready var left_button: TextureButton = $LeftDifficulty
-@onready var right_button: TextureButton = $RightDifficulty
-@onready var up_button: TextureButton = $BoardTypeUp
-@onready var down_button: TextureButton = $BoardTypeDown
+@onready var _left_button: TextureButton = $LeftDifficulty
+@onready var _right_button: TextureButton = $RightDifficulty
+@onready var _up_button: TextureButton = $BoardTypeUp
+@onready var _down_button: TextureButton = $BoardTypeDown
 
-@onready var text_animation_player = $TextAnimation
-@onready var icon_animation_player = $IconAnimation
+@onready var _text_animation: AnimationPlayer = $TextAnimation
+@onready var _icon_animation: AnimationPlayer = $IconAnimation
 
-var is_text_animating = false
-var is_icon_animating = false
+var _is_text_animating: bool = false
+var _is_icon_animating: bool = false
 
 
-func _ready():
+func _ready() -> void:
 	modulate = GlobalState.accent_color
 
-	left_button.pressed.connect(_scroll_left)
-	right_button.pressed.connect(_scroll_right)
-	up_button.pressed.connect(_scroll_up)
-	down_button.pressed.connect(_scroll_down)
-	text_animation_player.animation_finished.connect(_text_animation_finished)
-	icon_animation_player.animation_finished.connect(_icon_animation_finished)
-	left_label.text = display_difficulty[selected_difficulty]
-	right_label.text = display_difficulty[selected_difficulty]
-	up_icon.texture = display_board[selected_board]
-	down_icon.texture = display_board[selected_board]
+	_left_button.pressed.connect(_scroll_left)
+	_right_button.pressed.connect(_scroll_right)
+	_up_button.pressed.connect(_scroll_up)
+	_down_button.pressed.connect(_scroll_down)
+	_text_animation.animation_finished.connect(_on_text_animation_finished)
+	_icon_animation.animation_finished.connect(_on_icon_animation_finished)
+
+	_left_label.text = _display_difficulty[selected_difficulty]
+	_right_label.text = _display_difficulty[selected_difficulty]
+	_up_icon.texture = _display_board[selected_board]
+	_down_icon.texture = _display_board[selected_board]
 
 
-func _scroll_left():
-	if not is_text_animating:
-		left_label.text = display_difficulty[selected_difficulty]
-		selected_difficulty = (selected_difficulty - 1 + display_difficulty.size()) % display_difficulty.size()
-		right_label.text = display_difficulty[selected_difficulty]
-		text_animation_player.play("scroll")
-		is_text_animating = true
+# -- Difficulty scrolling ------------------------------------------------------
+
+func _scroll_left() -> void:
+	if _is_text_animating:
+		return
+	_left_label.text = _display_difficulty[selected_difficulty]
+	selected_difficulty = (selected_difficulty - 1 + _display_difficulty.size()) % _display_difficulty.size()
+	_right_label.text = _display_difficulty[selected_difficulty]
+	_text_animation.play("scroll")
+	_is_text_animating = true
 
 
-func _scroll_right():
-	if not is_text_animating:
-		is_text_animating = true
-		right_label.text = display_difficulty[selected_difficulty]
-		selected_difficulty += 1
-		selected_difficulty %= display_difficulty.size()
-		left_label.text = display_difficulty[selected_difficulty]
-		text_animation_player.play_backwards("scroll")
+func _scroll_right() -> void:
+	if _is_text_animating:
+		return
+	_is_text_animating = true
+	_right_label.text = _display_difficulty[selected_difficulty]
+	selected_difficulty = (selected_difficulty + 1) % _display_difficulty.size()
+	_left_label.text = _display_difficulty[selected_difficulty]
+	_text_animation.play_backwards("scroll")
 
 
-func _scroll_up():
-	if not is_icon_animating:
-		is_icon_animating = true
-		up_icon.texture = display_board[selected_board]
-		selected_board = (selected_board - 1 + display_board.size()) % display_board.size()
-		down_icon.texture = display_board[selected_board]
-		icon_animation_player.play("scroll_board")
+# -- Board type scrolling ------------------------------------------------------
+
+func _scroll_up() -> void:
+	if _is_icon_animating:
+		return
+	_is_icon_animating = true
+	_up_icon.texture = _display_board[selected_board]
+	selected_board = (selected_board - 1 + _display_board.size()) % _display_board.size()
+	_down_icon.texture = _display_board[selected_board]
+	_icon_animation.play("scroll_board")
 
 
-func _scroll_down():
-	if not is_icon_animating:
-		is_icon_animating = true
-		down_icon.texture = display_board[selected_board]
-		selected_board += 1
-		selected_board %= display_board.size()
-		up_icon.texture = display_board[selected_board]
-		icon_animation_player.play_backwards("scroll_board")
+func _scroll_down() -> void:
+	if _is_icon_animating:
+		return
+	_is_icon_animating = true
+	_down_icon.texture = _display_board[selected_board]
+	selected_board = (selected_board + 1) % _display_board.size()
+	_up_icon.texture = _display_board[selected_board]
+	_icon_animation.play_backwards("scroll_board")
 
 
-func _text_animation_finished(name):
-	if name == "scroll":
-		is_text_animating = false
-		left_label.text = display_difficulty[selected_difficulty]
-		right_label.text = display_difficulty[selected_difficulty]
+# -- Animation callbacks -------------------------------------------------------
+
+func _on_text_animation_finished(anim_name: StringName) -> void:
+	if anim_name == "scroll":
+		_is_text_animating = false
+		_left_label.text = _display_difficulty[selected_difficulty]
+		_right_label.text = _display_difficulty[selected_difficulty]
 
 
-func _icon_animation_finished(name):
-	if name == "scroll_board":
-		is_icon_animating = false
-		up_icon.texture = display_board[selected_board]
-		down_icon.texture = display_board[selected_board]
+func _on_icon_animation_finished(anim_name: StringName) -> void:
+	if anim_name == "scroll_board":
+		_is_icon_animating = false
+		_up_icon.texture = _display_board[selected_board]
+		_down_icon.texture = _display_board[selected_board]

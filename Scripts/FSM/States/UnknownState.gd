@@ -1,3 +1,5 @@
+## Default cell state — the cell has not been explored or flagged.
+## Defusing transitions to [DefuseState]; exploring transitions to [ExploreState].
 class_name UnknownState
 extends BaseState
 
