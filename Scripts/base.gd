@@ -14,11 +14,11 @@ var board: BaseBoard
 
 
 func _ready():
-	board_gui.connect("reset", reset)
+	board_gui.reset.connect(reset)
 	defuse_button.modulate = GlobalState.accent_color
-	start_button.connect("pressed", _load_game)
-	defuse_button.connect("toggled", _toggle_defuse)
-	%BackToMenu.connect("pressed", reset)
+	start_button.pressed.connect(_load_game)
+	defuse_button.toggled.connect(_toggle_defuse)
+	%BackToMenu.pressed.connect(reset)
 
 
 func _game_finished(is_win: bool, time: float):
@@ -41,10 +41,11 @@ func _load_game():
 	var game_data = GlobalState.get_game_data()
 
 	GlobalState._defusing = false
+	defuse_button.button_pressed = false
 	board.start_game(game_data.cols, game_data.rows, game_data.mines)
-	board.connect("on_game_started", game_started)
-	board.connect("on_defuse_changed", defused_changed)
-	board.connect("on_game_finished", _game_finished)
+	board.on_game_started.connect(game_started)
+	board.on_defuse_changed.connect(defused_changed)
+	board.on_game_finished.connect(_game_finished)
 
 	main_menu.visible = false
 	camera.reset_view()
@@ -62,6 +63,8 @@ func game_started(mines: int):
 func reset():
 	if board:
 		board.free()
+	GlobalState._defusing = false
+	defuse_button.button_pressed = false
 	main_menu.visible = true
 	board_gui.visible = false
 	$GUI/Screen/FinalScreen.visible = false

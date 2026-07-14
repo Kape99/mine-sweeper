@@ -13,9 +13,9 @@ func explore() -> void:
 func enter() -> void:
 	setup_colors(GlobalState.secondary_color, GlobalState.main_color)
 	owner._cell_icon.texture = preload("res://Asset/Icons/flag.svg")
-	owner.emit_signal("cell_defused", owner, true)
+	owner.cell_defused.emit(owner, true)
 
 
 func exit() -> void:
 	owner._cell_icon.texture = null
-	owner.emit_signal("cell_defused", owner, false)
+	owner.cell_defused.emit(owner, false)

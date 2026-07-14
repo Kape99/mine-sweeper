@@ -37,12 +37,12 @@ var is_icon_animating = false
 func _ready():
 	modulate = GlobalState.accent_color
 
-	left_button.connect("pressed", _scroll_left)
-	right_button.connect("pressed", _scroll_right)
-	up_button.connect("pressed", _scroll_up)
-	down_button.connect("pressed", _scroll_down)
-	text_animation_player.connect("animation_finished", _text_animation_finished)
-	icon_animation_player.connect("animation_finished", _icon_animation_finished)
+	left_button.pressed.connect(_scroll_left)
+	right_button.pressed.connect(_scroll_right)
+	up_button.pressed.connect(_scroll_up)
+	down_button.pressed.connect(_scroll_down)
+	text_animation_player.animation_finished.connect(_text_animation_finished)
+	icon_animation_player.animation_finished.connect(_icon_animation_finished)
 	left_label.text = display_difficulty[selected_difficulty]
 	right_label.text = display_difficulty[selected_difficulty]
 	up_icon.texture = display_board[selected_board]

@@ -53,10 +53,10 @@ func start_game(cols: int, rows: int, mines: int):
 
 
 func _connect_signals(cell: CellBase):
-	cell.connect("cell_pressed", _on_cell_pressed)
-	cell.connect("cell_explored", _handle_explored)
-	cell.connect("cell_defused", _handle_defuse)
-	cell.connect("cell_exploded", _handle_explosion)
+	cell.cell_pressed.connect(_on_cell_pressed)
+	cell.cell_explored.connect(_handle_explored)
+	cell.cell_defused.connect(_handle_defuse)
+	cell.cell_exploded.connect(_handle_explosion)
 
 
 func reset():
@@ -66,7 +66,7 @@ func reset():
 func _handle_explored(cell: CellBase):
 	_explored += 1
 	if to_be_explored == _explored:
-		emit_signal("on_game_finished", true, 0)
+		on_game_finished.emit(true, 0)
 
 
 func _handle_defuse(cell: CellBase, is_defused: bool):
@@ -74,13 +74,13 @@ func _handle_defuse(cell: CellBase, is_defused: bool):
 		_defused_count += 1
 	else:
 		_defused_count -= 1
-	emit_signal("on_defuse_changed", _defused_count)
+	on_defuse_changed.emit(_defused_count)
 
 
 func _handle_explosion(cell: CellBase):
 	if not _is_game_over:
 		_is_game_over = true
-		emit_signal("on_game_finished", false, 0.0)
+		on_game_finished.emit(false, 0.0)
 		for cel in board_grid.get_children():
 			if cel.nearby == -1:
 				cel.explore_delayed((cel.coord - cell.coord).length() * .1)
@@ -90,7 +90,7 @@ func _handle_explosion(cell: CellBase):
 func first_move(starting_cell):
 	_is_game_started = true
 	_place_mines(starting_cell)
-	emit_signal("on_game_started", mines)
+	on_game_started.emit(mines)
 
 
 func _on_cell_pressed(cell: CellBase, nearby: int):

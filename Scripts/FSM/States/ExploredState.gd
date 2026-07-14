@@ -16,10 +16,10 @@ func enter() -> void:
 		owner._cell_icon.texture = preload("res://Asset/Icons/mine.svg")
 		owner._cell_icon.modulate = GlobalState.background_color
 
-		owner.emit_signal("cell_exploded", owner)
+		owner.cell_exploded.emit(owner)
 
 	else:
-		owner.emit_signal("cell_explored", owner)
+		owner.cell_explored.emit(owner)
 		if owner.nearby != 0:
 			owner._cell_text.text = str(owner.nearby)
 

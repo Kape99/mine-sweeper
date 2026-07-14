@@ -27,4 +27,4 @@ func _update_score():
 
 
 func _on_reset_pressed():
-	emit_signal("reset")
+	reset.emit()

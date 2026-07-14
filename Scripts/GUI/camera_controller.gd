@@ -46,7 +46,7 @@ func _handle_drag(event: InputEventScreenDrag):
 
 		var delta_scale = new_vector.length() / old_vector.length()
 		zoom *= delta_scale
-		zoom = zoom.clamp(Vector2i(.5, .5), Vector2i(2, 2))
+		zoom = zoom.clamp(Vector2(.5, .5), Vector2(2, 2))
 		touch_points[event.index] = new_point
 
 

@@ -19,7 +19,6 @@ func _get_nearby_cells(cell: CellBase, distance: int = 1, cell_list: Dictionary 
 		return {cell: false}
 	# all the cells at distance > 1
 	var target_coord: Vector2i = cell.coord
-	var target_index: int = cell.get_index()
 	for col in range(target_coord.x - 1, target_coord.x + 1 + 1):
 		for row in range(target_coord.y - 1, target_coord.y + 1 + 1):
 			if not _is_valid(col, row):

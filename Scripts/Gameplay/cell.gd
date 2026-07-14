@@ -24,8 +24,6 @@ var coord: Vector2i
 
 var touch_position: Vector2
 
-var pressed = false
-
 
 func _ready():
 	_cell_fsm.setup()
@@ -59,8 +57,9 @@ func _on_area_2d_input_event(_viewport, event, _shape_idx):
 		touch_position = event.position
 	if event as InputEventScreenTouch and not event.pressed and touch_position.distance_to(event.position) < 15:
 		Input.vibrate_handheld(100)
-		emit_signal("cell_pressed", self, nearby)
+		cell_pressed.emit(self, nearby)
 
 
 func _on_timer_timeout():
-	_cell_fsm.explore()
+	if not is_explored():
+		_cell_fsm.explore()

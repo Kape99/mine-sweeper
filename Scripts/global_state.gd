@@ -2,10 +2,6 @@ extends Node
 
 var _defusing: bool = false
 
-#var background_color: Color = Color("734f9a")
-#var base_color: Color = Color("965fd4")
-#var accent_color: Color = Color("8bd450")
-
 
 class GameData:
 	var cols: int
@@ -26,64 +22,28 @@ var board: Dictionary = {
 }
 
 
-class ColorScheme:
-	var background: Color
-	var main: Color
-	var secondary: Color
-	var accent: Color
-
-	func _init(background, main, secondary, accent):
-		self.background = background
-		self.main = main
-		self.secondary = secondary
-		self.accent = accent
-
-
-var color_schemes: Dictionary
-
 var selected_board: int = 1
 
-# silvia
-var background_color: Color = Color("C1D8C3")
-var main_color: Color = Color("CD5C08")
-var secondary_color: Color = Color("F5E8B7")
-var accent_color: Color = Color("6A9C89")
+var color_schemes: Dictionary = {
+	"silvia": [Color("C1D8C3"), Color("CD5C08"), Color("F5E8B7"), Color("6A9C89")],
+	"silvia_alt": [Color("C1D8C3"), Color("6A9C89"), Color("F5E8B7"), Color("F5E8B7")],
+	"big_bubble": [Color("FFDFDF"), Color("FFF6F6"), Color("F875AA"), Color("AEDEFC")],
+	"green_orange": [Color("A6CF98"), Color("F2FFE9"), Color("557C55"), Color("FA7070")],
+	"rosa": [Color("F4BF96"), Color("CE5A67"), Color("1F1717"), Color("FCF5ED")],
+	"browns": [Color("EBE3D5"), Color("B0A695"), Color("F3EEEA"), Color("776B5D")],
+	"ukraine": [Color("0C356A"), Color("0174BE"), Color("FFC436"), Color("FFF0CE")],
+}
 
-## silvia
-#var background_color: Color = Color("C1D8C3")
-#var main_color: Color = Color("6A9C89")
-#var secondary_color: Color = Color("F5E8B7")
-#var accent_color: Color = Color("F5E8B7")
+var selected_scheme: String = "silvia"
 
-## Big-Bubble
-#var background_color: Color = Color("FFDFDF")
-#var main_color: Color = Color("FFF6F6")
-#var secondary_color: Color = Color("F875AA")
-#var accent_color: Color = Color("AEDEFC")
-
-## Green-Orange
-#var background_color: Color = Color("A6CF98")
-#var main_color: Color = Color("F2FFE9")
-#var secondary_color: Color = Color("557C55")
-#var accent_color: Color = Color("FA7070")
-
-## rosa
-#var background_color: Color = Color("F4BF96")
-#var main_color: Color = Color("CE5A67")
-#var secondary_color: Color = Color("1F1717")
-#var accent_color: Color = Color("FCF5ED")
-
-## browns
-#var background_color: Color = Color("EBE3D5")
-#var main_color: Color = Color("B0A695")
-#var secondary_color: Color = Color("F3EEEA")
-#var accent_color: Color = Color("776B5D")
-
-## Ukraine
-#var background_color: Color = Color("0C356A")
-#var main_color: Color = Color("0174BE")
-#var secondary_color: Color = Color("FFC436")
-#var accent_color: Color = Color("FFF0CE")
+var background_color: Color:
+	get: return color_schemes[selected_scheme][0]
+var main_color: Color:
+	get: return color_schemes[selected_scheme][1]
+var secondary_color: Color:
+	get: return color_schemes[selected_scheme][2]
+var accent_color: Color:
+	get: return color_schemes[selected_scheme][3]
 
 
 func _ready():
