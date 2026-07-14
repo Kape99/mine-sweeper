@@ -141,9 +141,11 @@ func _reveal_mines_from(origin: CellBase) -> void:
 			return a.coord.distance_to(origin.coord) < b.coord.distance_to(origin.coord)
 	)
 	var tween: Tween = _create_tween()
+	var prev_dist: float = 0.0
 	for cel in mine_cells:
-		var delay: float = cel.coord.distance_to(origin.coord) * REVEAL_DELAY_FACTOR
-		tween.tween_callback(cel.explore).set_delay(delay)
+		var dist: float = cel.coord.distance_to(origin.coord) * REVEAL_DELAY_FACTOR
+		tween.tween_callback(cel.explore).set_delay(dist - prev_dist)
+		prev_dist = dist
 
 
 ## Called on the very first click: places mines, then signals game start.
@@ -195,9 +197,11 @@ func _explore_nearby(cell: CellBase) -> void:
 			return a.coord.distance_to(cell.coord) < b.coord.distance_to(cell.coord)
 	)
 	var tween: Tween = _create_tween()
+	var prev_dist: float = 0.0
 	for neighbor_cell: CellBase in to_reveal:
-		var delay: float = neighbor_cell.coord.distance_to(cell.coord) * REVEAL_DELAY_FACTOR
-		tween.tween_callback(neighbor_cell.explore).set_delay(delay)
+		var dist: float = neighbor_cell.coord.distance_to(cell.coord) * REVEAL_DELAY_FACTOR
+		tween.tween_callback(neighbor_cell.explore).set_delay(dist - prev_dist)
+		prev_dist = dist
 
 
 ## Places mines using Fisher-Yates shuffle over valid positions — O(n) guaranteed.
