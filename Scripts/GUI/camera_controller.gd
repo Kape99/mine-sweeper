@@ -42,18 +42,14 @@ func _handle_drag(event: InputEventScreenDrag):
 		var old_vector: Vector2 = old_point - pivot_point
 		var new_vector: Vector2 = new_point - pivot_point
 
-		var delta_pos = drag_vector.dot(new_vector) / new_vector.length() * new_vector.normalized()
-
-		print(delta_pos)
 		offset -= (drag_vector / 2) / zoom.x
 
 		var delta_scale = new_vector.length() / old_vector.length()
-		print(delta_scale)
 		zoom *= delta_scale
 		zoom = zoom.clamp(Vector2i(.5, .5), Vector2i(2, 2))
 		touch_points[event.index] = new_point
 
 
-func set_limits(position, size):
+func reset_view():
 	offset = Vector2(0, 0)
-	scale = Vector2(1, 1)
+	zoom = Vector2(1, 1)

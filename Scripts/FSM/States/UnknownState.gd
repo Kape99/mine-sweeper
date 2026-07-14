@@ -1,4 +1,4 @@
-class_name UnkownState
+class_name UnknownState
 extends BaseState
 
 
@@ -11,7 +11,7 @@ func explore() -> void:
 
 
 func enter() -> void:
-	setup_colors(GlobaState.secondary_color, GlobaState.main_color)
+	setup_colors(GlobalState.secondary_color, GlobalState.main_color)
 
 
 func exit() -> void:

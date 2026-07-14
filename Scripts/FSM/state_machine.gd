@@ -7,7 +7,7 @@ extends Node
 signal transitioned(state_name)
 
 enum CellState {
-	UNKOWN,
+	UNKNOWN,
 	EXPLORED,
 	DEFUSED,
 }

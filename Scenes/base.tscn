@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://Scripts/base.gd" id="1_smbv4"]
 [ext_resource type="Script" path="res://Scripts/GUI/camera_controller.gd" id="2_buixl"]
 [ext_resource type="Texture2D" uid="uid://b5ykkupxejast" path="res://Asset/Icons/arrow_right.svg" id="2_pgp2b"]
-[ext_resource type="Script" path="res://Scripts/GUI/diffiuclty_selector.gd" id="3_s3kjk"]
+[ext_resource type="Script" path="res://Scripts/GUI/difficulty_selector.gd" id="3_s3kjk"]
 [ext_resource type="Script" path="res://Scenes/Screen.gd" id="3_wqvgk"]
 [ext_resource type="Texture2D" uid="uid://4iu435cfille" path="res://Asset/Icons/arrow_up.svg" id="9_itd5s"]
 [ext_resource type="PackedScene" uid="uid://2ff3i6tuwxtr" path="res://Scenes/board_gui.tscn" id="9_rp1dr"]
@@ -186,14 +186,14 @@ script = ExtResource("3_wqvgk")
 layout_mode = 2
 metadata/_edit_lock_ = true
 
-[node name="DiffiucltySelector" type="Control" parent="GUI/Screen/MainMenu"]
+[node name="DifficultySelector" type="Control" parent="GUI/Screen/MainMenu"]
 custom_minimum_size = Vector2(400, 400)
 layout_mode = 2
 mouse_filter = 1
 script = ExtResource("3_s3kjk")
 metadata/_edit_group_ = true
 
-[node name="LeftDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="LeftDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 4
@@ -212,7 +212,7 @@ texture_focused = ExtResource("1_mc8na")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="Difficulty" type="Label" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="Difficulty" type="Label" parent="GUI/Screen/MainMenu/DifficultySelector"]
 modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 1
@@ -231,7 +231,7 @@ theme_override_font_sizes/font_size = 24
 text = "Extreme"
 horizontal_alignment = 1
 
-[node name="DifficultyFake" type="Label" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="DifficultyFake" type="Label" parent="GUI/Screen/MainMenu/DifficultySelector"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 1
 anchors_preset = 8
@@ -249,7 +249,7 @@ theme_override_font_sizes/font_size = 24
 text = "Extreme"
 horizontal_alignment = 1
 
-[node name="RightDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="RightDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 6
@@ -271,7 +271,7 @@ texture_focused = ExtResource("2_pgp2b")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="BoardTypeUp" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="BoardTypeUp" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 5
@@ -290,7 +290,7 @@ texture_focused = ExtResource("9_itd5s")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="BoardIcon" type="TextureRect" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="BoardIcon" type="TextureRect" parent="GUI/Screen/MainMenu/DifficultySelector"]
 modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 8
@@ -307,7 +307,7 @@ grow_vertical = 2
 texture = ExtResource("10_531cw")
 expand_mode = 2
 
-[node name="BoardIcon2" type="TextureRect" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="BoardIcon2" type="TextureRect" parent="GUI/Screen/MainMenu/DifficultySelector"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -323,7 +323,7 @@ grow_vertical = 2
 texture = ExtResource("10_531cw")
 expand_mode = 2
 
-[node name="BoardTypeDown" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="BoardTypeDown" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 7
@@ -345,7 +345,7 @@ texture_focused = ExtResource("12_wjp3c")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="StartButton" type="TextureButton" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="StartButton" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector"]
 custom_minimum_size = Vector2(250, 250)
 layout_mode = 1
 anchors_preset = 8
@@ -361,13 +361,13 @@ grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 0
 
-[node name="IconAnimation" type="AnimationPlayer" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="IconAnimation" type="AnimationPlayer" parent="GUI/Screen/MainMenu/DifficultySelector"]
 reset_on_save = false
 libraries = {
 "": SubResource("AnimationLibrary_5ly7q")
 }
 
-[node name="TextAnimation" type="AnimationPlayer" parent="GUI/Screen/MainMenu/DiffiucltySelector"]
+[node name="TextAnimation" type="AnimationPlayer" parent="GUI/Screen/MainMenu/DifficultySelector"]
 root_node = NodePath("../IconAnimation")
 reset_on_save = false
 libraries = {

@@ -7,11 +7,11 @@ func reset():
 	for row in rows:
 		board.append([])
 		for col in cols:
-			var cell_istance: CellBase = cells[0].instantiate()
-			board_grid.add_child(cell_istance)
-			cell_istance.coord = Vector2i(col, row)
-			_connect_signals(cell_istance)
-			board[row].append(cell_istance)
+			var cell_instance: CellBase = cells[0].instantiate()
+			board_grid.add_child(cell_instance)
+			cell_instance.coord = Vector2i(col, row)
+			_connect_signals(cell_instance)
+			board[row].append(cell_instance)
 	board_state = board
 
 func _get_nearby_cells(cell: CellBase, distance: int = 1, cell_list: Dictionary = {}):
@@ -30,21 +30,3 @@ func _get_nearby_cells(cell: CellBase, distance: int = 1, cell_list: Dictionary 
 			cell_list.merge(_get_nearby_cells(board_state[row][col], distance - 1, cell_list))
 	return cell_list
 
-
-
-#	if distance == 0:
-#		return {}
-#	var target_coord: Vector2i = cell.coord
-#	var target_index: int = cell.get_index()
-#	var nearby_cells: Dictionary = {}
-#	for col in range(target_coord.x - 1, target_coord.x + 1 + 1):
-#		for row in range(target_coord.y - 1, target_coord.y + 1 + 1):
-#			if not _is_valid(col, row):
-#				continue
-#			if Vector2i(col, row) == target_coord:
-#				# Skip self
-#				continue
-#			nearby_cells.merge({board_state[row][col]: false})
-#	for nearby in nearby_cells:
-#		nearby_cells.merge(_get_nearby_cells(nearby, distance - 1))
-#	return nearby_cells

@@ -18,8 +18,8 @@ var defused_mines: int:
 
 
 func _ready():
-	$ColorRect.color = GlobaState.accent_color
-	_score_box.modulate = GlobaState.background_color
+	$ColorRect.color = GlobalState.accent_color
+	_score_box.modulate = GlobalState.background_color
 
 
 func _update_score():

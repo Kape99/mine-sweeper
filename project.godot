@@ -8,19 +8,23 @@
 
 config_version=5
 
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
 
 config/name="Minesweaper"
 config/description="A minimals MineSweeper game"
 run/main_scene="res://Scenes/base.tscn"
-config/features=PackedStringArray("4.1", "Mobile")
+config/features=PackedStringArray("4.7", "Mobile")
 boot_splash/bg_color=Color(0.756863, 0.847059, 0.764706, 1)
 boot_splash/image="res://Asset/Icons/flag.svg"
 config/icon="res://Asset/Icons/Icon.svg"
 
 [autoload]
 
-GlobaState="*res://Scripts/global_state.gd"
+GlobalState="*res://Scripts/global_state.gd"
 
 [display]
 

@@ -3,12 +3,12 @@ class_name DifficultySelector extends Control
 var selected_difficulty = 1:
 	set(value):
 		selected_difficulty = value
-		GlobaState.selected_difficulty = value
+		GlobalState.selected_difficulty = value
 
 var selected_board = 1:
 	set(value):
 		selected_board = value
-		GlobaState.selected_board = value
+		GlobalState.selected_board = value
 
 var display_difficulty: Array = ["Easy", "Medium", "Hard"]
 @onready var display_board: Array = [
@@ -35,7 +35,7 @@ var is_icon_animating = false
 
 
 func _ready():
-	modulate = GlobaState.accent_color
+	modulate = GlobalState.accent_color
 
 	left_button.connect("pressed", _scroll_left)
 	right_button.connect("pressed", _scroll_right)
@@ -52,8 +52,7 @@ func _ready():
 func _scroll_left():
 	if not is_text_animating:
 		left_label.text = display_difficulty[selected_difficulty]
-		selected_difficulty -= 1
-		selected_difficulty %= display_difficulty.size()
+		selected_difficulty = (selected_difficulty - 1 + display_difficulty.size()) % display_difficulty.size()
 		right_label.text = display_difficulty[selected_difficulty]
 		text_animation_player.play("scroll")
 		is_text_animating = true
@@ -73,8 +72,7 @@ func _scroll_up():
 	if not is_icon_animating:
 		is_icon_animating = true
 		up_icon.texture = display_board[selected_board]
-		selected_board -= 1
-		selected_board %= display_board.size()
+		selected_board = (selected_board - 1 + display_board.size()) % display_board.size()
 		down_icon.texture = display_board[selected_board]
 		icon_animation_player.play("scroll_board")
 

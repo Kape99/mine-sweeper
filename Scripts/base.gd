@@ -2,7 +2,7 @@ extends Node
 
 @onready var main_menu = $GUI/Screen/MainMenu
 @onready var board_gui: BoardGUI = $GUI/Screen/BoardGUI
-@onready var start_button = $GUI/Screen/MainMenu/DiffiucltySelector/StartButton
+@onready var start_button = $GUI/Screen/MainMenu/DifficultySelector/StartButton
 @onready var camera: CameraController = $Camera
 @onready var defuse_button: TextureButton = $GUI/Screen/BoardGUI/DefuseButton
 
@@ -15,7 +15,7 @@ var board: BaseBoard
 
 func _ready():
 	board_gui.connect("reset", reset)
-	defuse_button.modulate = GlobaState.accent_color
+	defuse_button.modulate = GlobalState.accent_color
 	start_button.connect("pressed", _load_game)
 	defuse_button.connect("toggled", _toggle_defuse)
 	%BackToMenu.connect("pressed", reset)
@@ -31,28 +31,23 @@ func _game_finished(is_win: bool, time: float):
 
 
 func _toggle_defuse(is_active):
-	GlobaState._defusing = is_active
+	GlobalState._defusing = is_active
 
 
 func _load_game():
-	if GlobaState.selected_board == 0:
-		board = triangle_board_scene.instantiate()
-	elif GlobaState.selected_board == 1:
-		board = square_board_scene.instantiate()
-	elif GlobaState.selected_board == 2:
-		board = hexagon_board_scene.instantiate()
+	var board_scenes = {0: triangle_board_scene, 1: square_board_scene, 2: hexagon_board_scene}
+	board = board_scenes[GlobalState.selected_board].instantiate()
 	add_child(board)
-	var game_data = GlobaState.get_game_data()
+	var game_data = GlobalState.get_game_data()
 
-	GlobaState._defusing = false
+	GlobalState._defusing = false
 	board.start_game(game_data.cols, game_data.rows, game_data.mines)
 	board.connect("on_game_started", game_started)
 	board.connect("on_defuse_changed", defused_changed)
 	board.connect("on_game_finished", _game_finished)
 
 	main_menu.visible = false
-	# TODO fix reset the camera and limit the movement
-	camera.set_limits(board.get_board_position(), board.get_board_size())
+	camera.reset_view()
 
 
 func defused_changed(defused: int):

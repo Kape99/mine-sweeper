@@ -7,11 +7,11 @@ func reset():
 	for row in rows:
 		board.append([])
 		for col in cols:
-			var cell_istance: CellBase = cells[(col + row * cols) % cells.size()].instantiate()
-			board_grid.add_child(cell_istance)
-			cell_istance.coord = Vector2i(col, row)
-			_connect_signals(cell_istance)
-			board[row].append(cell_istance)
+			var cell_instance: CellBase = cells[(col + row * cols) % cells.size()].instantiate()
+			board_grid.add_child(cell_instance)
+			cell_instance.coord = Vector2i(col, row)
+			_connect_signals(cell_instance)
+			board[row].append(cell_instance)
 	board_state = board
 
 

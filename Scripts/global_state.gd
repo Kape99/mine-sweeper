@@ -19,8 +19,6 @@ class GameData:
 
 
 var selected_difficulty = 1
-var difficulties: Dictionary = {0: Vector3i(9, 12, 50), 1: Vector3i(13, 18, 40), 2: Vector3i(19, 22, 150)}
-
 var board: Dictionary = {
 	0: [GameData.new(11, 12, 15), GameData.new(15, 16, 35), GameData.new(19, 20, 80)],
 	1: [GameData.new(9, 12, 15), GameData.new(10, 18, 35), GameData.new(13, 22, 80)],
@@ -35,7 +33,7 @@ class ColorScheme:
 	var accent: Color
 
 	func _init(background, main, secondary, accent):
-		self.back = background
+		self.background = background
 		self.main = main
 		self.secondary = secondary
 		self.accent = accent
@@ -94,15 +92,3 @@ func _ready():
 
 func get_game_data() -> GameData:
 	return board.get(selected_board)[selected_difficulty]
-
-
-func get_cols():
-	return difficulties[selected_difficulty].x
-
-
-func get_rows():
-	return difficulties[selected_difficulty].y
-
-
-func get_mines():
-	return difficulties[selected_difficulty].z

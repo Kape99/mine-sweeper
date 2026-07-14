@@ -12,13 +12,13 @@ signal cell_defused(cell: CellBase, is_defused: bool)
 signal cell_exploded(cell: CellBase)
 
 # If it is set to -1 it means it is a MINE
-# Otherwhise it represent the number of MINES nearby
+# Otherwise it represents the number of MINES nearby
 var nearby: int = 0:
 	set(value):
 		if nearby == -1 or value == -1:
 			nearby = -1
 		else:
-			nearby += 1
+			nearby += value
 
 var coord: Vector2i
 
@@ -39,7 +39,17 @@ func explore():
 	_cell_fsm.explore()
 
 
+func is_explored() -> bool:
+	return _cell_fsm.state is ExploreState
+
+
+func is_defused() -> bool:
+	return _cell_fsm.state is DefuseState
+
+
 func explore_delayed(delay: float):
+	if is_explored() or is_defused():
+		return
 	$Timer.wait_time = delay
 	$Timer.start()
 
