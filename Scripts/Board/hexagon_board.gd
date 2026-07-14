@@ -14,21 +14,39 @@ func reset():
 			board[row].append(cell_instance)
 	board_state = board
 
-func _get_nearby_cells(cell: CellBase, distance: int = 1, cell_list: Dictionary = {}):
-	if distance == 0:
-		return {cell: false}
-	var target_coord: Vector2i = cell.coord
-	for col in range(target_coord.x - 1, target_coord.x + 1 + 1):
-		for row in range(target_coord.y - 1, target_coord.y + 1 + 1):
-			if not _is_valid(col, row):
-				continue
-			if Vector2i(col, row) == target_coord:
-				# Skip self
-				continue
-			if target_coord.y != row:
-				if target_coord.y % 2 and target_coord.x > col + distance - 1:
+
+func _get_nearby_cells(cell: CellBase, distance: int = 1, _cell_list: Dictionary = {}) -> Dictionary:
+	# Iterative BFS ring expansion for hex grid
+	var result: Dictionary = {}
+	var visited: Dictionary = {cell.coord: true}
+	var current_ring: Array = [cell.coord]
+
+	for _d in distance:
+		var next_ring: Array = []
+		for coord in current_ring:
+			for neighbor_coord in _hex_neighbors(coord):
+				if visited.has(neighbor_coord):
 					continue
-				if not target_coord.y % 2 and target_coord.x < col + distance - 1:
+				if not _is_valid(neighbor_coord.x, neighbor_coord.y):
 					continue
-			cell_list.merge(_get_nearby_cells(board_state[row][col], distance - 1, cell_list))
-	return cell_list
+				visited[neighbor_coord] = true
+				next_ring.append(neighbor_coord)
+				result[board_state[neighbor_coord.y][neighbor_coord.x]] = false
+		current_ring = next_ring
+	return result
+
+
+func _hex_neighbors(coord: Vector2i) -> Array:
+	# Offset coordinates: even rows shift left, odd rows shift right
+	if coord.y % 2 == 0:
+		return [
+			Vector2i(coord.x - 1, coord.y - 1), Vector2i(coord.x, coord.y - 1),
+			Vector2i(coord.x - 1, coord.y),     Vector2i(coord.x + 1, coord.y),
+			Vector2i(coord.x - 1, coord.y + 1), Vector2i(coord.x, coord.y + 1),
+		]
+	else:
+		return [
+			Vector2i(coord.x, coord.y - 1),     Vector2i(coord.x + 1, coord.y - 1),
+			Vector2i(coord.x - 1, coord.y),     Vector2i(coord.x + 1, coord.y),
+			Vector2i(coord.x, coord.y + 1),     Vector2i(coord.x + 1, coord.y + 1),
+		]

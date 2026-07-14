@@ -45,13 +45,6 @@ func is_defused() -> bool:
 	return _cell_fsm.state is DefuseState
 
 
-func explore_delayed(delay: float):
-	if is_explored() or is_defused():
-		return
-	$Timer.wait_time = delay
-	$Timer.start()
-
-
 func _on_area_2d_input_event(_viewport, event, _shape_idx):
 	if event as InputEventScreenTouch and event.pressed:
 		touch_position = event.position
@@ -60,6 +53,4 @@ func _on_area_2d_input_event(_viewport, event, _shape_idx):
 		cell_pressed.emit(self, nearby)
 
 
-func _on_timer_timeout():
-	if not is_explored():
-		_cell_fsm.explore()
+

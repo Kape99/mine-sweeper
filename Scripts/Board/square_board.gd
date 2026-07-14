@@ -14,18 +14,16 @@ func reset():
 			board[row].append(cell_instance)
 	board_state = board
 
-func _get_nearby_cells(cell: CellBase, distance: int = 1, cell_list: Dictionary = {}):
-	if distance == 0:
-		return {cell: false}
-	# all the cells at distance > 1
-	var target_coord: Vector2i = cell.coord
-	for col in range(target_coord.x - 1, target_coord.x + 1 + 1):
-		for row in range(target_coord.y - 1, target_coord.y + 1 + 1):
+
+func _get_nearby_cells(cell: CellBase, distance: int = 1, _cell_list: Dictionary = {}) -> Dictionary:
+	# Iterative: collect all unique cells within Manhattan-Chebyshev distance
+	var result: Dictionary = {}
+	var origin: Vector2i = cell.coord
+	for col in range(origin.x - distance, origin.x + distance + 1):
+		for row in range(origin.y - distance, origin.y + distance + 1):
 			if not _is_valid(col, row):
 				continue
-			if Vector2i(col, row) == target_coord:
-				# Skip self
+			if col == origin.x and row == origin.y:
 				continue
-			cell_list.merge(_get_nearby_cells(board_state[row][col], distance - 1, cell_list))
-	return cell_list
-
+			result[board_state[row][col]] = false
+	return result

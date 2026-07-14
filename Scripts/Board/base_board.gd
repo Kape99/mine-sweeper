@@ -81,10 +81,22 @@ func _handle_explosion(cell: CellBase):
 	if not _is_game_over:
 		_is_game_over = true
 		on_game_finished.emit(false, 0.0)
-		for cel in board_grid.get_children():
-			if cel.nearby == -1:
-				cel.explore_delayed((cel.coord - cell.coord).length() * .1)
+		_reveal_mines_from(cell)
 		Input.vibrate_handheld(500)
+
+
+func _reveal_mines_from(origin: CellBase):
+	var mine_cells: Array = []
+	for cel in board_grid.get_children():
+		if cel.nearby == -1 and not cel.is_explored():
+			mine_cells.append(cel)
+	if mine_cells.is_empty():
+		return
+	mine_cells.sort_custom(func(a, b): return a.coord.distance_to(origin.coord) < b.coord.distance_to(origin.coord))
+	var tween = create_tween()
+	for cel in mine_cells:
+		var delay = cel.coord.distance_to(origin.coord) * 0.1
+		tween.tween_callback(cel.explore).set_delay(delay)
 
 
 func first_move(starting_cell):
@@ -107,33 +119,47 @@ func _on_cell_pressed(cell: CellBase, nearby: int):
 
 
 func _explore_nearby(cell: CellBase):
-	var new_cells: Dictionary = _get_nearby_cells(cell)
-	var size = 0
-	while new_cells.size() > size:
-		size = new_cells.size()
-		for nearby in new_cells.keys():
-			if nearby.nearby == 0:
-				new_cells.merge(_get_nearby_cells(nearby))
-	for nearby_cell in new_cells.keys():
-		nearby_cell.explore_delayed((nearby_cell.coord - cell.coord).length() * .1)
+	# BFS flood fill — only expands through cells with nearby == 0
+	var visited: Dictionary = {cell: true}
+	var queue: Array[CellBase] = [cell]
+	var to_reveal: Array = []
+	var head: int = 0
+	while head < queue.size():
+		var current = queue[head]
+		head += 1
+		for neighbor in _get_nearby_cells(current).keys():
+			if visited.has(neighbor):
+				continue
+			visited[neighbor] = true
+			to_reveal.append(neighbor)
+			if neighbor.nearby == 0:
+				queue.append(neighbor)
+	if to_reveal.is_empty():
+		return
+	# Sort by distance for wave animation, batch into single tween
+	to_reveal.sort_custom(func(a, b): return a.coord.distance_to(cell.coord) < b.coord.distance_to(cell.coord))
+	var tween = create_tween()
+	for neighbor_cell in to_reveal:
+		var delay = neighbor_cell.coord.distance_to(cell.coord) * 0.1
+		tween.tween_callback(neighbor_cell.explore).set_delay(delay)
 
 
 func _place_mines(cell: CellBase):
+	# Collect valid positions, shuffle, pick first N — O(n) guaranteed
 	var invalid_cells = _get_nearby_cells(cell, 2)
-	invalid_cells.merge({cell: false})
-	var max_position = rows * cols - 1
-	var available_cells = max_position + 1 - invalid_cells.size()
-	var actual_mines = mini(mines, available_cells)
-	var placed_mine = 0
-	while placed_mine < actual_mines:
-		var position = randi_range(0, max_position)
-		var possible_cell = board_grid.get_child(position)
-		if not invalid_cells.has(possible_cell):
-			possible_cell.nearby = -1
-			invalid_cells.merge({possible_cell: false})
-			placed_mine += 1
-			for cell_to_update in _get_nearby_cells(possible_cell):
-				cell_to_update.nearby = 1
+	invalid_cells[cell] = false
+	var valid_indices: Array[int] = []
+	var child_count = board_grid.get_child_count()
+	for i in child_count:
+		if not invalid_cells.has(board_grid.get_child(i)):
+			valid_indices.append(i)
+	valid_indices.shuffle()
+	var actual_mines = mini(mines, valid_indices.size())
+	for i in actual_mines:
+		var mine_cell = board_grid.get_child(valid_indices[i])
+		mine_cell.nearby = -1
+		for cell_to_update in _get_nearby_cells(mine_cell):
+			cell_to_update.nearby = 1
 
 
 func _get_nearby_cells(cell: CellBase, distance: int = 1) -> Dictionary:

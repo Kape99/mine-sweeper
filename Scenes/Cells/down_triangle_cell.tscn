@@ -87,7 +87,5 @@ script = ExtResource("4_7p7cw")
 [node name="Explored" type="Node" parent="StateMachine"]
 script = ExtResource("5_pffn6")
 
-[node name="Timer" type="Timer" parent="."]
 
 [connection signal="input_event" from="Area2D" to="." method="_on_area_2d_input_event" flags=18]
-[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
