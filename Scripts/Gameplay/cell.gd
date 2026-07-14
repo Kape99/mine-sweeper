@@ -99,7 +99,7 @@ func set_icon(icon: Texture2D, icon_color: Color) -> void:
 	_cell_icon.modulate = icon_color
 
 
-func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int, _local_shape_idx: int = 0) -> void:
+func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int, _local_shape: Object = null) -> void:
 	if event is InputEventScreenTouch and event.pressed:
 		_touch_position = event.position
 	if event is InputEventScreenTouch and not event.pressed:
