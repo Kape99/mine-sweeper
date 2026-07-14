@@ -1,5 +1,6 @@
 ## Triangular-grid minesweeper board.
-## Alternates between upward and downward triangles. Each cell has exactly 3 edge-neighbors.
+## Alternates between upward and downward triangles. Each cell has up to 12 neighbors
+## (3 edge-sharing + 9 vertex-sharing).
 class_name TriangleBoard
 extends BaseBoard
 
@@ -47,15 +48,38 @@ func _get_nearby_cells(cell: CellBase, distance: int = 1) -> Dictionary:
 	return result
 
 
-## Returns the 3 edge-neighbor coordinates for a triangle cell at [param coord].
-## Upward triangles connect to the row below; downward triangles to the row above.
+## Returns all 12 neighbor coordinates (edge + vertex) for a triangle cell at [param coord].
+## Upward triangles have 5 neighbors in the row below; downward triangles have 5 above.
 func _tri_neighbors(coord: Vector2i) -> Array[Vector2i]:
+	var c: int = coord.x
+	var r: int = coord.y
 	var neighbors: Array[Vector2i] = [
-		Vector2i(coord.x - 1, coord.y),
-		Vector2i(coord.x + 1, coord.y),
+		# Same row (4 neighbors)
+		Vector2i(c - 2, r),
+		Vector2i(c - 1, r),
+		Vector2i(c + 1, r),
+		Vector2i(c + 2, r),
 	]
-	if _is_upward_triangle(coord.x, coord.y):
-		neighbors.append(Vector2i(coord.x, coord.y + 1))
+	if _is_upward_triangle(c, r):
+		# Row above (3 neighbors)
+		neighbors.append(Vector2i(c - 1, r - 1))
+		neighbors.append(Vector2i(c, r - 1))
+		neighbors.append(Vector2i(c + 1, r - 1))
+		# Row below (5 neighbors)
+		neighbors.append(Vector2i(c - 2, r + 1))
+		neighbors.append(Vector2i(c - 1, r + 1))
+		neighbors.append(Vector2i(c, r + 1))
+		neighbors.append(Vector2i(c + 1, r + 1))
+		neighbors.append(Vector2i(c + 2, r + 1))
 	else:
-		neighbors.append(Vector2i(coord.x, coord.y - 1))
+		# Row above (5 neighbors)
+		neighbors.append(Vector2i(c - 2, r - 1))
+		neighbors.append(Vector2i(c - 1, r - 1))
+		neighbors.append(Vector2i(c, r - 1))
+		neighbors.append(Vector2i(c + 1, r - 1))
+		neighbors.append(Vector2i(c + 2, r - 1))
+		# Row below (3 neighbors)
+		neighbors.append(Vector2i(c - 1, r + 1))
+		neighbors.append(Vector2i(c, r + 1))
+		neighbors.append(Vector2i(c + 1, r + 1))
 	return neighbors
