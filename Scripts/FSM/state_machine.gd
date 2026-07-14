@@ -7,13 +7,6 @@ extends Node
 ## Emitted after transitioning to a new state.
 signal transitioned(state_name: String)
 
-## Possible cell states (used for external queries, not for FSM logic).
-enum CellState {
-	UNKNOWN,
-	EXPLORED,
-	DEFUSED,
-}
-
 ## Path to the initial active state node. Set in the inspector.
 @export var initial_state := NodePath()
 

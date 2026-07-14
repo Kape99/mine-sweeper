@@ -20,7 +20,9 @@ func reset() -> void:
 
 
 ## Returns all cells within Chebyshev [param distance] of [param cell].
-func _get_nearby_cells(cell: CellBase, distance: int = 1, _cell_list: Dictionary = {}) -> Dictionary:
+## For distance=1 this gives the classic 8-neighbor square adjacency.
+## For distance=2 (used by safe-zone), returns a 5×5 box minus center.
+func _get_nearby_cells(cell: CellBase, distance: int = 1) -> Dictionary:
 	var result: Dictionary = {}
 	var origin: Vector2i = cell.coord
 	for col: int in range(origin.x - distance, origin.x + distance + 1):

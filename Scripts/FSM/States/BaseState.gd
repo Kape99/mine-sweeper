@@ -1,6 +1,8 @@
 ## Abstract base class for cell FSM states.
 ## Subclasses override [method defuse], [method explore], [method enter],
 ## and [method exit] to implement state-specific behavior.
+## States communicate visuals through [method CellBase.set_display] to stay decoupled
+## from the cell's internal node tree.
 class_name BaseState
 extends Node
 
@@ -26,11 +28,3 @@ func enter() -> void:
 ## Called when leaving this state. Override to clean up visuals and emit signals.
 func exit() -> void:
 	pass
-
-
-## Applies [param background_color] to the cell polygon and [param content_color]
-## to the label and icon.
-func setup_colors(background_color: Color, content_color: Color) -> void:
-	owner._cell_text.modulate = content_color
-	owner._cell_icon.modulate = content_color
-	owner._cell_triangle.modulate = background_color

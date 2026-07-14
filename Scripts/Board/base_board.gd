@@ -29,6 +29,7 @@ signal on_game_started(mines_number: int)
 signal on_game_finished(is_win: bool, time: float)
 
 ## 2D array of [CellBase] references, indexed as [code]board_state[row][col][/code].
+## Untyped because GDScript doesn't support [code]Array[Array[CellBase]][/code].
 var board_state: Array = []
 
 var _explored: int = 0
@@ -36,6 +37,10 @@ var _defused_count: int = 0
 var _is_game_started: bool = false
 var _is_game_over: bool = false
 var _to_be_explored: int = 0
+
+## Active animation tween. Tracked so it can be killed when a new animation starts
+## (e.g. flood-fill interrupted by explosion).
+var _active_tween: Tween = null
 
 
 ## Returns the pixel size of the board grid container.
@@ -50,6 +55,7 @@ func get_board_position() -> Vector2:
 
 ## Resets internal state and frees all child cells from the grid.
 func clear() -> void:
+	_kill_active_tween()
 	_explored = 0
 	_defused_count = 0
 	_is_game_started = false
@@ -107,12 +113,26 @@ func _handle_explosion(cell: CellBase) -> void:
 
 # -- Core gameplay logic -------------------------------------------------------
 
+## Kills the currently running animation tween, if any.
+func _kill_active_tween() -> void:
+	if _active_tween and _active_tween.is_valid():
+		_active_tween.kill()
+	_active_tween = null
+
+
+## Creates a new animation tween, killing any active one first.
+func _create_tween() -> Tween:
+	_kill_active_tween()
+	_active_tween = create_tween()
+	return _active_tween
+
+
 ## Animates the reveal of all remaining mines in a distance-sorted wave
 ## originating from [param origin].
 func _reveal_mines_from(origin: CellBase) -> void:
 	var mine_cells: Array[CellBase] = []
 	for cel in board_grid.get_children():
-		if cel.nearby == -1 and not cel.is_explored():
+		if cel.is_mine() and not cel.is_explored():
 			mine_cells.append(cel)
 	if mine_cells.is_empty():
 		return
@@ -120,7 +140,7 @@ func _reveal_mines_from(origin: CellBase) -> void:
 		func(a: CellBase, b: CellBase) -> bool:
 			return a.coord.distance_to(origin.coord) < b.coord.distance_to(origin.coord)
 	)
-	var tween: Tween = create_tween()
+	var tween: Tween = _create_tween()
 	for cel in mine_cells:
 		var delay: float = cel.coord.distance_to(origin.coord) * REVEAL_DELAY_FACTOR
 		tween.tween_callback(cel.explore).set_delay(delay)
@@ -174,7 +194,7 @@ func _explore_nearby(cell: CellBase) -> void:
 		func(a: CellBase, b: CellBase) -> bool:
 			return a.coord.distance_to(cell.coord) < b.coord.distance_to(cell.coord)
 	)
-	var tween: Tween = create_tween()
+	var tween: Tween = _create_tween()
 	for neighbor_cell: CellBase in to_reveal:
 		var delay: float = neighbor_cell.coord.distance_to(cell.coord) * REVEAL_DELAY_FACTOR
 		tween.tween_callback(neighbor_cell.explore).set_delay(delay)
@@ -196,13 +216,14 @@ func _place_mines(cell: CellBase) -> void:
 	var actual_mines: int = mini(mines, valid_indices.size())
 	for i: int in actual_mines:
 		var mine_cell: CellBase = board_grid.get_child(valid_indices[i])
-		mine_cell.nearby = -1
+		mine_cell.mark_as_mine()
 		for cell_to_update: CellBase in _get_nearby_cells(mine_cell):
-			cell_to_update.nearby = 1
+			cell_to_update.increment_nearby()
 
 
 ## Returns a [Dictionary] of neighboring [CellBase] nodes within [param distance].
 ## Keys are [CellBase], values are unused ([code]false[/code]).
+## Used as a set — GDScript lacks a native Set type.[br]
 ## Must be overridden by each board subclass.
 func _get_nearby_cells(_cell: CellBase, _distance: int = 1) -> Dictionary:
 	return {}

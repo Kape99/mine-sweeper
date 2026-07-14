@@ -13,7 +13,7 @@ func explore() -> void:
 
 
 func enter() -> void:
-	setup_colors(GlobalState.secondary_color, GlobalState.main_color)
+	owner.set_display(GlobalState.secondary_color, GlobalState.main_color)
 
 
 func exit() -> void:

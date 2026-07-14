@@ -3,6 +3,8 @@
 class_name DefuseState
 extends BaseState
 
+const FLAG_ICON: Texture2D = preload("res://Asset/Icons/flag.svg")
+
 
 func defuse() -> void:
 	state_machine.transition_to("Unknown")
@@ -13,11 +15,10 @@ func explore() -> void:
 
 
 func enter() -> void:
-	setup_colors(GlobalState.secondary_color, GlobalState.main_color)
-	owner._cell_icon.texture = preload("res://Asset/Icons/flag.svg")
+	owner.set_display(GlobalState.secondary_color, GlobalState.main_color, FLAG_ICON)
 	owner.cell_defused.emit(owner, true)
 
 
 func exit() -> void:
-	owner._cell_icon.texture = null
+	owner.set_display(GlobalState.secondary_color, GlobalState.main_color)
 	owner.cell_defused.emit(owner, false)

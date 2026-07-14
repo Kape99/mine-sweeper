@@ -15,9 +15,9 @@ const TAP_VIBRATION_MS: int = 100
 @onready var _cell_fsm: StateMachine = $StateMachine
 @onready var _cell_triangle: Polygon2D = $Area2D/Polygon2D
 
-## Emitted when the player taps this cell. [param cell] is self, [param nearby]
+## Emitted when the player taps this cell. [param cell] is self, [param p_nearby]
 ## is the mine-neighbor count (or -1 if mine).
-signal cell_pressed(cell: CellBase, nearby: int)
+signal cell_pressed(cell: CellBase, p_nearby: int)
 
 ## Emitted when a non-mine cell transitions to explored state.
 signal cell_explored(cell: CellBase)
@@ -32,14 +32,8 @@ signal cell_exploded(cell: CellBase)
 ## Mine-neighbor count for this cell.[br]
 ## [code]-1[/code] means this cell is a mine.[br]
 ## Positive values represent how many adjacent mines exist.[br]
-## The setter accumulates: assigning [code]1[/code] increments the count by 1.
-## Assigning [code]-1[/code] permanently marks the cell as a mine.
-var nearby: int = 0:
-	set(value):
-		if nearby == -1 or value == -1:
-			nearby = -1
-		else:
-			nearby += value
+## Use [method mark_as_mine] and [method increment_nearby] to modify — do not set directly.
+var nearby: int = 0
 
 ## Grid coordinate of this cell (column, row).
 var coord: Vector2i
@@ -50,6 +44,22 @@ var _touch_position: Vector2
 
 func _ready() -> void:
 	_cell_fsm.setup()
+
+
+## Permanently marks this cell as a mine. Irreversible.
+func mark_as_mine() -> void:
+	nearby = -1
+
+
+## Increments the neighbor mine count by one. No-op if cell is already a mine.
+func increment_nearby() -> void:
+	if nearby != -1:
+		nearby += 1
+
+
+## Returns [code]true[/code] if this cell is a mine.
+func is_mine() -> bool:
+	return nearby == -1
 
 
 ## Attempt to toggle defuse (flag) on this cell.
@@ -70,6 +80,23 @@ func is_explored() -> bool:
 ## Returns [code]true[/code] if this cell is currently flagged.
 func is_defused() -> bool:
 	return _cell_fsm.state is DefuseState
+
+
+## Updates the visual appearance of this cell. Called by FSM states to stay
+## decoupled from the internal node tree.
+func set_display(bg_color: Color, content_color: Color, icon: Texture2D = null, text: String = "") -> void:
+	_cell_triangle.modulate = bg_color
+	_cell_text.modulate = content_color
+	_cell_icon.modulate = content_color
+	_cell_icon.texture = icon
+	_cell_text.text = text
+
+
+## Overrides only the icon texture and its color. Used when the icon color
+## differs from the default content color (e.g. mine icon on explosion).
+func set_icon(icon: Texture2D, icon_color: Color) -> void:
+	_cell_icon.texture = icon
+	_cell_icon.modulate = icon_color
 
 
 func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:

@@ -27,7 +27,7 @@ func _is_upward_triangle(col: int, row: int) -> bool:
 
 ## Returns all cells within [param distance] rings of [param cell] using
 ## iterative BFS ring expansion over triangle edge-neighbors.
-func _get_nearby_cells(cell: CellBase, distance: int = 1, _cell_list: Dictionary = {}) -> Dictionary:
+func _get_nearby_cells(cell: CellBase, distance: int = 1) -> Dictionary:
 	var result: Dictionary = {}
 	var visited: Dictionary = {cell.coord: true}
 	var current_ring: Array[Vector2i] = [cell.coord]

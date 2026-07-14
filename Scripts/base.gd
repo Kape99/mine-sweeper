@@ -58,7 +58,7 @@ func _load_game() -> void:
 	_board.on_game_finished.connect(_game_finished)
 
 	_main_menu.visible = false
-	_camera.reset_view()
+	_camera.set_board_bounds(_board.get_board_position(), _board.get_board_size())
 
 
 func _defused_changed(defused: int) -> void:
