@@ -17,10 +17,10 @@ func _ready() -> void:
 	var scale_factor_x: float = float(window_size.x) / BASE_WIDTH
 	var scale_factor_y: float = float(window_size.y) / BASE_HEIGHT
 
-	var top: float = BASE_PADDING + safe_area.position.y / scale_factor_y
-	var left: float = BASE_PADDING + safe_area.position.x / scale_factor_x
-	var bottom: float = BASE_PADDING + (window_size.y - safe_area.end.y) / scale_factor_y
-	var right: float = BASE_PADDING + (window_size.x - safe_area.end.x) / scale_factor_x
+	var top: float = BASE_PADDING + maxf(0.0, safe_area.position.y / scale_factor_y)
+	var left: float = BASE_PADDING + maxf(0.0, safe_area.position.x / scale_factor_x)
+	var bottom: float = BASE_PADDING + maxf(0.0, (window_size.y - safe_area.end.y) / scale_factor_y)
+	var right: float = BASE_PADDING + maxf(0.0, (window_size.x - safe_area.end.x) / scale_factor_x)
 
 	add_theme_constant_override("margin_top", int(top))
 	add_theme_constant_override("margin_left", int(left))
