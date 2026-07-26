@@ -21,7 +21,6 @@ material = SubResource("CanvasItemMaterial_t1sig")
 position = Vector2(12.5, 23)
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Area2D"]
-polygon = PackedVector2Array(29, 23, -29, 23, 0, -24)
 
 [node name="Polygon2D" type="Polygon2D" parent="Area2D"]
 polygon = PackedVector2Array(-25, 21, 25, 21, 0, -21)

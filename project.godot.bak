@@ -1,0 +1,54 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
+[application]
+
+config/name="Minesweaper"
+config/description="A minimals MineSweeper game"
+run/main_scene="res://Scenes/base.tscn"
+config/features=PackedStringArray("4.7", "Mobile")
+boot_splash/bg_color=Color(0.756863, 0.847059, 0.764706, 1)
+boot_splash/image="res://Asset/Icons/Icon.png"
+config/icon="res://Asset/Icons/Icon.svg"
+
+[autoload]
+
+GlobalState="*res://Scripts/global_state.gd"
+
+[display]
+
+window/size/viewport_width=480
+window/size/viewport_height=800
+window/size/initial_position_type=0
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[dotnet]
+
+project/assembly_name="Mine-Sweaper"
+
+[gui]
+
+theme/custom_font="res://Asset/Font/Anton-Regular.ttf"
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.960784, 0.909804, 0.717647, 1)

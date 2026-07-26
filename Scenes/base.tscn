@@ -168,7 +168,7 @@ shader_parameter/lod = 20.0
 script = ExtResource("1_smbv4")
 
 [node name="Camera" type="Camera2D" parent="." unique_id=1140760277]
-position = Vector2(240, 401)
+position = Vector2(0, 0)
 script = ExtResource("2_buixl")
 
 [node name="GUI" type="CanvasLayer" parent="." unique_id=1828482509]
@@ -182,18 +182,22 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("3_wqvgk")
 
-[node name="MainMenu" type="CenterContainer" parent="GUI/Screen" unique_id=951140519]
+[node name="VBoxContainer" type="VBoxContainer" parent="GUI/Screen" unique_id=2113179829]
+layout_mode = 2
+alignment = 1
+
+[node name="MainMenu" type="CenterContainer" parent="GUI/Screen/VBoxContainer" unique_id=951140519]
 layout_mode = 2
 metadata/_edit_lock_ = true
 
-[node name="DifficultySelector" type="Control" parent="GUI/Screen/MainMenu" unique_id=1723384055]
+[node name="DifficultySelector" type="Control" parent="GUI/Screen/VBoxContainer/MainMenu" unique_id=1723384055]
 custom_minimum_size = Vector2(400, 400)
 layout_mode = 2
 mouse_filter = 1
 script = ExtResource("3_s3kjk")
 metadata/_edit_group_ = true
 
-[node name="LeftDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=745788379]
+[node name="LeftDifficulty" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=745788379]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 4
@@ -212,7 +216,7 @@ texture_focused = ExtResource("1_mc8na")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="Difficulty" type="Label" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=1373242796]
+[node name="Difficulty" type="Label" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=1373242796]
 modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 1
@@ -231,7 +235,7 @@ theme_override_font_sizes/font_size = 24
 text = "Extreme"
 horizontal_alignment = 1
 
-[node name="DifficultyFake" type="Label" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=1248954268]
+[node name="DifficultyFake" type="Label" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=1248954268]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 1
 anchors_preset = 8
@@ -249,7 +253,7 @@ theme_override_font_sizes/font_size = 24
 text = "Extreme"
 horizontal_alignment = 1
 
-[node name="RightDifficulty" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=1120119164]
+[node name="RightDifficulty" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=1120119164]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 6
@@ -271,7 +275,7 @@ texture_focused = ExtResource("2_pgp2b")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="BoardTypeUp" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=2052748028]
+[node name="BoardTypeUp" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=2052748028]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 5
@@ -290,7 +294,7 @@ texture_focused = ExtResource("9_itd5s")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="BoardIcon" type="TextureRect" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=17285357]
+[node name="BoardIcon" type="TextureRect" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=17285357]
 modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 8
@@ -300,14 +304,14 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -125.0
 offset_top = -125.0
-offset_right = 125.001
+offset_right = 125.00101
 offset_bottom = 125.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("10_531cw")
 expand_mode = 2
 
-[node name="BoardIcon2" type="TextureRect" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=751609989]
+[node name="BoardIcon2" type="TextureRect" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=751609989]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -317,13 +321,13 @@ anchor_bottom = 0.5
 offset_left = -125.0
 offset_top = -125.0
 offset_right = 125.0
-offset_bottom = 124.999
+offset_bottom = 124.99899
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("10_531cw")
 expand_mode = 2
 
-[node name="BoardTypeDown" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=526116954]
+[node name="BoardTypeDown" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=526116954]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 7
@@ -345,7 +349,7 @@ texture_focused = ExtResource("12_wjp3c")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="StartButton" type="TextureButton" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=971974671]
+[node name="StartButton" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=971974671]
 custom_minimum_size = Vector2(250, 250)
 layout_mode = 1
 anchors_preset = 8
@@ -361,14 +365,19 @@ grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 0
 
-[node name="IconAnimation" type="AnimationPlayer" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=56757171]
+[node name="IconAnimation" type="AnimationPlayer" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=56757171]
 reset_on_save = false
 libraries/ = SubResource("AnimationLibrary_5ly7q")
 
-[node name="TextAnimation" type="AnimationPlayer" parent="GUI/Screen/MainMenu/DifficultySelector" unique_id=344036412]
+[node name="TextAnimation" type="AnimationPlayer" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=344036412]
 reset_on_save = false
 root_node = NodePath("../IconAnimation")
 libraries/ = SubResource("AnimationLibrary_5ly7q")
+
+[node name="NoBorder" type="CheckButton" parent="GUI/Screen/VBoxContainer" unique_id=314258257]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "No bordi"
 
 [node name="BoardGUI" parent="GUI/Screen" unique_id=2116095749 instance=ExtResource("9_rp1dr")]
 visible = false
@@ -415,3 +424,5 @@ text = "Oh no!
 Try again"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[connection signal="toggled" from="GUI/Screen/VBoxContainer/NoBorder" to="." method="_on_no_border_toggled"]

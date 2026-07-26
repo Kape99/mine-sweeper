@@ -1,27 +1,15 @@
-## Hexagonal-grid minesweeper board using offset coordinates (odd-row shift right).
-## Each cell has up to 6 neighbors.
 class_name HexagonBoard
 extends BaseBoard
 
 
-## Clears the board and instantiates a hex grid. Alternates cell scene by row parity
-## to account for the visual offset.
-func reset() -> void:
-	clear()
-	var board: Array = []
-	for row: int in rows:
-		board.append([])
-		for col: int in cols:
-			var cell_instance: CellBase = cells[row % 2].instantiate()
-			board_grid.add_child(cell_instance)
-			cell_instance.coord = Vector2i(col, row)
-			_connect_signals(cell_instance)
-			board[row].append(cell_instance)
-	board_state = board
+## The hex honeycomb stagger is an X-axis offset baked into alternating
+## cell variants, keyed by row parity. Using the *global* row (continuing
+## across tile boundaries, via posmod for negative rows) keeps the zigzag
+## unbroken at tile seams.
+func _get_cell_type_idx(_col: int, row: int) -> int:
+	return posmod(row, 2)
 
 
-## Returns all cells within [param distance] rings of [param cell] using
-## iterative BFS ring expansion over hex neighbors.
 func _get_nearby_cells(cell: CellBase, distance: int = 1) -> Dictionary:
 	var result: Dictionary = {}
 	var visited: Dictionary = {cell.coord: true}
@@ -33,17 +21,16 @@ func _get_nearby_cells(cell: CellBase, distance: int = 1) -> Dictionary:
 			for neighbor_coord: Vector2i in _hex_neighbors(coord):
 				if visited.has(neighbor_coord):
 					continue
-				if not _is_valid(neighbor_coord.x, neighbor_coord.y):
-					continue
+				neighbor_coord.x = posmod(neighbor_coord.x, cols)
+				neighbor_coord.y = posmod(neighbor_coord.y, rows)
 				visited[neighbor_coord] = true
 				next_ring.append(neighbor_coord)
-				result[board_state[neighbor_coord.y][neighbor_coord.x]] = false
+				if not board_state.is_empty():
+					result[board_state[neighbor_coord.y][neighbor_coord.x]] = false
 		current_ring = next_ring
 	return result
 
 
-## Returns the 6 neighbor coordinates for a hex cell at [param coord].
-## Uses offset coordinates: even rows shift left, odd rows shift right.
 func _hex_neighbors(coord: Vector2i) -> Array[Vector2i]:
 	if coord.y % 2 == 0:
 		return [

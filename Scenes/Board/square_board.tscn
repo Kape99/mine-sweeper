@@ -14,16 +14,4 @@ mouse_filter = 1
 script = ExtResource("1_0xuwu")
 cells = Array[PackedScene]([ExtResource("2_qokuc")])
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Board" type="GridContainer" parent="CenterContainer"]
-layout_mode = 2
-theme_override_constants/h_separation = 4
-theme_override_constants/v_separation = 4
-columns = 10
+[node name="Container" type="Node2D" parent="."]

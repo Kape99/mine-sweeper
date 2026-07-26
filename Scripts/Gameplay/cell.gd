@@ -10,10 +10,17 @@ const TAP_THRESHOLD: float = 15.0
 ## Haptic feedback duration (ms) on cell tap.
 const TAP_VIBRATION_MS: int = 100
 
+## How much larger the tap-collision shape is than the visible fill shape,
+## expressed as a uniform scale from the fill polygon's centroid. Keeps the
+## touch target slightly bigger than what's drawn without hand-authoring a
+## second polygon per cell shape.
+const COLLISION_SCALE: float = 1.1
+
 @onready var _cell_text: Label = $Area2D/Node2D/Content/Label
 @onready var _cell_icon: TextureRect = $Area2D/Node2D/Content/TextureRect
 @onready var _cell_fsm: StateMachine = $StateMachine
 @onready var _cell_triangle: Polygon2D = $Area2D/Polygon2D
+@onready var _cell_collision: CollisionPolygon2D = $Area2D/CollisionPolygon2D
 
 ## Emitted when the player taps this cell. [param cell] is self, [param p_nearby]
 ## is the mine-neighbor count (or -1 if mine).
@@ -44,6 +51,27 @@ var _touch_position: Vector2
 
 func _ready() -> void:
 	_cell_fsm.setup()
+	_bind_collision_shape()
+
+
+## Derives the tap-collision polygon from the visible fill polygon by
+## scaling it uniformly around its centroid. Keeps the two shapes in sync
+## from a single source of truth ([member _cell_triangle].polygon) instead
+## of a hand-authored duplicate array per cell scene.
+func _bind_collision_shape() -> void:
+	var fill: PackedVector2Array = _cell_triangle.polygon
+	if fill.is_empty():
+		return
+	var centroid: Vector2 = Vector2.ZERO
+	for point: Vector2 in fill:
+		centroid += point
+	centroid /= fill.size()
+
+	var scaled: PackedVector2Array = PackedVector2Array()
+	scaled.resize(fill.size())
+	for i: int in fill.size():
+		scaled[i] = centroid + (fill[i] - centroid) * COLLISION_SCALE
+	_cell_collision.polygon = scaled
 
 
 ## Permanently marks this cell as a mine. Irreversible.

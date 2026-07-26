@@ -8,6 +8,7 @@ class GameData:
 	var cols: int
 	var rows: int
 	var mines: int
+	
 
 	func _init(p_cols: int, p_rows: int, p_mines: int) -> void:
 		cols = p_cols
@@ -23,6 +24,8 @@ var selected_difficulty: int = 1
 
 ## Index of the currently selected board shape (0 = Triangle, 1 = Square, 2 = Hexagon).
 var selected_board: int = 1
+
+var no_border: bool = false
 
 ## Game configurations per board type. Key: board index, Value: array of [GameData]
 ## ordered by difficulty (Easy, Medium, Hard).

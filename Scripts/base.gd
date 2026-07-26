@@ -1,10 +1,11 @@
 ## Main game controller. Manages screen flow (main menu → gameplay → result screen),
 ## board instantiation, and signal wiring between the board and UI.
+## Periodically refreshes board tiles to follow the camera for infinite scrolling.
 extends Node
 
-@onready var _main_menu: CenterContainer = $GUI/Screen/MainMenu
+@onready var _main_menu: VBoxContainer = $GUI/Screen/VBoxContainer
 @onready var _board_gui: BoardGUI = $GUI/Screen/BoardGUI
-@onready var _start_button: TextureButton = $GUI/Screen/MainMenu/DifficultySelector/StartButton
+@onready var _start_button: TextureButton = $GUI/Screen/VBoxContainer/MainMenu/DifficultySelector/StartButton
 @onready var _camera: CameraController = $Camera
 @onready var _defuse_button: TextureButton = $GUI/Screen/BoardGUI/DefuseButton
 @onready var _final_screen: ColorRect = $GUI/Screen/FinalScreen
@@ -34,6 +35,11 @@ func _ready() -> void:
 	%BackToMenu.pressed.connect(_reset)
 
 
+func _process(_delta: float) -> void:
+	if _board and _board.get_child_count() > 0:
+		_board.recenter_if_needed(_camera.offset)
+
+
 func _game_finished(is_win: bool, _time: float) -> void:
 	_final_title.text = "Good job!" if is_win else "Oh no!"
 	_board_gui.visible = false
@@ -58,7 +64,8 @@ func _load_game() -> void:
 	_board.on_game_finished.connect(_game_finished)
 
 	_main_menu.visible = false
-	_camera.set_board_bounds(_board.get_board_position(), _board.get_board_size())
+	# Center camera on the board
+	_camera.offset = _board.get_board_size() / 2.0
 
 
 func _defused_changed(defused: int) -> void:
@@ -79,3 +86,7 @@ func _reset() -> void:
 	_main_menu.visible = true
 	_board_gui.visible = false
 	_final_screen.visible = false
+
+
+func _on_no_border_toggled(toggled_on: bool) -> void:
+	GlobalState.no_border = toggled_on
