@@ -21,8 +21,12 @@ func _get_nearby_cells(cell: CellBase, distance: int = 1) -> Dictionary:
 			for neighbor_coord: Vector2i in _hex_neighbors(coord):
 				if visited.has(neighbor_coord):
 					continue
-				neighbor_coord.x = posmod(neighbor_coord.x, cols)
-				neighbor_coord.y = posmod(neighbor_coord.y, rows)
+				if _wrap_mode:
+					neighbor_coord.x = posmod(neighbor_coord.x, cols)
+					neighbor_coord.y = posmod(neighbor_coord.y, rows)
+				else:
+					if neighbor_coord.x < 0 or neighbor_coord.x >= cols or neighbor_coord.y < 0 or neighbor_coord.y >= rows:
+						continue
 				visited[neighbor_coord] = true
 				next_ring.append(neighbor_coord)
 				if not board_state.is_empty():

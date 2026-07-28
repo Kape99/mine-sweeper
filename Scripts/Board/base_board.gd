@@ -28,6 +28,10 @@ const CENTER_TILE_INDEX: int = TILE_GRID_SIZE * TILE_GRID_SIZE / 2
 ## Fraction of a single board's size that triggers a recenter.
 const RECENTER_THRESHOLD: float = 0.5
 
+## Extra padding (pixels) added around the board bounds in classic mode,
+## matching CameraController's own margin so panning feels consistent.
+const PAN_MARGIN: float = 100.0
+
 @export var cols: int = 10
 @export var rows: int = 10
 @export var mines: int = 10
@@ -53,6 +57,12 @@ var _is_game_started: bool = false
 var _is_game_over: bool = false
 var _to_be_explored: int = 0
 var _active_tween: Tween = null
+
+## When true (default), the board is toroidal — neighbors wrap, camera
+## recenter is active, and there are no camera bounds. When false, the
+## board has hard edges, the camera is clamped to the board bounds, and
+## neighbor lookups stop at the edge.
+var _wrap_mode: bool = true
 
 
 func _ready() -> void:
@@ -90,6 +100,19 @@ func get_board_position() -> Vector2:
 	return _board_node.position if _board_node else Vector2.ZERO
 
 
+## Returns the camera bounds for this board. In wrap mode the rect is
+## empty (no bounds — camera recenter handles scrolling). In classic mode
+## the rect covers the board with a small margin.
+func get_bounds() -> Rect2:
+	if _wrap_mode:
+		return Rect2()
+	var board_size: Vector2 = get_board_size()
+	return Rect2(
+		_board_node.position - Vector2(PAN_MARGIN, PAN_MARGIN),
+		board_size + Vector2(PAN_MARGIN * 2.0, PAN_MARGIN * 2.0)
+	)
+
+
 func clear() -> void:
 	_kill_active_tween()
 	_explored = 0
@@ -105,10 +128,11 @@ func clear() -> void:
 	_board_node.position = Vector2.ZERO
 
 
-func start_game(p_cols: int, p_rows: int, p_mines: int) -> void:
+func start_game(p_cols: int, p_rows: int, p_mines: int, p_wrap: bool = true) -> void:
 	cols = p_cols
 	rows = p_rows
 	mines = p_mines
+	_wrap_mode = p_wrap
 	_to_be_explored = rows * cols - mines
 	reset()
 
@@ -125,13 +149,12 @@ func _connect_signals(cell: CellBase) -> void:
 	cell.cell_exploded.connect(_handle_explosion)
 
 
-## Creates the TILE_GRID_SIZE² tile block. The center tile holds real,
-## interactive cells (becomes [member board_state]); the rest are visual
-## copies that mirror the center tile's appearance.
+## Creates the tile block. In wrap mode this is a TILE_GRID_SIZE² grid
+## (one interactive center tile + visual copies). In classic mode only a
+## single tile is built — no copies, no wrapping offsets.
 func _build_tiles() -> void:
 	var board_size: Vector2 = get_board_size()
-	var half: int = TILE_GRID_SIZE / 2
-	var total: int = TILE_GRID_SIZE * TILE_GRID_SIZE
+	var total: int = TILE_GRID_SIZE * TILE_GRID_SIZE if _wrap_mode else 1
 
 	for i: int in total:
 		var grid: GridContainer = GridContainer.new()
@@ -140,18 +163,22 @@ func _build_tiles() -> void:
 		grid.add_theme_constant_override("v_separation", GRID_V_SEPARATION)
 		_board_node.add_child(grid)
 
-		var dx: int = (i % TILE_GRID_SIZE) - half
-		var dy: int = (i / TILE_GRID_SIZE) - half
-		grid.position = Vector2(dx * board_size.x, dy * board_size.y)
+		var dx: int = 0
+		var dy: int = 0
+		if _wrap_mode:
+			dx = (i % TILE_GRID_SIZE) - TILE_GRID_SIZE / 2
+			dy = (i / TILE_GRID_SIZE) - TILE_GRID_SIZE / 2
+			grid.position = Vector2(dx * board_size.x, dy * board_size.y)
 		_tiles.append(grid)
 
 		# Global row/col offset of this tile, so alternating patterns (hex
-		# X-offset rows, triangle Y-offset columns) continue seamlessly across
-		# tile boundaries instead of restarting at each tile's local (0, 0).
+		# X-offset rows, triangle Y-offset columns) continue seamlessly
+		# across tile boundaries in wrap mode. Zero in classic mode.
 		var col_offset: int = dx * cols
 		var row_offset: int = dy * rows
 
-		if i == CENTER_TILE_INDEX:
+		var is_center: bool = not _wrap_mode or (i == CENTER_TILE_INDEX)
+		if is_center:
 			var board: Array = []
 			for row: int in rows:
 				board.append([])
@@ -167,12 +194,7 @@ func _build_tiles() -> void:
 		else:
 			for row: int in rows:
 				for col: int in cols:
-					var cell_instance: CellBase = cells[
-						_get_cell_type_idx(col_offset + col, row_offset + row)
-					].instantiate()
-					grid.add_child(cell_instance)
-					cell_instance.coord = Vector2i(col, row)
-					_connect_signals(cell_instance)
+					grid.add_child(_create_display_cell())
 
 
 ## Returns the index into the `cells` array for a given global (col, row).
@@ -183,6 +205,44 @@ func _build_tiles() -> void:
 ## Override in subclasses that use multiple cell types.
 func _get_cell_type_idx(_col: int, _row: int) -> int:
 	return 0
+
+
+## Creates a lightweight display-only cell for non-center tiles.
+## No Area2D, no FSM, no collision — just visuals.
+func _create_display_cell() -> Control:
+	var cell: Control = Control.new()
+	cell.custom_minimum_size = _cell_size
+	cell.mouse_filter = MOUSE_FILTER_IGNORE
+
+	var poly: Polygon2D = Polygon2D.new()
+	var half: Vector2 = _cell_size / 2.0
+	poly.polygon = PackedVector2Array([
+		Vector2(-half.x, -half.y),
+		Vector2(half.x, -half.y),
+		Vector2(half.x, half.y),
+		Vector2(-half.x, half.y),
+	])
+	poly.position = half
+	cell.add_child(poly)
+
+	var label: Label = Label.new()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size = _cell_size
+	label.position = Vector2.ZERO
+	label.mouse_filter = MOUSE_FILTER_IGNORE
+	cell.add_child(label)
+
+	var icon: TextureRect = TextureRect.new()
+	icon.custom_minimum_size = _cell_size * 0.6
+	icon.size = icon.custom_minimum_size
+	icon.position = (_cell_size - icon.size) / 2.0
+	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	icon.mouse_filter = MOUSE_FILTER_IGNORE
+	cell.add_child(icon)
+
+	return cell
 
 
 ## Maps any clicked cell (copy or the real one) back to the logical cell.
@@ -201,7 +261,7 @@ func _get_center_cell(cell: CellBase) -> CellBase:
 ## under the camera, so the jump is imperceptible — giving the illusion of
 ## infinite scrolling.
 func recenter_if_needed(camera_offset: Vector2) -> void:
-	if _tiles.is_empty() or not _is_game_started:
+	if not _wrap_mode or _tiles.is_empty() or not _is_game_started:
 		return
 
 	var board_size: Vector2 = get_board_size()
@@ -239,18 +299,52 @@ func _sync_display_to_copies(source: CellBase) -> void:
 		_apply_display_from_source(tile.get_child(idx), source)
 
 
-func _apply_display_from_source(target: CellBase, source: CellBase) -> void:
-	if source.is_explored():
-		if source.is_mine():
-			target.set_display(GlobalState.main_color, GlobalState.secondary_color)
-			target.set_icon(MINE_ICON, GlobalState.background_color)
+func _apply_display_from_source(target: Node, source: CellBase) -> void:
+	if target is CellBase:
+		if source.is_explored():
+			if source.is_mine():
+				target.set_display(GlobalState.main_color, GlobalState.secondary_color)
+				target.set_icon(MINE_ICON, GlobalState.background_color)
+			else:
+				var text: String = str(source.nearby) if source.nearby > 0 else ""
+				target.set_display(GlobalState.main_color, GlobalState.secondary_color, null, text)
+		elif source.is_defused():
+			target.set_display(GlobalState.secondary_color, GlobalState.main_color, FLAG_ICON)
 		else:
-			var text: String = str(source.nearby) if source.nearby > 0 else ""
-			target.set_display(GlobalState.main_color, GlobalState.secondary_color, null, text)
-	elif source.is_defused():
-		target.set_display(GlobalState.secondary_color, GlobalState.main_color, FLAG_ICON)
+			target.set_display(GlobalState.secondary_color, GlobalState.main_color)
 	else:
-		target.set_display(GlobalState.secondary_color, GlobalState.main_color)
+		# Lightweight display cell — children: Polygon2D, Label, TextureRect
+		if target.get_child_count() < 3:
+			return
+		var poly: Polygon2D = target.get_child(0)
+		var label: Label = target.get_child(1)
+		var icon: TextureRect = target.get_child(2)
+
+		if source.is_explored():
+			if source.is_mine():
+				poly.modulate = GlobalState.main_color
+				label.modulate = GlobalState.secondary_color
+				icon.modulate = GlobalState.background_color
+				icon.texture = MINE_ICON
+				label.text = ""
+			else:
+				poly.modulate = GlobalState.main_color
+				label.modulate = GlobalState.secondary_color
+				icon.modulate = GlobalState.secondary_color
+				icon.texture = null
+				label.text = str(source.nearby) if source.nearby > 0 else ""
+		elif source.is_defused():
+			poly.modulate = GlobalState.secondary_color
+			label.modulate = GlobalState.main_color
+			icon.modulate = GlobalState.main_color
+			icon.texture = FLAG_ICON
+			label.text = ""
+		else:
+			poly.modulate = GlobalState.secondary_color
+			label.modulate = GlobalState.main_color
+			icon.modulate = GlobalState.main_color
+			icon.texture = null
+			label.text = ""
 
 
 func _handle_explored(_cell: CellBase) -> void:
@@ -325,12 +419,42 @@ func _on_cell_pressed(cell: CellBase, _p_nearby: int) -> void:
 	var logical_cell: CellBase = _get_center_cell(cell)
 	if GlobalState.is_defusing:
 		logical_cell.defuse()
+	elif logical_cell.is_explored() and logical_cell.nearby > 0:
+		_chord_reveal(logical_cell)
 	else:
 		if not _is_game_started:
 			_first_move(logical_cell)
 		logical_cell.explore()
 		if logical_cell.nearby == 0:
 			_explore_nearby(logical_cell)
+
+
+## Chord reveal: if number of defused neighbors equals cell's nearby count,
+## reveal all remaining un-explored, un-defused neighbors.
+func _chord_reveal(cell: CellBase) -> void:
+	var defused: int = 0
+	var to_reveal: Array[CellBase] = []
+	for neighbor: CellBase in _get_nearby_cells(cell).keys():
+		if neighbor.is_defused():
+			defused += 1
+		elif not neighbor.is_explored():
+			to_reveal.append(neighbor)
+	if defused != cell.nearby or to_reveal.is_empty():
+		return
+
+	to_reveal.sort_custom(
+		func(a: CellBase, b: CellBase) -> bool:
+			return a.coord.distance_to(cell.coord) < b.coord.distance_to(cell.coord)
+	)
+	var tween: Tween = _create_tween()
+	for neighbor: CellBase in to_reveal:
+		var nc: CellBase = neighbor
+		tween.tween_callback(
+			func():
+				nc.explore()
+				if nc.nearby == 0:
+					_explore_nearby(nc)
+		).set_delay(REVEAL_DELAY_FACTOR)
 
 
 func _explore_nearby(cell: CellBase) -> void:
@@ -377,7 +501,16 @@ func _place_mines(cell: CellBase) -> void:
 		var c: int = i % cols
 		if not invalid_cells.has(board_state[r][c]):
 			valid_indices.append(i)
-	valid_indices.shuffle()
+
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	if GlobalState.board_seed != 0:
+		rng.seed = GlobalState.board_seed
+	# Fisher-Yates shuffle with seeded RNG for repeatable layouts
+	for i: int in range(valid_indices.size() - 1, 0, -1):
+		var j: int = rng.randi_range(0, i)
+		var tmp: int = valid_indices[i]
+		valid_indices[i] = valid_indices[j]
+		valid_indices[j] = tmp
 
 	var actual_mines: int = mini(mines, valid_indices.size())
 	for i: int in actual_mines:

@@ -25,6 +25,7 @@ config/icon="res://Asset/Icons/Icon.svg"
 [autoload]
 
 GlobalState="*res://Scripts/global_state.gd"
+Settings="*res://Scripts/Settings.gd"
 
 [display]
 

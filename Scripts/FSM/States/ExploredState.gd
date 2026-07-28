@@ -17,8 +17,8 @@ func explore() -> void:
 
 func enter() -> void:
 	if owner.is_mine():
-		owner.set_display(GlobalState.main_color, GlobalState.secondary_color)
-		owner.set_icon(MINE_ICON, GlobalState.background_color)
+		owner.set_display(Color.RED, Color.WHITE)
+		owner.set_icon(MINE_ICON, Color.WHITE)
 		owner.cell_exploded.emit(owner)
 	else:
 		var text: String = str(owner.nearby) if owner.nearby != 0 else ""

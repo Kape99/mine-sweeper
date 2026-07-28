@@ -1,39 +1,22 @@
-## Global singleton managing game configuration, difficulty, board type, and color schemes.
+## Global singleton managing game configuration, board type, and color schemes.
 ## Registered as an autoload named "GlobalState".
 extends Node
-
-
-## Stores column, row, and mine counts for a single difficulty level.
-class GameData:
-	var cols: int
-	var rows: int
-	var mines: int
-	
-
-	func _init(p_cols: int, p_rows: int, p_mines: int) -> void:
-		cols = p_cols
-		rows = p_rows
-		mines = p_mines
 
 
 ## Whether the player is currently in defuse (flag) mode.
 var is_defusing: bool = false
 
-## Index of the currently selected difficulty (0 = Easy, 1 = Medium, 2 = Hard).
-var selected_difficulty: int = 1
-
 ## Index of the currently selected board shape (0 = Triangle, 1 = Square, 2 = Hexagon).
 var selected_board: int = 1
 
-var no_border: bool = false
+## Custom board dimensions, bomb density, and random seed.
+var board_rows: int = 18
+var board_cols: int = 18
+var bomb_percentage: float = 0.15  # 0.0 - 1.0
+var board_seed: int = 0  # 0 = random, non-zero = repeatable
 
-## Game configurations per board type. Key: board index, Value: array of [GameData]
-## ordered by difficulty (Easy, Medium, Hard).
-var board_configs: Dictionary = {
-	0: [GameData.new(11, 12, 15), GameData.new(15, 16, 35), GameData.new(19, 20, 80)],
-	1: [GameData.new(9, 12, 15), GameData.new(10, 18, 35), GameData.new(13, 22, 80)],
-	2: [GameData.new(9, 13, 15), GameData.new(10, 18, 35), GameData.new(13, 22, 80)],
-}
+## Whether the board wraps on itself (toroidal) or has hard edges (classic).
+var board_wrap: bool = true
 
 ## Available color schemes. Each value is [background, main, secondary, accent].
 var color_schemes: Dictionary = {
@@ -70,6 +53,6 @@ func _ready() -> void:
 	RenderingServer.set_default_clear_color(background_color)
 
 
-## Returns the [GameData] for the currently selected board and difficulty.
-func get_game_data() -> GameData:
-	return board_configs.get(selected_board)[selected_difficulty]
+## Returns mine count computed from board dimensions and bomb percentage.
+func get_mine_count() -> int:
+	return maxi(1, roundi(board_rows * board_cols * bomb_percentage))

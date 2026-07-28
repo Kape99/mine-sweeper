@@ -1,0 +1,187 @@
+[gd_scene format=3 uid="uid://cktrketomxyd5"]
+
+[ext_resource type="Script" uid="uid://dppekabman6ri" path="res://Scripts/GUI/main_menu.gd" id="1_script"]
+
+[node name="MainMenu" type="Control" unique_id=381426663]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=602332271]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.05, 0.75)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1389279100]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="VBoxContainer" parent="CenterContainer" unique_id=815885032]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+alignment = 1
+
+[node name="BoardTypeRow" type="HBoxContainer" parent="CenterContainer/Panel" unique_id=2022636972]
+layout_mode = 2
+alignment = 1
+
+[node name="BoardTypePrev" type="Button" parent="CenterContainer/Panel/BoardTypeRow" unique_id=637043120]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+text = "◀"
+
+[node name="BoardTypeLabel" type="Label" parent="CenterContainer/Panel/BoardTypeRow" unique_id=112533404]
+layout_mode = 2
+text = "Square"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BoardTypeNext" type="Button" parent="CenterContainer/Panel/BoardTypeRow" unique_id=1371561329]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+text = "▶"
+
+[node name="RowsRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+alignment = 1
+
+[node name="RowsDesc" type="Label" parent="CenterContainer/Panel/RowsRow"]
+layout_mode = 2
+text = "Rows:"
+horizontal_alignment = 2
+vertical_alignment = 1
+custom_minimum_size = Vector2(100, 0)
+
+[node name="RowsSpin" type="SpinBox" parent="CenterContainer/Panel/RowsRow"]
+layout_mode = 2
+min_value = 5
+max_value = 50
+value = 18
+step = 1
+rounded = true
+custom_minimum_size = Vector2(100, 0)
+
+[node name="ColsRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+alignment = 1
+
+[node name="ColsDesc" type="Label" parent="CenterContainer/Panel/ColsRow"]
+layout_mode = 2
+text = "Cols:"
+horizontal_alignment = 2
+vertical_alignment = 1
+custom_minimum_size = Vector2(100, 0)
+
+[node name="ColsSpin" type="SpinBox" parent="CenterContainer/Panel/ColsRow"]
+layout_mode = 2
+min_value = 5
+max_value = 50
+value = 18
+step = 1
+rounded = true
+custom_minimum_size = Vector2(100, 0)
+
+[node name="BombRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+alignment = 1
+
+[node name="BombDesc" type="Label" parent="CenterContainer/Panel/BombRow"]
+layout_mode = 2
+text = "Bombs %:"
+horizontal_alignment = 2
+vertical_alignment = 1
+custom_minimum_size = Vector2(100, 0)
+
+[node name="BombSpin" type="SpinBox" parent="CenterContainer/Panel/BombRow"]
+layout_mode = 2
+min_value = 1
+max_value = 60
+value = 15
+step = 1
+rounded = true
+suffix = "%"
+custom_minimum_size = Vector2(100, 0)
+
+[node name="SeedRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+alignment = 1
+
+[node name="SeedDesc" type="Label" parent="CenterContainer/Panel/SeedRow"]
+layout_mode = 2
+text = "Seed:"
+horizontal_alignment = 2
+vertical_alignment = 1
+custom_minimum_size = Vector2(100, 0)
+
+[node name="SeedSpin" type="SpinBox" parent="CenterContainer/Panel/SeedRow"]
+layout_mode = 2
+min_value = 0
+max_value = 999999
+value = 0
+step = 1
+rounded = true
+custom_minimum_size = Vector2(100, 0)
+
+[node name="WrapRow" type="HBoxContainer" parent="CenterContainer/Panel" unique_id=475272870]
+layout_mode = 2
+alignment = 1
+
+[node name="WrapPrev" type="Button" parent="CenterContainer/Panel/WrapRow" unique_id=895660568]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+text = "◀"
+
+[node name="WrapLabel" type="Label" parent="CenterContainer/Panel/WrapRow" unique_id=332662638]
+layout_mode = 2
+text = "Wrap"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="WrapNext" type="Button" parent="CenterContainer/Panel/WrapRow" unique_id=557232067]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+text = "▶"
+
+[node name="NoBorderRow" type="HBoxContainer" parent="CenterContainer/Panel" unique_id=1528356872]
+layout_mode = 2
+alignment = 1
+
+[node name="NoBorderCheck" type="CheckBox" parent="CenterContainer/Panel/NoBorderRow" unique_id=1393582187]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CenterContainer/Panel" unique_id=2101306346]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="CenterContainer/Panel" unique_id=1594947662]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "PLAY"
+
+[node name="SettingsButton" type="Button" parent="CenterContainer/Panel" unique_id=1554730487]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "PLAY"
+
+[node name="QuitButton" type="Button" parent="CenterContainer/Panel" unique_id=2016858339]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "QUIT"
+
+[node name="Version" type="Label" parent="CenterContainer/Panel" unique_id=1400920569]
+layout_mode = 2
+text = "v1.0"
+horizontal_alignment = 1

@@ -8,6 +8,9 @@ extends Control
 ## Emitted when the player presses the reset button.
 signal reset
 
+## Emitted when the player presses the pause button.
+signal pause_requested
+
 ## Total number of mines on the board. Setting this resets [member defused_mines] to 0.
 var total_mines: int:
 	set(value):
@@ -33,3 +36,7 @@ func _update_score() -> void:
 
 func _on_reset_pressed() -> void:
 	reset.emit()
+
+
+func _on_pause_pressed() -> void:
+	pause_requested.emit()

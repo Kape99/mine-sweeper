@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tests/test_settings_persistence.gd" id="1"]
+
+[node name="TestSettingsPersistence" type="Node"]
+script = ExtResource("1")

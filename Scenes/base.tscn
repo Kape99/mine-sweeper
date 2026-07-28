@@ -1,158 +1,12 @@
 [gd_scene format=3 uid="uid://df4602v1smvil"]
 
-[ext_resource type="Texture2D" uid="uid://chyy03erxduyq" path="res://Asset/Icons/arrow_left.svg" id="1_mc8na"]
 [ext_resource type="Script" uid="uid://db8af8c4fg0hu" path="res://Scripts/base.gd" id="1_smbv4"]
 [ext_resource type="Script" uid="uid://b2ugdxodenifl" path="res://Scripts/GUI/camera_controller.gd" id="2_buixl"]
-[ext_resource type="Texture2D" uid="uid://b5ykkupxejast" path="res://Asset/Icons/arrow_right.svg" id="2_pgp2b"]
-[ext_resource type="Script" uid="uid://c3883gxmaxech" path="res://Scripts/GUI/difficulty_selector.gd" id="3_s3kjk"]
 [ext_resource type="Script" uid="uid://o0l5mdlumj4c" path="res://Scenes/Screen.gd" id="3_wqvgk"]
-[ext_resource type="Texture2D" uid="uid://4iu435cfille" path="res://Asset/Icons/arrow_up.svg" id="9_itd5s"]
 [ext_resource type="PackedScene" uid="uid://2ff3i6tuwxtr" path="res://Scenes/board_gui.tscn" id="9_rp1dr"]
-[ext_resource type="Texture2D" uid="uid://c1o7c4oabirit" path="res://Asset/Icons/square_border.svg" id="10_531cw"]
-[ext_resource type="Texture2D" uid="uid://bipy5rstfs7n8" path="res://Asset/Icons/arrow_down.svg" id="12_wjp3c"]
 [ext_resource type="Shader" uid="uid://cjaqkscqnotlx" path="res://Asset/blur.gdshader" id="15_t7wxk"]
-
-[sub_resource type="Animation" id="Animation_u34sw"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("BoardIcon:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector2(75, 75)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("BoardIcon2:position")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector2(75, 75)]
-}
-
-[sub_resource type="Animation" id="Animation_6c315"]
-resource_name = "scroll"
-length = 0.3
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("../Difficulty:position")
-tracks/0/interp = 2
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.3),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Vector2(150, 181.5), Vector2(300, 181.5)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("../Difficulty:modulate")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.2),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("../DifficultyFake:position")
-tracks/2/interp = 2
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0, 0.3),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Vector2(0, 181.5), Vector2(150, 181.5)]
-}
-tracks/3/type = "value"
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/path = NodePath("../DifficultyFake:modulate")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/keys = {
-"times": PackedFloat32Array(0.1, 0.3),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
-}
-
-[sub_resource type="Animation" id="Animation_311lf"]
-resource_name = "scroll_board"
-length = 0.3
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("BoardIcon:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.3),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Vector2(75, 75), Vector2(75, 475)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("BoardIcon:modulate")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.2),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("BoardIcon2:position")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0, 0.3),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Vector2(75, -325), Vector2(75, 75)]
-}
-tracks/3/type = "value"
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/path = NodePath("BoardIcon2:modulate")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/keys = {
-"times": PackedFloat32Array(0.1, 0.3),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_5ly7q"]
-_data = {
-&"RESET": SubResource("Animation_u34sw"),
-&"scroll": SubResource("Animation_6c315"),
-&"scroll_board": SubResource("Animation_311lf")
-}
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_e68ls"]
-shader = ExtResource("15_t7wxk")
-shader_parameter/lod = 20.0
+[ext_resource type="Script" uid="uid://bmbpmlmqovo0v" path="res://Scripts/GUI/screen_manager.gd" id="16_screen_mgr"]
+[ext_resource type="PackedScene" uid="uid://cktrketomxyd5" path="res://Scenes/Menu/MainMenu.tscn" id="17_main_menu"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_t6nux"]
 
@@ -164,12 +18,34 @@ shader_parameter/lod = 20.0
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ixin1"]
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_e68ls"]
+shader = ExtResource("15_t7wxk")
+shader_parameter/lod = 20.0
+
 [node name="Base" type="Node" unique_id=2023769458]
 script = ExtResource("1_smbv4")
 
 [node name="Camera" type="Camera2D" parent="." unique_id=1140760277]
-position = Vector2(0, 0)
 script = ExtResource("2_buixl")
+
+[node name="ScreenManager" type="Control" parent="." unique_id=999000001]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("16_screen_mgr")
+
+[node name="GUI_ScreenManager#Container" type="Control" parent="." unique_id=1715830744]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="GUI" type="CanvasLayer" parent="." unique_id=1828482509]
 
@@ -186,238 +62,49 @@ script = ExtResource("3_wqvgk")
 layout_mode = 2
 alignment = 1
 
-[node name="MainMenu" type="CenterContainer" parent="GUI/Screen/VBoxContainer" unique_id=951140519]
+[node name="MainMenu" parent="GUI/Screen" unique_id=1893672986 instance=ExtResource("17_main_menu")]
 layout_mode = 2
-metadata/_edit_lock_ = true
-
-[node name="DifficultySelector" type="Control" parent="GUI/Screen/VBoxContainer/MainMenu" unique_id=1723384055]
-custom_minimum_size = Vector2(400, 400)
-layout_mode = 2
-mouse_filter = 1
-script = ExtResource("3_s3kjk")
-metadata/_edit_group_ = true
-
-[node name="LeftDifficulty" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=745788379]
-custom_minimum_size = Vector2(64, 64)
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -16.0
-offset_right = 32.0
-offset_bottom = 16.0
-grow_vertical = 2
-size_flags_horizontal = 0
-focus_mode = 0
-texture_normal = ExtResource("1_mc8na")
-texture_pressed = ExtResource("1_mc8na")
-texture_hover = ExtResource("1_mc8na")
-texture_focused = ExtResource("1_mc8na")
-ignore_texture_size = true
-stretch_mode = 4
-
-[node name="Difficulty" type="Label" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=1373242796]
-modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 100.0
-offset_top = -18.5
-offset_right = 200.0
-offset_bottom = 18.5
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_font_sizes/font_size = 24
-text = "Extreme"
-horizontal_alignment = 1
-
-[node name="DifficultyFake" type="Label" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=1248954268]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -50.0
-offset_top = -18.5
-offset_right = 50.0002
-offset_bottom = 18.5
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_font_sizes/font_size = 24
-text = "Extreme"
-horizontal_alignment = 1
-
-[node name="RightDifficulty" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=1120119164]
-custom_minimum_size = Vector2(64, 64)
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -32.0
-offset_top = -16.0
-offset_bottom = 16.0
-grow_horizontal = 0
-grow_vertical = 2
-size_flags_horizontal = 0
-focus_mode = 0
-texture_normal = ExtResource("2_pgp2b")
-texture_pressed = ExtResource("2_pgp2b")
-texture_hover = ExtResource("2_pgp2b")
-texture_focused = ExtResource("2_pgp2b")
-ignore_texture_size = true
-stretch_mode = 4
-
-[node name="BoardTypeUp" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=2052748028]
-custom_minimum_size = Vector2(64, 64)
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -32.0
-offset_right = 32.0
-offset_bottom = 64.0
-grow_horizontal = 2
-size_flags_horizontal = 0
-focus_mode = 0
-texture_normal = ExtResource("9_itd5s")
-texture_pressed = ExtResource("9_itd5s")
-texture_hover = ExtResource("9_itd5s")
-texture_focused = ExtResource("9_itd5s")
-ignore_texture_size = true
-stretch_mode = 4
-
-[node name="BoardIcon" type="TextureRect" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=17285357]
-modulate = Color(1, 1, 1, 0)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -125.0
-offset_top = -125.0
-offset_right = 125.00101
-offset_bottom = 125.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("10_531cw")
-expand_mode = 2
-
-[node name="BoardIcon2" type="TextureRect" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=751609989]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -125.0
-offset_top = -125.0
-offset_right = 125.0
-offset_bottom = 124.99899
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("10_531cw")
-expand_mode = 2
-
-[node name="BoardTypeDown" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=526116954]
-custom_minimum_size = Vector2(64, 64)
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -32.0
-offset_top = -64.0
-offset_right = 32.0
-grow_horizontal = 2
-grow_vertical = 0
-size_flags_horizontal = 0
-focus_mode = 0
-texture_normal = ExtResource("12_wjp3c")
-texture_pressed = ExtResource("12_wjp3c")
-texture_hover = ExtResource("12_wjp3c")
-texture_focused = ExtResource("12_wjp3c")
-ignore_texture_size = true
-stretch_mode = 4
-
-[node name="StartButton" type="TextureButton" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=971974671]
-custom_minimum_size = Vector2(250, 250)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
-grow_horizontal = 2
-grow_vertical = 2
-focus_mode = 0
-
-[node name="IconAnimation" type="AnimationPlayer" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=56757171]
-reset_on_save = false
-libraries/ = SubResource("AnimationLibrary_5ly7q")
-
-[node name="TextAnimation" type="AnimationPlayer" parent="GUI/Screen/VBoxContainer/MainMenu/DifficultySelector" unique_id=344036412]
-reset_on_save = false
-root_node = NodePath("../IconAnimation")
-libraries/ = SubResource("AnimationLibrary_5ly7q")
-
-[node name="NoBorder" type="CheckButton" parent="GUI/Screen/VBoxContainer" unique_id=314258257]
-layout_mode = 2
-size_flags_horizontal = 4
-text = "No bordi"
 
 [node name="BoardGUI" parent="GUI/Screen" unique_id=2116095749 instance=ExtResource("9_rp1dr")]
 visible = false
 layout_mode = 2
 
-[node name="FinalScreen" type="ColorRect" parent="GUI/Screen" unique_id=468645982]
+[node name="FinalScreen" type="Control" parent="GUI/Screen" unique_id=468645982]
 visible = false
-modulate = Color(0.263128, 0.415405, 0.358476, 1)
-material = SubResource("ShaderMaterial_e68ls")
 layout_mode = 2
-color = Color(1, 1, 1, 0)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+mouse_filter = 2
 
-[node name="BackToMenu" type="Button" parent="GUI/Screen/FinalScreen" unique_id=687136296]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 50)
+[node name="BlurPanel" type="ColorRect" parent="GUI/Screen/FinalScreen" unique_id=1502116424]
+material = SubResource("ShaderMaterial_e68ls")
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -120.0
+offset_right = 200.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.263128, 0.415405, 0.358476, 0.85)
+
+[node name="CenterContainer" type="CenterContainer" parent="GUI/Screen/FinalScreen/BlurPanel" unique_id=1786245545]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/normal = SubResource("StyleBoxEmpty_t6nux")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_nj83x")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_m86is")
-theme_override_styles/disabled = SubResource("StyleBoxEmpty_q62j5")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_ixin1")
 
-[node name="CenterContainer" type="CenterContainer" parent="GUI/Screen/FinalScreen" unique_id=108008510]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="GUI/Screen/FinalScreen/CenterContainer" unique_id=1940877760]
+[node name="VBoxContainer" type="VBoxContainer" parent="GUI/Screen/FinalScreen/BlurPanel/CenterContainer" unique_id=1915265250]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="MainTitle" type="Label" parent="GUI/Screen/FinalScreen/CenterContainer/VBoxContainer" unique_id=1073600472]
+[node name="MainTitle" type="Label" parent="GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer" unique_id=1240398921]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "Oh no!
@@ -425,4 +112,16 @@ Try again"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[connection signal="toggled" from="GUI/Screen/VBoxContainer/NoBorder" to="." method="_on_no_border_toggled"]
+[node name="BackToMenu" type="Button" parent="GUI/Screen/FinalScreen/BlurPanel" unique_id=687136296]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+offset_bottom = -16.0
+offset_left = -80.0
+offset_right = 80.0
+grow_horizontal = 2
+text = "Restart"
