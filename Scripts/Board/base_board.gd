@@ -196,6 +196,12 @@ func _build_tiles() -> void:
 				for col: int in cols:
 					grid.add_child(_create_display_cell())
 
+	if _wrap_mode:
+		# Sync all display cells to match center tile initial state
+		for row: int in rows:
+			for col: int in cols:
+				_sync_display_to_copies(board_state[row][col])
+
 
 ## Returns the index into the `cells` array for a given global (col, row).
 ## [param col] and [param row] may be negative or exceed [member cols] /
@@ -223,6 +229,7 @@ func _create_display_cell() -> Control:
 		Vector2(-half.x, half.y),
 	])
 	poly.position = half
+	poly.modulate = GlobalState.secondary_color
 	cell.add_child(poly)
 
 	var label: Label = Label.new()
@@ -230,6 +237,7 @@ func _create_display_cell() -> Control:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.size = _cell_size
 	label.position = Vector2.ZERO
+	label.modulate = GlobalState.main_color
 	label.mouse_filter = MOUSE_FILTER_IGNORE
 	cell.add_child(label)
 
@@ -237,8 +245,9 @@ func _create_display_cell() -> Control:
 	icon.custom_minimum_size = _cell_size * 0.6
 	icon.size = icon.custom_minimum_size
 	icon.position = (_cell_size - icon.size) / 2.0
-	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.modulate = GlobalState.main_color
 	icon.mouse_filter = MOUSE_FILTER_IGNORE
 	cell.add_child(icon)
 
@@ -250,6 +259,49 @@ func _get_center_cell(cell: CellBase) -> CellBase:
 	if board_state.is_empty():
 		return cell
 	return board_state[cell.coord.y][cell.coord.x]
+
+
+## Handles taps on non-center tiles via unhandled input. Computes which
+## tile was hit from the click position, then maps to the logical cell.
+func _unhandled_input(event: InputEvent) -> void:
+	if not _wrap_mode or _tiles.is_empty() or board_state.is_empty():
+		return
+	var is_tap: bool = (
+		(event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed)
+		or (event is InputEventScreenTouch and not event.pressed)
+	)
+	if not is_tap:
+		return
+	_handle_tile_tap(event.position)
+
+
+func _handle_tile_tap(global_pos: Vector2) -> void:
+	# Convert from viewport coordinates to canvas coordinates (accounts for camera)
+	var canvas_pos: Vector2 = get_viewport().canvas_transform.affine_inverse() * global_pos
+	var board_size: Vector2 = get_board_size()
+	var board_origin: Vector2 = _board_node.global_position
+	var cell_step: Vector2 = Vector2(
+		_cell_size.x + GRID_H_SEPARATION,
+		_cell_size.y + GRID_V_SEPARATION
+	)
+
+	for i: int in _tiles.size():
+		if i == CENTER_TILE_INDEX:
+			continue
+		var tile: GridContainer = _tiles[i]
+		var tile_origin: Vector2 = board_origin + tile.position
+		var local_pos: Vector2 = canvas_pos - tile_origin
+		if local_pos.x < 0 or local_pos.y < 0:
+			continue
+		if local_pos.x >= board_size.x or local_pos.y >= board_size.y:
+			continue
+		var col: int = int(local_pos.x / cell_step.x)
+		var row: int = int(local_pos.y / cell_step.y)
+		if col >= 0 and col < cols and row >= 0 and row < rows:
+			Input.vibrate_handheld(CellBase.TAP_VIBRATION_MS)
+			var logical_cell: CellBase = board_state[row][col]
+			_on_cell_pressed(logical_cell, logical_cell.nearby)
+		return
 
 
 ## Called every frame from the main controller with the camera's current
@@ -418,7 +470,10 @@ func _on_cell_pressed(cell: CellBase, _p_nearby: int) -> void:
 		return
 	var logical_cell: CellBase = _get_center_cell(cell)
 	if GlobalState.is_defusing:
-		logical_cell.defuse()
+		if logical_cell.is_explored() and logical_cell.nearby > 0:
+			_chord_reveal(logical_cell)
+		else:
+			logical_cell.defuse()
 	elif logical_cell.is_explored() and logical_cell.nearby > 0:
 		_chord_reveal(logical_cell)
 	else:
