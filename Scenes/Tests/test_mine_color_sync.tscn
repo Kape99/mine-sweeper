@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bj0x0q3x1q3q2"]
+
+[ext_resource type="Script" path="res://Scripts/Tests/test_mine_color_sync.gd" id="1_8j2k4"]
+
+[node name="TestMineColorSync" type="Node"]
+script = ExtResource("1_8j2k4")
