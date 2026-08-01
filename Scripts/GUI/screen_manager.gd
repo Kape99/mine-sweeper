@@ -12,7 +12,7 @@ const TRANSITION_DURATION: float = 0.25
 const TRANSITION_EASE: Tween.EaseType = Tween.EASE_IN_OUT
 const TRANSITION_TRANS: Tween.TransitionType = Tween.TRANS_CUBIC
 
-@onready var _container: Control = get_parent().get_node("GUI_ScreenManager#Container")
+@onready var _container: Control = get_parent().get_node("%ScreensContainer")
 @onready var _tween: Tween
 
 ## Currently visible screen, or null.
@@ -98,6 +98,11 @@ func reset_stack(screen: Control, animated: bool = true) -> void:
 
 ## Show the main menu screen (always-present inline node in base.tscn).
 ## Clears any open overlays first.
+## Returns the currently visible screen, or null.
+func get_current_screen() -> Control:
+	return _current
+
+
 func show_main_menu(main_menu: Control) -> void:
 	_clear_history()
 	if _dismissed_screen and is_instance_valid(_dismissed_screen):
@@ -148,8 +153,12 @@ func hide_pause(gameplay_root: Control) -> void:
 
 
 func _show_screen(screen: Control, animated: bool) -> void:
-	_container.add_child(screen)
+	if screen.get_parent() and screen.get_parent() != _container:
+		screen.get_parent().remove_child(screen)
+	if screen.get_parent() != _container:
+		_container.add_child(screen)
 	screen.visible = true
+	screen.process_mode = Node.PROCESS_MODE_INHERIT
 	_current = screen
 
 	if animated:

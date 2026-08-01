@@ -52,24 +52,30 @@ func _make_button(text: String, callback: Callable) -> Button:
 	return b
 
 
+func _get_screen_manager() -> ScreenManager:
+	return get_tree().root.find_child("ScreenManager", true, false)
+
+
+func _get_base() -> Node:
+	return get_tree().root.find_child("Base", true, false)
+
+
 ## Called by ScreenManager after the fade-out completes.
 func _on_resume() -> void:
-	get_tree().root.get_node("GUI/ScreenManager").hide_pause(get_tree().root.get_node("Base"))
+	_get_screen_manager().hide_pause(_get_base())
 
 
 func _on_restart() -> void:
-	var base: Node = get_tree().root.get_node("Base")
-	get_tree().root.get_node("GUI/ScreenManager").hide_pause(base)
-	base._reset()
-	base._load_game()
+	var base: Node = _get_base()
+	_get_screen_manager().hide_pause(base)
+	base.restart_game()
 
 
 func _on_settings() -> void:
-	var sm: ScreenManager = get_tree().root.get_node("GUI/ScreenManager")
-	sm.push(load("res://Scenes/Menu/SettingsMenu.tscn").instantiate(), true, false)
+	_get_screen_manager().push(load("res://Scenes/Menu/SettingsMenu.tscn").instantiate(), true, false)
 
 
 func _on_quit() -> void:
-	var base: Node = get_tree().root.get_node("Base")
-	get_tree().root.get_node("GUI/ScreenManager").hide_pause(base)
-	base._reset()
+	var base: Node = _get_base()
+	_get_screen_manager().hide_pause(base)
+	base.return_to_menu()

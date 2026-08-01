@@ -95,8 +95,14 @@ func _build_ui() -> void:
 	var back: Button = Button.new()
 	back.text = BACK_BUTTON_TEXT
 	back.custom_minimum_size = Vector2(200, CONTROL_MIN_HEIGHT)
-	back.pressed.connect(func(): get_tree().root.get_node("GUI/ScreenManager").pop())
+	back.pressed.connect(_on_back_pressed)
 	_panel.add_child(back)
+
+
+func _on_back_pressed() -> void:
+	var sm: ScreenManager = get_tree().root.find_child("ScreenManager", true, false)
+	if sm:
+		sm.pop()
 
 
 ## Rebuild all controls from current Settings values (used on pop/push so
@@ -115,9 +121,6 @@ func _refresh_row(node: Node) -> void:
 				c.button_pressed = _checkbox_value_for_row(node)
 			elif c is OptionButton:
 				_option_select_for_row(node)
-	elif node is HBoxContainer:
-		for c in node.get_children():
-			_refresh_row(c)
 
 
 func _slider_value_for_row(row: HBoxContainer) -> float:
@@ -126,7 +129,7 @@ func _slider_value_for_row(row: HBoxContainer) -> float:
 		"master": return Settings.master_volume
 		"music":  return Settings.music_volume
 		"sfx":    return Settings.sfx_volume
-		return 0.5
+	return 0.5
 
 
 func _checkbox_value_for_row(row: HBoxContainer) -> bool:
@@ -135,7 +138,7 @@ func _checkbox_value_for_row(row: HBoxContainer) -> bool:
 		"vibration": return Settings.vibration_enabled
 		"fullscreen": return Settings.fullscreen
 		"wrap board": return Settings.board_wrap
-		return false
+	return false
 
 
 func _option_select_for_row(row: HBoxContainer) -> void:

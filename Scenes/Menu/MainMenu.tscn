@@ -174,7 +174,7 @@ text = "PLAY"
 [node name="SettingsButton" type="Button" parent="CenterContainer/Panel" unique_id=1554730487]
 custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
-text = "PLAY"
+text = "SETTINGS"
 
 [node name="QuitButton" type="Button" parent="CenterContainer/Panel" unique_id=2016858339]
 custom_minimum_size = Vector2(220, 44)
