@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d2x0q3q1q3q3"]
+
+[ext_resource type="Script" path="res://Scripts/Tests/test_long_press_defuse.gd" id="1_9l2m4"]
+
+[node name="TestLongPressDefuse" type="Node"]
+script = ExtResource("1_9l2m4")
