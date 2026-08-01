@@ -6,8 +6,14 @@ extends Container
 ## Maximum distance (in pixels) between touch-down and touch-up to register a tap.
 const TAP_THRESHOLD: float = 15.0
 
+## Time (ms) a finger must stay down to trigger a long-press defuse toggle.
+const LONG_PRESS_THRESHOLD_MS: int = 400
+
 ## Haptic feedback duration (ms) on cell tap.
 const TAP_VIBRATION_MS: int = 100
+
+## Haptic feedback duration (ms) on long-press.
+const LONG_PRESS_VIBRATION_MS: int = 50
 
 ## How much larger the tap-collision shape is than the visible fill shape,
 ## expressed as a uniform scale from the fill polygon's centroid. Keeps the
@@ -51,8 +57,17 @@ var nearby: int = 0
 ## Grid coordinate of this cell (column, row).
 var coord: Vector2i
 
-## Screen position recorded on touch-down, used for tap detection.
+## Screen position recorded on touch-down, used for tap/long-press detection.
 var _touch_position: Vector2
+
+## Whether the player is currently holding this cell.
+var _touch_pressed: bool = false
+
+## Time (ms) when the current hold started.
+var _touch_start_time: int = 0
+
+## True if the long-press action already fired for the current hold.
+var _long_press_triggered: bool = false
 
 
 func _ready() -> void:
@@ -160,10 +175,37 @@ func set_icon(icon: Texture2D, icon_color: Color) -> void:
 	_cell_icon.modulate = icon_color
 
 
+func _process(_delta: float) -> void:
+	if _touch_pressed and not _long_press_triggered and not is_explored():
+		if Time.get_ticks_msec() - _touch_start_time > LONG_PRESS_THRESHOLD_MS:
+			_long_press_triggered = true
+			if Settings.vibration_enabled:
+				Input.vibrate_handheld(LONG_PRESS_VIBRATION_MS)
+			defuse()
+
+
 func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int, _local_shape: Object = null) -> void:
-	if event is InputEventScreenTouch and event.pressed:
+	var is_press_event: bool = (
+		(event is InputEventScreenTouch and event.pressed)
+		or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed)
+	)
+	var is_release_event: bool = (
+		(event is InputEventScreenTouch and not event.pressed)
+		or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed)
+	)
+
+	if is_press_event:
+		_touch_pressed = true
+		_touch_start_time = Time.get_ticks_msec()
 		_touch_position = event.position
-	if event is InputEventScreenTouch and not event.pressed:
+		_long_press_triggered = false
+		return
+
+	if is_release_event:
+		_touch_pressed = false
+		if _long_press_triggered:
+			_long_press_triggered = false
+			return
 		if _touch_position.distance_to(event.position) < TAP_THRESHOLD:
 			if Settings.vibration_enabled:
 				Input.vibrate_handheld(TAP_VIBRATION_MS)

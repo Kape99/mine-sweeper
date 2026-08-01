@@ -76,6 +76,13 @@ var _display_cell_scenes: Dictionary = {}
 ## neighbor lookups stop at the edge.
 var _wrap_mode: bool = true
 
+## Long-press tracking for taps on wrap-mode display copies.
+var _display_touch_active: bool = false
+var _display_touch_start_time: int = 0
+var _display_touch_position: Vector2 = Vector2.ZERO
+var _display_long_press_triggered: bool = false
+var _display_logical_cell: CellBase = null
+
 
 func _ready() -> void:
 	_measure_cell_size()
@@ -356,22 +363,55 @@ func _get_center_cell(cell: CellBase) -> CellBase:
 	return board_state[cell.coord.y][cell.coord.x]
 
 
-## Handles taps on non-center tiles via unhandled input. Computes which
-## tile was hit from the click position, then maps to the logical cell.
+func _process(_delta: float) -> void:
+	if _display_touch_active and not _display_long_press_triggered and _display_logical_cell and not _display_logical_cell.is_explored():
+		if Time.get_ticks_msec() - _display_touch_start_time > CellBase.LONG_PRESS_THRESHOLD_MS:
+			_display_long_press_triggered = true
+			if Settings.vibration_enabled:
+				Input.vibrate_handheld(CellBase.LONG_PRESS_VIBRATION_MS)
+			_display_logical_cell.defuse()
+
+
+## Handles taps and long-presses on non-center display tiles.
 func _unhandled_input(event: InputEvent) -> void:
 	if not _wrap_mode or _tiles.is_empty() or board_state.is_empty():
 		return
-	var is_tap: bool = (
+
+	var is_press: bool = (
+		(event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed)
+		or (event is InputEventScreenTouch and event.pressed)
+	)
+	var is_release: bool = (
 		(event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed)
 		or (event is InputEventScreenTouch and not event.pressed)
 	)
-	if not is_tap:
+
+	if is_press:
+		var cell: CellBase = _find_display_logical_cell(event.position)
+		if cell:
+			_display_touch_active = true
+			_display_touch_start_time = Time.get_ticks_msec()
+			_display_touch_position = event.position
+			_display_long_press_triggered = false
+			_display_logical_cell = cell
 		return
-	_handle_tile_tap(event.position)
+
+	if is_release and _display_touch_active:
+		_display_touch_active = false
+		var cell: CellBase = _display_logical_cell
+		_display_logical_cell = null
+		if _display_long_press_triggered:
+			_display_long_press_triggered = false
+			return
+		if _display_touch_position.distance_to(event.position) < CellBase.TAP_THRESHOLD:
+			if Settings.vibration_enabled:
+				Input.vibrate_handheld(CellBase.TAP_VIBRATION_MS)
+			if cell:
+				_on_cell_pressed(cell, cell.nearby)
 
 
-func _handle_tile_tap(global_pos: Vector2) -> void:
-	# Convert from viewport coordinates to canvas coordinates (accounts for camera)
+## Finds the logical cell under a position on a non-center display tile.
+func _find_display_logical_cell(global_pos: Vector2) -> CellBase:
 	var canvas_pos: Vector2 = get_viewport().canvas_transform.affine_inverse() * global_pos
 	var board_size: Vector2 = get_board_size()
 	var board_origin: Vector2 = _board_node.global_position
@@ -393,11 +433,8 @@ func _handle_tile_tap(global_pos: Vector2) -> void:
 		var col: int = int(local_pos.x / cell_step.x)
 		var row: int = int(local_pos.y / cell_step.y)
 		if col >= 0 and col < cols and row >= 0 and row < rows:
-			if Settings.vibration_enabled:
-				Input.vibrate_handheld(CellBase.TAP_VIBRATION_MS)
-			var logical_cell: CellBase = board_state[row][col]
-			_on_cell_pressed(logical_cell, logical_cell.nearby)
-		return
+			return board_state[row][col]
+	return null
 
 
 ## Called every frame from the main controller with the camera's current
