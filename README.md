@@ -13,7 +13,7 @@ A minimal, touch-friendly minesweeper game built with **Godot 4.7** for mobile d
   - [Scene Tree](#scene-tree)
   - [Board System](#board-system)
   - [Board Topology: Wrap vs. Classic](#board-topology-wrap-vs-classic)
-  - [Cell & FSM](#cell--fsm)
+  - [Cell State](#cell-state)
   - [Global State](#global-state)
   - [Settings & Persistence](#settings--persistence)
   - [Camera](#camera)
@@ -28,10 +28,10 @@ A minimal, touch-friendly minesweeper game built with **Godot 4.7** for mobile d
 Classic minesweeper rules on non-standard grids:
 
 - **Square board** — 8 neighbors per cell (Chebyshev adjacency)
-- **Triangle board** — 3 neighbors per cell (edge-sharing only)
+- **Triangle board** — 12 neighbors per cell (edge + vertex sharing)
 - **Hexagonal board** — 6 neighbors per cell (offset coordinates)
 
-Three difficulty levels (Easy, Medium, Hard) scale the grid size and mine count per board type. The game is designed for portrait-mode mobile with touch input, but also supports mouse and scroll wheel on desktop.
+Board dimensions and mine density are configurable from the main menu (rows, columns, bomb percentage), so any geometry can be tuned from tiny to large. The game is designed for portrait-mode mobile with touch input, but also supports mouse and scroll wheel on desktop.
 
 ## How to Play
 
@@ -52,7 +52,8 @@ The first tap is always safe: mines are placed *after* the first click, excludin
 │     MainMenu (standalone scene)    │
 │                                    │
 │  ◄ Square ►   (board type)         │
-│  ◄ Medium ►   (difficulty)         │
+│  Rows: 18    Cols: 18              │
+│  Bomb %: 15    Seed: 0              │
 │  ◄ Wrap   ►   (topology mode)      │
 │  [ ] No Border                     │
 │                                    │
@@ -71,11 +72,11 @@ The first tap is always safe: mines are placed *after* the first click, excludin
 └───────────────────────┘  └────────────────────┘
 ```
 
-1. **MainMenu** (`Scenes/Menu/MainMenu.tscn`, `main_menu.gd`) is a standalone scene shown through `ScreenManager`, not embedded in `base.tscn`. It owns board type, difficulty, wrap/classic, and no-border selection, writing directly to `GlobalState` as the player cycles options.
+1. **MainMenu** (`Scenes/Menu/MainMenu.tscn`, `main_menu.gd`) is a standalone scene shown through `ScreenManager`, not embedded in `base.tscn`. It owns board type, rows/columns, bomb percentage, seed, wrap/classic, and no-border selection, writing directly to `GlobalState` as the player changes options.
 2. Player taps **Play** → `main_menu.gd` emits `start_requested` → `base.gd._load_game()` runs:
    - Looks up the board scene from a dictionary (`{0: triangle, 1: square, 2: hexagon}`)
    - Instantiates and adds to scene tree
-   - Fetches `GameData` (cols, rows, mines) from `GlobalState` for the selected board + difficulty
+   - Reads `board_rows`, `board_cols`, and `get_mine_count()` from `GlobalState`
    - Resets defuse mode and button state
    - Calls `board.start_game(cols, rows, mines, GlobalState.board_wrap)` → builds the tile block (see [Board Topology](#board-topology-wrap-vs-classic))
    - Configures the camera: unconstrained + centered in wrap mode, bounds-clamped in classic mode
@@ -100,11 +101,11 @@ _first_move(cell)
 _on_cell_pressed(cell, nearby)
    │
    ├── [defuse mode ON] → cell.defuse()
-   │     FSM: Unknown ↔ Defused (toggle)
+   │     State: Unknown ↔ Defused (toggle)
    │     Emits cell_defused → updates counter
    │
    └── [defuse mode OFF] → cell.explore()
-         FSM: Unknown → Explored
+         State: Unknown → Explored
          │
          ├── [nearby == -1] → MINE
          │     Emits cell_exploded
@@ -172,13 +173,6 @@ mine-sweeper/
 │   │   └── triangle_board.gd        Triangle grid + edge neighbors
 │   ├── Gameplay/
 │   │   └── cell.gd                  Cell base class (CellBase)
-│   ├── FSM/
-│   │   ├── state_machine.gd         Generic FSM
-│   │   └── States/
-│   │       ├── BaseState.gd         Abstract state
-│   │       ├── UnknownState.gd      Default (unrevealed)
-│   │       ├── DefuseState.gd       Flagged
-│   │       └── ExploredState.gd     Revealed
 │   ├── GUI/
 │   │   ├── board_gui.gd             Score tracker + reset + pause button
 │   │   ├── camera_controller.gd     Pan/zoom, optional bounds clamping
@@ -259,25 +253,23 @@ The board supports two topology modes, selectable from the MainMenu or Settings 
 | Neighbor lookup | Toroidal — coordinates wrap with `posmod()` | Hard edges — out-of-bounds neighbors are skipped |
 | Feel | Left edge connects to right edge, top to bottom (like Pac-Man) | Traditional bounded Minesweeper board |
 
-**Why a 3×3 tile block instead of true infinite generation?** Cells are full interactive scenes (`Area2D` + `CollisionPolygon2D` + `StateMachine` + `Label` + `TextureRect`), not simple sprites — they can't be represented as a shader or generated on the fly without real nodes for hit-testing. A fixed 3×3 block (9× the base cell count) gives seamless continuous scrolling with a bounded, one-time node cost, whichis a small, safe tradeoff for the board sizes this game uses (max ~19×22 cells).
+**Why a 3×3 tile block instead of true infinite generation?** Cells are full interactive scenes (`Area2D` + `CollisionPolygon2D` + `Label` + `TextureRect`), not simple sprites — they can't be represented as a shader or generated on the fly without real nodes for hit-testing. A fixed 3×3 block (9× the base cell count) gives seamless continuous scrolling with a bounded, one-time node cost, whichis a small, safe tradeoff for the board sizes this game uses (max ~19×22 cells).
 
 **Why snapping by exactly one board size is invisible:** all 8 surrounding tiles are kept as pixel-perfect visual mirrors of the center tile (synced via `_sync_display_to_copies()` on every explore/defuse). Shifting the tile block by a full board dimension lands the camera on an identical-looking tile, so the recenter jump is imperceptible.
 
-### Cell & FSM
+### Cell State
 
 Each cell scene contains:
 - `Area2D` with `Polygon2D` (shape), `Label` (number), `TextureRect` (icon)
-- `StateMachine` node with 3 child states
+- A `CellState` enum tracking `UNKNOWN`, `DEFUSED`, or `EXPLORED`
 
 ```
 CellBase
-└── StateMachine
-    ├── Unknown    ← initial state
-    ├── Defused    ← flagged
-    └── Explored   ← revealed
+└── visual nodes (Area2D / Polygon2D / Label / TextureRect)
+└── CellState enum
 ```
 
-**State machine** is a generic FSM — states are scene tree nodes, transitions by name. Each state calls `owner.set_display()` to update visuals, keeping states **decoupled from the cell's internal node tree**.
+State transitions are handled directly by `CellBase.defuse()` and `CellBase.explore()`. Both methods update the enum and call `set_display()` to refresh visuals, keeping visual state in one place.
 
 Cell exposes explicit methods instead of magic setters:
 - `mark_as_mine()` — permanently marks as mine
@@ -288,7 +280,7 @@ Cell exposes explicit methods instead of magic setters:
 ### Global State
 
 `GlobalState` autoload singleton holds:
-- **Game config**: board type, difficulty, `board_configs` dictionary mapping to `GameData` (cols, rows, mines)
+- **Game config**: board type, rows, columns, bomb percentage, and seed
 - **Topology**: `board_wrap` — mirrors `Settings.board_wrap`, read by `base.gd` when starting a game
 - **UI state**: `is_defusing` flag, `no_border` flag
 - **Color schemes**: data-driven dictionary, active scheme selected by key, colors exposed via getter properties
@@ -302,8 +294,8 @@ Cell exposes explicit methods instead of magic setters:
 | Property | Type | Notes |
 |---|---|---|
 | `master_volume`, `music_volume`, `sfx_volume` | `float` (0.0–1.0) | Clamped in the setter; `master_volume` applies live to the `AudioServer` "Master" bus |
-| `vibration_enabled` | `bool` | Gates haptic feedback (not yet wired into `cell.gd` — see [Design Decisions](#design-decisions)) |
-| `graphics_quality` | `String` | `"low"` / `"medium"` / `"high"` — stored, not yet applied to rendering |
+| `vibration_enabled` | `bool` | Gates haptic feedback on cell taps and explosions |
+| `graphics_quality` | `String` | `"low"` / `"medium"` / `"high"` — controls 2D MSAA and pixel snapping |
 | `fullscreen` | `bool` | Applies immediately via `DisplayServer.window_set_mode()` |
 | `board_wrap` | `bool` | Wrap vs. classic board topology, default `true` |
 | `nickname`, `language` | `String` | Reserved for future use |
@@ -322,7 +314,7 @@ Every property is a Godot property with a custom `set()` that calls `_persist(ke
 
 ### UI
 
-- **MainMenu** (`main_menu.gd`): owns board type / difficulty / wrap-mode / no-border selection; emits `start_requested`, `settings_requested`, `quit_requested`, `no_border_toggled`, `wrap_mode_changed` rather than calling into `base.gd` directly
+- **MainMenu** (`main_menu.gd`): owns board type / rows / cols / bomb percentage / seed / wrap-mode / no-border selection; emits `start_requested`, `settings_requested`, `quit_requested`, `no_border_toggled`, `wrap_mode_changed` rather than calling into `base.gd` directly
 - **ScreenManager** (`screen_manager.gd`): push/pop screen stack with fade transitions.
   - `push(screen, animated, dismiss_current)` — `dismiss_current=false` hides the current screen in place (modulate → 0, processing disabled) instead of freeing it, so it can be restored by the next `pop()`. Used when Settings is opened from either MainMenu or PauseOverlay, so either one reappears correctly on back.
   - `show_main_menu(main_menu)` — treats the always-present inline MainMenu node as the base of the navigation stack
@@ -331,7 +323,6 @@ Every property is a Godot property with a custom `set()` that calls `_persist(ke
 - **SettingsMenu** (`settings_menu.gd`): sliders/checkboxes bound directly to `Settings` properties, built programmatically (no hand-authored control tree)
 - **BoardGUI**: defuse counter (`flagged/total`), reset button, pause button
 - **Screen.gd**: safe-area margin computation for notched devices, scales relative to 480×800 base resolution
-- **DifficultySelector** (`difficulty_selector.gd`): legacy animated menu selector from the original embedded main menu, no longer instantiated — kept in the repo for reference/possible reuse, not part of the current UI
 
 ## Design Decisions
 
@@ -350,14 +341,11 @@ Flood fill and mine reveal can touch hundreds of cells. One Tween with sequentia
 ### Why Dictionary-as-Set for neighbors?
 GDScript 4 has no native Set type. Dictionary with unused values is the standard workaround — O(1) lookup, O(1) insert, deduplication by key.
 
-### Why decouple states from cell internals?
-FSM states previously accessed `owner._cell_text`, `owner._cell_icon`, etc. This tightly couples state logic to the cell's node tree. Now states call `owner.set_display()` — if the cell's internal structure changes, only `CellBase` needs updating.
-
 ### Why explicit mark_as_mine() / increment_nearby()?
 The original `nearby` setter silently accumulated on assignment (`cell.nearby = 1` actually did `nearby += 1`). Code reading `cell.nearby = -1` looked like it *set* the value. Explicit methods make intent unambiguous.
 
 ### Why a 3×3 tile block for wrap mode instead of a shader or true infinite generation?
-Cells need real `Area2D` + `CollisionPolygon2D` for tap input and a `StateMachine` for per-cell FSM state — none of that can live in a shader, so a purely cosmetic "infinite" rendering trick isn't enough. Dynamically spawning/freeing tiles as the camera moves was considered but rejected: it adds churn (node creation/destruction every frame near a boundary) for a marginal memory win, since the largest configured board (~19×22 = 418 cells) only costs ~3,760 cells total at 9× duplication — a one-time cost at game start, not a per-frame one.
+Cells need real `Area2D` + `CollisionPolygon2D` for tap input and per-cell state — none of that can live in a shader, so a purely cosmetic "infinite" rendering trick isn't enough. Dynamically spawning/freeing tiles as the camera moves was considered but rejected: it adds churn (node creation/destruction every frame near a boundary) for a marginal memory win, since the largest configured board (~19×22 = 418 cells) only costs ~3,760 cells total at 9× duplication — a one-time cost at game start, not a per-frame one.
 
 ### Why recenter the board instead of the camera?
 Early attempts moved the `Camera2D.offset` directly from inside `BaseBoard.recenter_if_needed()`. This put two different systems (the generic, reusable `CameraController` and the board's own wrap logic) writing to the same property from different call sites (input events vs. `_process`), risking order-dependent bugs — e.g. a pinch-zoom recalculating `offset` in the same frame a recenter snapped it. Moving `_board_node.position` instead keeps a strict single-writer rule: `CameraController` owns `offset` (pan/zoom/touch), `BaseBoard` owns its own transform. The visual result is identical either way since all tiles are perfect mirrors of each other.
@@ -389,6 +377,8 @@ godot --headless Scenes/Tests/test_board_wrapping.tscn
 |---|---|---|
 | `test_board_wrapping.gd` | 11 | Wrap mode builds a 9-tile block with toroidal neighbor wrap; classic mode builds 1 tile with edge-clipped neighbors — checked for square, hex, and triangle boards |
 | `test_cell_binding.gd` | 15 | Collision polygon is non-empty, has the same vertex count, and has strictly larger area than the fill polygon — checked for all 5 cell scenes |
+| `test_chord_reveal.gd` | 9 | Correctly flagged neighbors match the cell number and all remaining hidden neighbors are revealed |
+| `test_mine_color_sync.gd` | 5 | A mined cell explosion shows red background + white icon on both the logical cell and wrap-mode display copies |
 | `test_settings_persistence.gd` | 7 | Value clamping, `setting_changed` signal payload, and a real round-trip through `user://settings.cfg` via a fresh `ConfigFile` read |
 
 ### Writing a new test
@@ -404,10 +394,9 @@ godot --headless Scenes/Tests/test_board_wrapping.tscn
 - **GDScript lambdas capture value-type locals by snapshot, not by reference.** A lambda that reassigns an outer `var received_key: String` won't be visible to the caller. Use a mutable container (`Array`, `Dictionary`) instead — see `test_settings_persistence.gd`'s `_test_signal_emission()`.
 - **`Object.get()` / `Object._set()` are reserved virtual method names.** Defining a method literally named `get` or `_set` on any `Node`/`Object` subclass with an incompatible signature breaks compilation silently in the editor and only surfaces when the script is actually loaded (e.g. as an autoload at game start).
 
-### Seed System
+### Seed Validation
 
-# Seed Validation
-\nThe game ensures that no two different seed values can produce identical first turn mine configurations. This is a new design constraint that adds significant complexity to the mine placement algorithm:
+The game ensures that no two different seed values can produce identical first turn mine configurations. This is a new design constraint that adds significant complexity to the mine placement algorithm:
 - **Seed Longevity**: Must remain valid across arbitrary recomputations of early-game states.
 - **Config Switching**: Different board types and difficulties must produce unique safe zones for the same seed value.
 - **Hash Consistency**: The mine placement hash must be consistent across all valid board sizes and configurations for a given seed.
@@ -425,5 +414,5 @@ Implemented a controlled randomization system that generates different mine plac
 3. Compatibility with all board types and difficulties
 
 ## Accessibility
-- **Known Seeds**: We've identified safe seed values like `257189688`, `69903475`, `8170328`, `724916`, `5664`, `394`, and `1000" which produce challenging mine configurations.
+- **Known Seeds**: We've identified safe seed values like `257189688`, `69903475`, `8170328`, `724916`, `5664`, `394`, and `1000` which produce challenging mine configurations.
 - **Seed Validation Testing**: Each new seed undergoes rigorous testing to ensure valid safe zone generation;

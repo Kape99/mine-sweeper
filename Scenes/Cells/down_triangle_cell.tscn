@@ -1,10 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://blgl3aaby1fec"]
 
 [ext_resource type="Script" path="res://Scripts/Gameplay/cell.gd" id="1_8hh05"]
-[ext_resource type="Script" path="res://Scripts/FSM/state_machine.gd" id="2_kckiu"]
-[ext_resource type="Script" path="res://Scripts/FSM/States/UnknownState.gd" id="3_et81a"]
-[ext_resource type="Script" path="res://Scripts/FSM/States/DefuseState.gd" id="4_7p7cw"]
-[ext_resource type="Script" path="res://Scripts/FSM/States/ExploredState.gd" id="5_pffn6"]
 
 [node name="DownTriangleCell" type="MarginContainer"]
 custom_minimum_size = Vector2(25, 44)
@@ -72,19 +68,5 @@ offset_bottom = 12.5
 grow_horizontal = 2
 grow_vertical = 2
 expand_mode = 1
-
-[node name="StateMachine" type="Node" parent="."]
-script = ExtResource("2_kckiu")
-initial_state = NodePath("Unknown")
-
-[node name="Unknown" type="Node" parent="StateMachine"]
-script = ExtResource("3_et81a")
-
-[node name="Defused" type="Node" parent="StateMachine"]
-script = ExtResource("4_7p7cw")
-
-[node name="Explored" type="Node" parent="StateMachine"]
-script = ExtResource("5_pffn6")
-
 
 [connection signal="input_event" from="Area2D" to="." method="_on_area_2d_input_event" flags=18]
