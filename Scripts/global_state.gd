@@ -18,6 +18,9 @@ var board_seed: int = 0  # 0 = random, non-zero = repeatable
 ## Whether the board wraps on itself (toroidal) or has hard edges (classic).
 var board_wrap: bool = true
 
+## Whether board cells should render without a visible border.
+var no_border: bool = false
+
 ## Available color schemes. Each value is [background, main, secondary, accent].
 var color_schemes: Dictionary = {
 	"silvia": [Color("C1D8C3"), Color("CD5C08"), Color("F5E8B7"), Color("6A9C89")],
@@ -30,7 +33,10 @@ var color_schemes: Dictionary = {
 }
 
 ## Key into [member color_schemes] for the active theme.
-var selected_scheme: String = "silvia"
+var selected_scheme: String = "silvia":
+	set(value):
+		selected_scheme = value
+		RenderingServer.set_default_clear_color(background_color)
 
 ## Background color of the active scheme.
 var background_color: Color:

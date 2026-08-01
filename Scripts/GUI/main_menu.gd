@@ -20,6 +20,7 @@ const BOARD_MODE_NAMES: PackedStringArray = ["Classic", "Wrap"]
 @onready var _wrap_prev: Button = $CenterContainer/Panel/WrapRow/WrapPrev
 @onready var _wrap_next: Button = $CenterContainer/Panel/WrapRow/WrapNext
 @onready var _wrap_label: Label = $CenterContainer/Panel/WrapRow/WrapLabel
+@onready var _no_border_check: CheckBox = $CenterContainer/Panel/NoBorderRow/NoBorderCheck
 @onready var _start_button: Button = $CenterContainer/Panel/StartButton
 @onready var _settings_button: Button = $CenterContainer/Panel/SettingsButton
 @onready var _quit_button: Button = $CenterContainer/Panel/QuitButton
@@ -39,6 +40,7 @@ func _connect_signals() -> void:
 	_seed_spin.value_changed.connect(_on_seed_changed)
 	_wrap_prev.pressed.connect(_on_wrap_prev)
 	_wrap_next.pressed.connect(_on_wrap_next)
+	_no_border_check.toggled.connect(_on_no_border_toggled)
 	_start_button.pressed.connect(_on_start)
 	_settings_button.pressed.connect(_on_settings)
 	_quit_button.pressed.connect(_on_quit)
@@ -48,9 +50,21 @@ func _sync_from_global_state() -> void:
 	_board_type_label.text = BOARD_TYPE_NAMES[GlobalState.selected_board]
 	_rows_spin.value = GlobalState.board_rows
 	_cols_spin.value = GlobalState.board_cols
-	_bomb_spin.value = GlobalState.bomb_percentage * 100.0
+	_update_bomb_spin_max()
+	_bomb_spin.value = minf(_bomb_spin.value, _bomb_spin.max_value)
+	GlobalState.bomb_percentage = _bomb_spin.value / 100.0
 	_seed_spin.value = GlobalState.board_seed
 	_wrap_label.text = BOARD_MODE_NAMES[1 if GlobalState.board_wrap else 0]
+	_no_border_check.button_pressed = GlobalState.no_border
+
+
+## Keeps bomb percentage within a conservative safe-zone budget so the
+## first-click safe zone (distance 2) is unlikely to cover all cells.
+func _update_bomb_spin_max() -> void:
+	var cells: int = GlobalState.board_rows * GlobalState.board_cols
+	var max_mines: int = maxi(1, cells - 9)
+	var max_percent: float = floorf(max_mines * 100.0 / cells)
+	_bomb_spin.max_value = clampf(max_percent, 1.0, 99.0)
 
 
 func _on_board_type_prev() -> void:
@@ -65,10 +79,16 @@ func _on_board_type_next() -> void:
 
 func _on_rows_changed(value: float) -> void:
 	GlobalState.board_rows = int(value)
+	_update_bomb_spin_max()
+	_bomb_spin.value = minf(_bomb_spin.value, _bomb_spin.max_value)
+	GlobalState.bomb_percentage = _bomb_spin.value / 100.0
 
 
 func _on_cols_changed(value: float) -> void:
 	GlobalState.board_cols = int(value)
+	_update_bomb_spin_max()
+	_bomb_spin.value = minf(_bomb_spin.value, _bomb_spin.max_value)
+	GlobalState.bomb_percentage = _bomb_spin.value / 100.0
 
 
 func _on_bomb_changed(value: float) -> void:

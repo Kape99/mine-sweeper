@@ -39,6 +39,7 @@ var vibration_enabled: bool:
 var graphics_quality: String:
 	set(v):
 		graphics_quality = v
+		_apply_graphics_quality()
 		_persist("graphics_quality", graphics_quality)
 
 ## Whether the game runs fullscreen.
@@ -52,6 +53,7 @@ var fullscreen: bool:
 var board_wrap: bool:
 	set(v):
 		board_wrap = v
+		GlobalState.board_wrap = v
 		_persist("board_wrap", board_wrap)
 
 ## Player nickname (used for online / leaderboard display later).
@@ -79,6 +81,20 @@ func _apply_fullscreen() -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+
+
+## Apply quality preset to 2D MSAA and pixel snapping.
+func _apply_graphics_quality() -> void:
+	match graphics_quality:
+		"low":
+			ProjectSettings.set_setting("rendering/anti_aliasing/quality/msaa_2d", 0)
+			ProjectSettings.set_setting("rendering/2d/snap_2d_vertices_to_pixel", true)
+		"high":
+			ProjectSettings.set_setting("rendering/anti_aliasing/quality/msaa_2d", 2)
+			ProjectSettings.set_setting("rendering/2d/snap_2d_vertices_to_pixel", false)
+		_:
+			ProjectSettings.set_setting("rendering/anti_aliasing/quality/msaa_2d", 1)
+			ProjectSettings.set_setting("rendering/2d/snap_2d_vertices_to_pixel", false)
 
 
 ## Apply volume settings to AudioServer buses immediately.
@@ -146,6 +162,7 @@ func _load() -> void:
 
 	vibration_enabled = _config.get_value(CONFIG_SECTION, "vibration_enabled", true)
 	graphics_quality = _config.get_value(CONFIG_SECTION, "graphics_quality", "medium")
+	_apply_graphics_quality()
 	nickname = _config.get_value(CONFIG_SECTION, "nickname", "")
 	language = _config.get_value(CONFIG_SECTION, "language", "en")
 
@@ -167,6 +184,7 @@ func _apply_defaults() -> void:
 	sfx_volume = 1.0
 	vibration_enabled = true
 	graphics_quality = "medium"
+	_apply_graphics_quality()
 	fullscreen = false
 	board_wrap = true
 	nickname = ""
