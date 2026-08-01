@@ -15,6 +15,10 @@ const TAP_VIBRATION_MS: int = 100
 ## Haptic feedback duration (ms) on long-press.
 const LONG_PRESS_VIBRATION_MS: int = 50
 
+## Visual highlight color for neighbors of a held revealed cell.
+## Chosen to be clearly distinct from all scheme colors.
+const NEIGHBOR_HIGHLIGHT_COLOR: Color = Color(0.0, 0.7, 1.0, 1.0)
+
 ## How much larger the tap-collision shape is than the visible fill shape,
 ## expressed as a uniform scale from the fill polygon's centroid. Keeps the
 ## touch target slightly bigger than what's drawn without hand-authoring a
@@ -47,6 +51,12 @@ signal cell_defused(cell: CellBase, is_defused: bool)
 
 ## Emitted when a mine cell is explored (game over trigger).
 signal cell_exploded(cell: CellBase)
+
+## Emitted when a revealed cell with nearby mines is held to highlight neighbors.
+signal cell_highlight_requested(cell: CellBase)
+
+## Emitted when the finger is lifted after a long-press highlight.
+signal cell_highlight_cleared
 
 ## Mine-neighbor count for this cell.[br]
 ## [code]-1[/code] means this cell is a mine.[br]
@@ -168,6 +178,21 @@ func set_display(bg_color: Color, content_color: Color, icon: Texture2D = null, 
 	_cell_text.text = text
 
 
+## Temporarily highlights this cell as a neighbor of a held revealed cell.
+func set_neighbor_highlight(enabled: bool) -> void:
+	if enabled:
+		_cell_triangle.modulate = NEIGHBOR_HIGHLIGHT_COLOR
+	else:
+		# Restore colors based on current state without touching icon/text.
+		match _cell_state:
+			CellState.DEFUSED:
+				_cell_triangle.modulate = GlobalState.secondary_color
+			CellState.EXPLORED:
+				_cell_triangle.modulate = Color.RED if is_mine() else GlobalState.main_color
+			_:
+				_cell_triangle.modulate = GlobalState.secondary_color
+
+
 ## Overrides only the icon texture and its color. Used when the icon color
 ## differs from the default content color (e.g. mine icon on explosion).
 func set_icon(icon: Texture2D, icon_color: Color) -> void:
@@ -176,12 +201,18 @@ func set_icon(icon: Texture2D, icon_color: Color) -> void:
 
 
 func _process(_delta: float) -> void:
-	if _touch_pressed and not _long_press_triggered and not is_explored():
-		if Time.get_ticks_msec() - _touch_start_time > LONG_PRESS_THRESHOLD_MS:
-			_long_press_triggered = true
-			if Settings.vibration_enabled:
-				Input.vibrate_handheld(LONG_PRESS_VIBRATION_MS)
-			defuse()
+	if not _touch_pressed or _long_press_triggered:
+		return
+	var elapsed: int = Time.get_ticks_msec() - _touch_start_time
+	if elapsed <= LONG_PRESS_THRESHOLD_MS:
+		return
+	_long_press_triggered = true
+	if Settings.vibration_enabled:
+		Input.vibrate_handheld(LONG_PRESS_VIBRATION_MS)
+	if is_explored() and nearby > 0:
+		cell_highlight_requested.emit(self)
+	elif not is_explored():
+		defuse()
 
 
 func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int, _local_shape: Object = null) -> void:
@@ -203,8 +234,10 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 
 	if is_release_event:
 		_touch_pressed = false
-		if _long_press_triggered:
-			_long_press_triggered = false
+		var had_long_press: bool = _long_press_triggered
+		_long_press_triggered = false
+		if had_long_press:
+			cell_highlight_cleared.emit()
 			return
 		if _touch_position.distance_to(event.position) < TAP_THRESHOLD:
 			if Settings.vibration_enabled:

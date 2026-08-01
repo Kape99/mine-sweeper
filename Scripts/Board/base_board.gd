@@ -83,6 +83,9 @@ var _display_touch_position: Vector2 = Vector2.ZERO
 var _display_long_press_triggered: bool = false
 var _display_logical_cell: CellBase = null
 
+## Currently highlighted neighbors (from a long-press on a revealed cell).
+var _highlighted_neighbors: Array[CellBase] = []
+
 
 func _ready() -> void:
 	_measure_cell_size()
@@ -197,6 +200,10 @@ func _connect_signals(cell: CellBase) -> void:
 		cell.cell_defused.connect(_handle_defuse)
 	if not cell.cell_exploded.is_connected(_handle_explosion):
 		cell.cell_exploded.connect(_handle_explosion)
+	if not cell.cell_highlight_requested.is_connected(_on_cell_highlight_requested):
+		cell.cell_highlight_requested.connect(_on_cell_highlight_requested)
+	if not cell.cell_highlight_cleared.is_connected(_clear_neighbor_highlight):
+		cell.cell_highlight_cleared.connect(_clear_neighbor_highlight)
 
 
 ## Pulls a reusable cell from the static pool, or instantiates a new one.
@@ -364,12 +371,18 @@ func _get_center_cell(cell: CellBase) -> CellBase:
 
 
 func _process(_delta: float) -> void:
-	if _display_touch_active and not _display_long_press_triggered and _display_logical_cell and not _display_logical_cell.is_explored():
-		if Time.get_ticks_msec() - _display_touch_start_time > CellBase.LONG_PRESS_THRESHOLD_MS:
-			_display_long_press_triggered = true
-			if Settings.vibration_enabled:
-				Input.vibrate_handheld(CellBase.LONG_PRESS_VIBRATION_MS)
-			_display_logical_cell.defuse()
+	if not _display_touch_active or _display_long_press_triggered:
+		return
+	var elapsed: int = Time.get_ticks_msec() - _display_touch_start_time
+	if elapsed <= CellBase.LONG_PRESS_THRESHOLD_MS:
+		return
+	_display_long_press_triggered = true
+	if Settings.vibration_enabled:
+		Input.vibrate_handheld(CellBase.LONG_PRESS_VIBRATION_MS)
+	if _display_logical_cell and _display_logical_cell.is_explored() and _display_logical_cell.nearby > 0:
+		_highlight_neighbors(_display_logical_cell)
+	elif _display_logical_cell and not _display_logical_cell.is_explored():
+		_display_logical_cell.defuse()
 
 
 ## Handles taps and long-presses on non-center display tiles.
@@ -400,8 +413,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_display_touch_active = false
 		var cell: CellBase = _display_logical_cell
 		_display_logical_cell = null
-		if _display_long_press_triggered:
-			_display_long_press_triggered = false
+		var had_long_press: bool = _display_long_press_triggered
+		_display_long_press_triggered = false
+		_clear_neighbor_highlight()
+		if had_long_press:
 			return
 		if _display_touch_position.distance_to(event.position) < CellBase.TAP_THRESHOLD:
 			if Settings.vibration_enabled:
@@ -517,6 +532,31 @@ func _apply_display_from_source(target: Node, source: CellBase) -> void:
 		icon.modulate = GlobalState.main_color
 		icon.texture = null
 		label.text = ""
+
+
+## Highlights the neighbors of [param cell] and all their display copies.
+func _highlight_neighbors(cell: CellBase) -> void:
+	_clear_neighbor_highlight()
+	for neighbor: CellBase in _get_nearby_cells(cell).keys():
+		if neighbor.is_explored():
+			continue
+		neighbor.set_neighbor_highlight(true)
+		_highlighted_neighbors.append(neighbor)
+		_sync_display_to_copies(neighbor)
+
+
+## Clears any active neighbor highlight.
+func _clear_neighbor_highlight() -> void:
+	for neighbor: CellBase in _highlighted_neighbors:
+		if not is_instance_valid(neighbor):
+			continue
+		neighbor.set_neighbor_highlight(false)
+		_sync_display_to_copies(neighbor)
+	_highlighted_neighbors.clear()
+
+
+func _on_cell_highlight_requested(cell: CellBase) -> void:
+	_highlight_neighbors(_get_center_cell(cell))
 
 
 func _handle_explored(_cell: CellBase) -> void:

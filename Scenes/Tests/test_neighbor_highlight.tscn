@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://e3x0q3q1q3q4"]
+
+[ext_resource type="Script" path="res://Scripts/Tests/test_neighbor_highlight.gd" id="1_2m5n7"]
+
+[node name="TestNeighborHighlight" type="Node"]
+script = ExtResource("1_2m5n7")
