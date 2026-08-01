@@ -27,6 +27,9 @@ func _ready() -> void:
 		1: _square_board_scene,
 		2: _hexagon_board_scene,
 	}
+	# Clean up static cell pools on exit so off-tree pooled nodes don't leak RIDs.
+	get_tree().root.tree_exiting.connect(BaseBoard.clear_pools)
+
 	_board_gui.reset.connect(_reset)
 	_board_gui.pause_requested.connect(_on_pause_requested)
 	_defuse_button.modulate = GlobalState.accent_color
@@ -108,6 +111,17 @@ func _reset() -> void:
 	sm.show_main_menu(_main_menu)
 
 
+## Public wrapper used by PauseOverlay.
+func return_to_menu() -> void:
+	_reset()
+
+
+## Public wrapper used by PauseOverlay to restart the current game.
+func restart_game() -> void:
+	_reset()
+	_load_game()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
@@ -124,7 +138,7 @@ func _handle_back_button() -> void:
 	var sm: ScreenManager = $ScreenManager
 	if _board and _board.get_child_count() > 0:
 		# Gameplay is active — toggle pause
-		if sm._current and sm._current is PauseOverlay:
+		if sm.get_current_screen() is PauseOverlay:
 			sm.hide_pause(_board)
 		else:
 			sm.show_pause(_board)
@@ -154,4 +168,4 @@ func _on_no_border_toggled(toggled_on: bool) -> void:
 
 
 func _on_wrap_mode_changed(wrap: bool) -> void:
-	pass  # Setting is already updated in GlobalState by MainMenu; board picks it up on next game start.
+	Settings.board_wrap = wrap

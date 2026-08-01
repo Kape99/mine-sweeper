@@ -32,6 +32,9 @@ const RECENTER_THRESHOLD: float = 0.5
 ## matching CameraController's own margin so panning feels consistent.
 const PAN_MARGIN: float = 100.0
 
+## Number of interactive cells to pre-create per variant at startup.
+const POOL_PREWARM: int = 200
+
 @export var cols: int = 10
 @export var rows: int = 10
 @export var mines: int = 10
@@ -43,6 +46,12 @@ const PAN_MARGIN: float = 100.0
 signal on_defuse_changed(defuse_value: int)
 signal on_game_started(mines_number: int)
 signal on_game_finished(is_win: bool, time: float)
+
+## Static pool of reusable interactive cells, keyed by scene path.
+static var _cell_pools: Dictionary = {}
+
+## Whether the static pools have been pre-warmed for this board's variants.
+static var _pools_warmed: bool = false
 
 ## The logical board — 2D array [row][col] of the real, interactive cells.
 var board_state: Array = []
@@ -58,6 +67,9 @@ var _is_game_over: bool = false
 var _to_be_explored: int = 0
 var _active_tween: Tween = null
 
+## Cached lightweight display cell scenes, keyed by cell type index.
+var _display_cell_scenes: Dictionary = {}
+
 ## When true (default), the board is toroidal — neighbors wrap, camera
 ## recenter is active, and there are no camera bounds. When false, the
 ## board has hard edges, the camera is clamped to the board bounds, and
@@ -67,6 +79,28 @@ var _wrap_mode: bool = true
 
 func _ready() -> void:
 	_measure_cell_size()
+	_warm_pools()
+
+
+## Pre-creates a pool of reusable interactive cells for each cell variant.
+## Called once per board instance; static flag keeps it from repeating.
+func _warm_pools() -> void:
+	if _pools_warmed:
+		return
+	_pools_warmed = true
+	for scene: PackedScene in cells:
+		warm_pool(scene, POOL_PREWARM)
+
+
+## Static helper to pre-warm a pool for any board cell scene.
+static func warm_pool(scene: PackedScene, count: int) -> void:
+	if not scene or _cell_pools.has(scene.resource_path):
+		return
+	var pool: Array = []
+	pool.resize(count)
+	for i: int in count:
+		pool[i] = scene.instantiate()
+	_cell_pools[scene.resource_path] = pool
 
 
 ## Instantiates a sample cell to determine pixel dimensions.
@@ -119,9 +153,14 @@ func clear() -> void:
 	_defused_count = 0
 	_is_game_started = false
 	_is_game_over = false
-	for tile: GridContainer in _tiles:
+	for tile_idx: int in _tiles.size():
+		var tile: GridContainer = _tiles[tile_idx]
+		var is_center: bool = not _wrap_mode or (tile_idx == CENTER_TILE_INDEX)
 		for cell in tile.get_children():
-			cell.free()
+			if is_center and cell is CellBase:
+				_release_cell(cell)
+			else:
+				cell.free()
 		tile.free()
 	_tiles.clear()
 	board_state = []
@@ -143,10 +182,52 @@ func reset() -> void:
 
 
 func _connect_signals(cell: CellBase) -> void:
-	cell.cell_pressed.connect(_on_cell_pressed)
-	cell.cell_explored.connect(_handle_explored)
-	cell.cell_defused.connect(_handle_defuse)
-	cell.cell_exploded.connect(_handle_explosion)
+	if not cell.cell_pressed.is_connected(_on_cell_pressed):
+		cell.cell_pressed.connect(_on_cell_pressed)
+	if not cell.cell_explored.is_connected(_handle_explored):
+		cell.cell_explored.connect(_handle_explored)
+	if not cell.cell_defused.is_connected(_handle_defuse):
+		cell.cell_defused.connect(_handle_defuse)
+	if not cell.cell_exploded.is_connected(_handle_explosion):
+		cell.cell_exploded.connect(_handle_explosion)
+
+
+## Pulls a reusable cell from the static pool, or instantiates a new one.
+func _acquire_cell(p_idx: int) -> CellBase:
+	var scene: PackedScene = cells[p_idx]
+	var pool: Array = _cell_pools.get(scene.resource_path, [])
+	if not pool.is_empty():
+		return pool.pop_back()
+	return scene.instantiate()
+
+
+## Returns an interactive cell to the static pool for reuse.
+func _release_cell(cell: CellBase) -> void:
+	if cell.cell_pressed.is_connected(_on_cell_pressed):
+		cell.cell_pressed.disconnect(_on_cell_pressed)
+	if cell.cell_explored.is_connected(_handle_explored):
+		cell.cell_explored.disconnect(_handle_explored)
+	if cell.cell_defused.is_connected(_handle_defuse):
+		cell.cell_defused.disconnect(_handle_defuse)
+	if cell.cell_exploded.is_connected(_handle_explosion):
+		cell.cell_exploded.disconnect(_handle_explosion)
+	var parent: Node = cell.get_parent()
+	if parent:
+		parent.remove_child(cell)
+	cell.reset_state()
+	var pool: Array = _cell_pools.get(cell.scene_file_path, [])
+	pool.append(cell)
+	_cell_pools[cell.scene_file_path] = pool
+
+
+## Frees every pooled cell. Useful for tests that would otherwise leak
+## CanvasItem RIDs held by off-tree pooled nodes.
+static func clear_pools() -> void:
+	for pool: Array in _cell_pools.values():
+		for cell: CellBase in pool:
+			cell.free()
+	_cell_pools.clear()
+	_pools_warmed = false
 
 
 ## Creates the tile block. In wrap mode this is a TILE_GRID_SIZE² grid
@@ -183,9 +264,9 @@ func _build_tiles() -> void:
 			for row: int in rows:
 				board.append([])
 				for col: int in cols:
-					var cell_instance: CellBase = cells[
+					var cell_instance: CellBase = _acquire_cell(
 						_get_cell_type_idx(col_offset + col, row_offset + row)
-					].instantiate()
+					)
 					grid.add_child(cell_instance)
 					cell_instance.coord = Vector2i(col, row)
 					_connect_signals(cell_instance)
@@ -194,13 +275,12 @@ func _build_tiles() -> void:
 		else:
 			for row: int in rows:
 				for col: int in cols:
-					grid.add_child(_create_display_cell())
+					grid.add_child(_create_display_cell(col_offset + col, row_offset + row))
 
 	if _wrap_mode:
-		# Sync all display cells to match center tile initial state
-		for row: int in rows:
-			for col: int in cols:
-				_sync_display_to_copies(board_state[row][col])
+		# All cells start in the unknown state, so display copies already match.
+		# Per-cell sync happens on explore/defuse.
+		pass
 
 
 ## Returns the index into the `cells` array for a given global (col, row).
@@ -214,44 +294,59 @@ func _get_cell_type_idx(_col: int, _row: int) -> int:
 
 
 ## Creates a lightweight display-only cell for non-center tiles.
-## No Area2D, no FSM, no collision — just visuals.
-func _create_display_cell() -> Control:
+## Mirrors the real cell's shape without the heavy Area2D/state overhead.
+func _create_display_cell(p_col: int, p_row: int) -> Control:
+	var idx: int = _get_cell_type_idx(p_col, p_row)
+	if not _display_cell_scenes.has(idx):
+		_display_cell_scenes[idx] = _build_display_cell_scene(idx)
+	return _display_cell_scenes[idx].instantiate()
+
+
+## Builds a stripped-down PackedScene for a display-only cell variant.
+func _build_display_cell_scene(p_idx: int) -> PackedScene:
+	var template: CellBase = cells[p_idx].instantiate()
 	var cell: Control = Control.new()
-	cell.custom_minimum_size = _cell_size
-	cell.mouse_filter = MOUSE_FILTER_IGNORE
+	cell.custom_minimum_size = template.custom_minimum_size
+	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var poly: Polygon2D = Polygon2D.new()
-	var half: Vector2 = _cell_size / 2.0
-	poly.polygon = PackedVector2Array([
-		Vector2(-half.x, -half.y),
-		Vector2(half.x, -half.y),
-		Vector2(half.x, half.y),
-		Vector2(-half.x, half.y),
-	])
-	poly.position = half
-	poly.modulate = GlobalState.secondary_color
-	cell.add_child(poly)
+	var area: Area2D = template.get_node("Area2D")
+	var poly: Polygon2D = template.get_node("Area2D/Polygon2D")
+	var node2d: Node2D = template.get_node("Area2D/Node2D")
+	var content: Control = template.get_node("Area2D/Node2D/Content")
+	var label: Label = template.get_node("Area2D/Node2D/Content/Label")
+	var icon: TextureRect = template.get_node("Area2D/Node2D/Content/TextureRect")
 
-	var label: Label = Label.new()
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.size = _cell_size
-	label.position = Vector2.ZERO
-	label.modulate = GlobalState.main_color
-	label.mouse_filter = MOUSE_FILTER_IGNORE
-	cell.add_child(label)
+	var poly_copy: Polygon2D = poly.duplicate()
+	poly_copy.position = area.position + poly.position
+	poly_copy.modulate = GlobalState.secondary_color
+	cell.add_child(poly_copy)
+	poly_copy.owner = cell
 
-	var icon: TextureRect = TextureRect.new()
-	icon.custom_minimum_size = _cell_size * 0.6
-	icon.size = icon.custom_minimum_size
-	icon.position = (_cell_size - icon.size) / 2.0
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.modulate = GlobalState.main_color
-	icon.mouse_filter = MOUSE_FILTER_IGNORE
-	cell.add_child(icon)
+	var label_copy: Label = label.duplicate()
+	label_copy.position = area.position + node2d.position + content.position + label.position
+	label_copy.size = label.size
+	label_copy.anchors_preset = Control.PRESET_TOP_LEFT
+	label_copy.horizontal_alignment = label.horizontal_alignment
+	label_copy.vertical_alignment = label.vertical_alignment
+	label_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cell.add_child(label_copy)
+	label_copy.owner = cell
 
-	return cell
+	var icon_copy: TextureRect = icon.duplicate()
+	icon_copy.position = area.position + node2d.position + content.position + icon.position
+	icon_copy.size = icon.size
+	icon_copy.anchors_preset = Control.PRESET_TOP_LEFT
+	icon_copy.expand_mode = icon.expand_mode
+	icon_copy.stretch_mode = icon.stretch_mode
+	icon_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cell.add_child(icon_copy)
+	icon_copy.owner = cell
+
+	template.free()
+
+	var ps: PackedScene = PackedScene.new()
+	ps.pack(cell)
+	return ps
 
 
 ## Maps any clicked cell (copy or the real one) back to the logical cell.
@@ -298,7 +393,8 @@ func _handle_tile_tap(global_pos: Vector2) -> void:
 		var col: int = int(local_pos.x / cell_step.x)
 		var row: int = int(local_pos.y / cell_step.y)
 		if col >= 0 and col < cols and row >= 0 and row < rows:
-			Input.vibrate_handheld(CellBase.TAP_VIBRATION_MS)
+			if Settings.vibration_enabled:
+				Input.vibrate_handheld(CellBase.TAP_VIBRATION_MS)
 			var logical_cell: CellBase = board_state[row][col]
 			_on_cell_pressed(logical_cell, logical_cell.nearby)
 		return
@@ -352,51 +448,38 @@ func _sync_display_to_copies(source: CellBase) -> void:
 
 
 func _apply_display_from_source(target: Node, source: CellBase) -> void:
-	if target is CellBase:
-		if source.is_explored():
-			if source.is_mine():
-				target.set_display(GlobalState.main_color, GlobalState.secondary_color)
-				target.set_icon(MINE_ICON, GlobalState.background_color)
-			else:
-				var text: String = str(source.nearby) if source.nearby > 0 else ""
-				target.set_display(GlobalState.main_color, GlobalState.secondary_color, null, text)
-		elif source.is_defused():
-			target.set_display(GlobalState.secondary_color, GlobalState.main_color, FLAG_ICON)
-		else:
-			target.set_display(GlobalState.secondary_color, GlobalState.main_color)
-	else:
-		# Lightweight display cell — children: Polygon2D, Label, TextureRect
-		if target.get_child_count() < 3:
-			return
-		var poly: Polygon2D = target.get_child(0)
-		var label: Label = target.get_child(1)
-		var icon: TextureRect = target.get_child(2)
+	# Display copies are lightweight Controls with children: Polygon2D, Label, TextureRect
+	if target.get_child_count() < 3:
+		return
+	var poly: Polygon2D = target.get_child(0)
+	var label: Label = target.get_child(1)
+	var icon: TextureRect = target.get_child(2)
 
-		if source.is_explored():
-			if source.is_mine():
-				poly.modulate = GlobalState.main_color
-				label.modulate = GlobalState.secondary_color
-				icon.modulate = GlobalState.background_color
-				icon.texture = MINE_ICON
-				label.text = ""
-			else:
-				poly.modulate = GlobalState.main_color
-				label.modulate = GlobalState.secondary_color
-				icon.modulate = GlobalState.secondary_color
-				icon.texture = null
-				label.text = str(source.nearby) if source.nearby > 0 else ""
-		elif source.is_defused():
-			poly.modulate = GlobalState.secondary_color
-			label.modulate = GlobalState.main_color
-			icon.modulate = GlobalState.main_color
-			icon.texture = FLAG_ICON
+	if source.is_explored():
+		if source.is_mine():
+			poly.modulate = Color.RED
+			label.modulate = Color.WHITE
+			icon.modulate = Color.WHITE
+			icon.texture = MINE_ICON
 			label.text = ""
 		else:
-			poly.modulate = GlobalState.secondary_color
-			label.modulate = GlobalState.main_color
-			icon.modulate = GlobalState.main_color
+			poly.modulate = GlobalState.main_color
+			label.modulate = GlobalState.secondary_color
+			icon.modulate = GlobalState.secondary_color
 			icon.texture = null
-			label.text = ""
+			label.text = str(source.nearby) if source.nearby > 0 else ""
+	elif source.is_defused():
+		poly.modulate = GlobalState.secondary_color
+		label.modulate = GlobalState.main_color
+		icon.modulate = GlobalState.main_color
+		icon.texture = FLAG_ICON
+		label.text = ""
+	else:
+		poly.modulate = GlobalState.secondary_color
+		label.modulate = GlobalState.main_color
+		icon.modulate = GlobalState.main_color
+		icon.texture = null
+		label.text = ""
 
 
 func _handle_explored(_cell: CellBase) -> void:
@@ -420,7 +503,9 @@ func _handle_explosion(_cell: CellBase) -> void:
 		_is_game_over = true
 		on_game_finished.emit(false, 0.0)
 		_reveal_mines_from(_cell)
-		Input.vibrate_handheld(EXPLOSION_VIBRATION_MS)
+		_sync_display_to_copies(_cell)
+		if Settings.vibration_enabled:
+			Input.vibrate_handheld(EXPLOSION_VIBRATION_MS)
 
 
 func _kill_active_tween() -> void:
@@ -485,16 +570,38 @@ func _on_cell_pressed(cell: CellBase, _p_nearby: int) -> void:
 
 
 ## Chord reveal: if number of defused neighbors equals cell's nearby count,
-## reveal all remaining un-explored, un-defused neighbors.
+## reveal all remaining un-explored, un-defused neighbors, including any
+## zero-cascade cells reachable from them. The whole set is animated in a
+## single wave so nested tweens cannot kill each other.
 func _chord_reveal(cell: CellBase) -> void:
 	var defused: int = 0
-	var to_reveal: Array[CellBase] = []
+	var seeds: Array[CellBase] = []
 	for neighbor: CellBase in _get_nearby_cells(cell).keys():
 		if neighbor.is_defused():
 			defused += 1
 		elif not neighbor.is_explored():
-			to_reveal.append(neighbor)
-	if defused != cell.nearby or to_reveal.is_empty():
+			seeds.append(neighbor)
+	if defused != cell.nearby or seeds.is_empty():
+		return
+
+	var to_reveal: Array[CellBase] = []
+	var visited: Dictionary = {}
+	var queue: Array[CellBase] = seeds.duplicate()
+	for s: CellBase in seeds:
+		visited[s] = true
+	var head: int = 0
+	while head < queue.size():
+		var current: CellBase = queue[head]
+		head += 1
+		to_reveal.append(current)
+		if current.nearby == 0:
+			for n: CellBase in _get_nearby_cells(current).keys():
+				if visited.has(n) or n.is_explored() or n.is_defused():
+					continue
+				visited[n] = true
+				queue.append(n)
+
+	if to_reveal.is_empty():
 		return
 
 	to_reveal.sort_custom(
@@ -502,14 +609,9 @@ func _chord_reveal(cell: CellBase) -> void:
 			return a.coord.distance_to(cell.coord) < b.coord.distance_to(cell.coord)
 	)
 	var tween: Tween = _create_tween()
-	for neighbor: CellBase in to_reveal:
-		var nc: CellBase = neighbor
-		tween.tween_callback(
-			func():
-				nc.explore()
-				if nc.nearby == 0:
-					_explore_nearby(nc)
-		).set_delay(REVEAL_DELAY_FACTOR)
+	for reveal_cell: CellBase in to_reveal:
+		var rc: CellBase = reveal_cell
+		tween.tween_callback(func(): rc.explore()).set_delay(REVEAL_DELAY_FACTOR)
 
 
 func _explore_nearby(cell: CellBase) -> void:

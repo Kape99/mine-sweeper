@@ -12,6 +12,8 @@ func run() -> void:
 	_test_square()
 	_test_hexagon()
 	_test_triangle()
+	# Pooled cells are off-tree and would leak CanvasItem RIDs at exit.
+	BaseBoard.clear_pools()
 
 
 func _test_square() -> void:

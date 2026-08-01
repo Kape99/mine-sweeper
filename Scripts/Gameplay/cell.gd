@@ -1,6 +1,5 @@
 ## Base class for all cell types (square, triangle, hexagon).
-## Manages cell state through [StateMachine], handles touch input, and emits
-## gameplay signals consumed by the board.
+## Handles touch input and emits gameplay signals consumed by the board.
 class_name CellBase
 extends Container
 
@@ -16,9 +15,16 @@ const TAP_VIBRATION_MS: int = 100
 ## second polygon per cell shape.
 const COLLISION_SCALE: float = 1.1
 
+const FLAG_ICON: Texture2D = preload("res://Asset/Icons/flag.svg")
+const MINE_ICON: Texture2D = preload("res://Asset/Icons/mine.svg")
+
+enum CellState { UNKNOWN, DEFUSED, EXPLORED }
+
+## Current visual/interaction state of the cell.
+var _cell_state: CellState = CellState.UNKNOWN
+
 @onready var _cell_text: Label = $Area2D/Node2D/Content/Label
 @onready var _cell_icon: TextureRect = $Area2D/Node2D/Content/TextureRect
-@onready var _cell_fsm: StateMachine = $StateMachine
 @onready var _cell_triangle: Polygon2D = $Area2D/Polygon2D
 @onready var _cell_collision: CollisionPolygon2D = $Area2D/CollisionPolygon2D
 
@@ -50,8 +56,17 @@ var _touch_position: Vector2
 
 
 func _ready() -> void:
-	_cell_fsm.setup()
 	_bind_collision_shape()
+	reset_state()
+
+
+## Resets the cell to its pre-game unknown state. Used by object pools.
+func reset_state() -> void:
+	nearby = 0
+	_cell_state = CellState.UNKNOWN
+	set_display(GlobalState.secondary_color, GlobalState.main_color)
+	_cell_icon.texture = null
+	_cell_text.text = ""
 
 
 ## Derives the tap-collision polygon from the visible fill polygon by
@@ -92,26 +107,44 @@ func is_mine() -> bool:
 
 ## Attempt to toggle defuse (flag) on this cell.
 func defuse() -> void:
-	_cell_fsm.defuse()
+	if _cell_state == CellState.EXPLORED:
+		return
+	if _cell_state == CellState.UNKNOWN:
+		_cell_state = CellState.DEFUSED
+		set_display(GlobalState.secondary_color, GlobalState.main_color, FLAG_ICON)
+		cell_defused.emit(self, true)
+	else:
+		_cell_state = CellState.UNKNOWN
+		set_display(GlobalState.secondary_color, GlobalState.main_color)
+		cell_defused.emit(self, false)
 
 
 ## Attempt to explore (reveal) this cell.
 func explore() -> void:
-	_cell_fsm.explore()
+	if _cell_state != CellState.UNKNOWN:
+		return
+	_cell_state = CellState.EXPLORED
+	if is_mine():
+		set_display(Color.RED, Color.WHITE)
+		set_icon(MINE_ICON, Color.WHITE)
+		cell_exploded.emit(self)
+	else:
+		var text: String = str(nearby) if nearby > 0 else ""
+		set_display(GlobalState.main_color, GlobalState.secondary_color, null, text)
+		cell_explored.emit(self)
 
 
 ## Returns [code]true[/code] if this cell has already been explored.
 func is_explored() -> bool:
-	return _cell_fsm.state is ExploreState
+	return _cell_state == CellState.EXPLORED
 
 
 ## Returns [code]true[/code] if this cell is currently flagged.
 func is_defused() -> bool:
-	return _cell_fsm.state is DefuseState
+	return _cell_state == CellState.DEFUSED
 
 
-## Updates the visual appearance of this cell. Called by FSM states to stay
-## decoupled from the internal node tree.
+## Updates the visual appearance of this cell.
 func set_display(bg_color: Color, content_color: Color, icon: Texture2D = null, text: String = "") -> void:
 	_cell_triangle.modulate = bg_color
 	_cell_text.modulate = content_color
@@ -132,5 +165,6 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 		_touch_position = event.position
 	if event is InputEventScreenTouch and not event.pressed:
 		if _touch_position.distance_to(event.position) < TAP_THRESHOLD:
-			Input.vibrate_handheld(TAP_VIBRATION_MS)
+			if Settings.vibration_enabled:
+				Input.vibrate_handheld(TAP_VIBRATION_MS)
 			cell_pressed.emit(self, nearby)
