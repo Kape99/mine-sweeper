@@ -84,31 +84,29 @@ jobs:
       - name: Generate export preset
         run: |
           mkdir -p "${BUILD_DIR}"
-          cat > export_presets.cfg <<EOF
-          [preset "${EXPORT_PRESET}"]
-          name="${EXPORT_PRESET}"
-          platform="Android"
-          preset/custom_template_debug=""
-          preset/custom_template_release=""
-          preset/application_id="${APP_ID}"
-          preset/icon="res://Asset/Icons/Icon.png"
-          preset/version_code=${VERSION_CODE}
-          preset/version_string="${VERSION_STRING}"
-          preset/one_click_deploy=false
-          preset/architectures=PackedStringArray("arm64-v8a", "armeabi-v7a")
-          preset/x86_64=false
-          preset/x86=false
-          preset/armv7=true
-          preset/arm64_v8a=true
-          preset/byteswap=false
-          preset/keystore="${KEYSTORE_PATH}"
-          preset/keystore_pass="${ANDROID_KEYSTORE_PASSWORD}"
-          preset/key="${ANDROID_KEY_ALIAS}"
-          preset/key_pass="${ANDROID_KEY_PASSWORD}"
-          preset/export_mode="file"
-          preset/build_tools_version="34.0.0"
-          preset/sdk_build_tools_version="34.0.0"
-          EOF
+          echo "[preset \"${EXPORT_PRESET}\"]" > export_presets.cfg
+          echo "name=\"${EXPORT_PRESET}\"" >> export_presets.cfg
+          echo 'platform="Android"' >> export_presets.cfg
+          echo 'preset/custom_template_debug=""' >> export_presets.cfg
+          echo 'preset/custom_template_release=""' >> export_presets.cfg
+          echo "preset/application_id=\"${APP_ID}\"" >> export_presets.cfg
+          echo 'preset/icon="res://Asset/Icons/Icon.png"' >> export_presets.cfg
+          echo "preset/version_code=${VERSION_CODE}" >> export_presets.cfg
+          echo "preset/version_string=\"${VERSION_STRING}\"" >> export_presets.cfg
+          echo 'preset/one_click_deploy=false' >> export_presets.cfg
+          echo 'preset/architectures=PackedStringArray("arm64-v8a", "armeabi-v7a")' >> export_presets.cfg
+          echo 'preset/x86_64=false' >> export_presets.cfg
+          echo 'preset/x86=false' >> export_presets.cfg
+          echo 'preset/armv7=true' >> export_presets.cfg
+          echo 'preset/arm64_v8a=true' >> export_presets.cfg
+          echo 'preset/byteswap=false' >> export_presets.cfg
+          echo "preset/keystore=\"${KEYSTORE_PATH}\"" >> export_presets.cfg
+          echo "preset/keystore_pass=\"${ANDROID_KEYSTORE_PASSWORD}\"" >> export_presets.cfg
+          echo "preset/key=\"${ANDROID_KEY_ALIAS}\"" >> export_presets.cfg
+          echo "preset/key_pass=\"${ANDROID_KEY_PASSWORD}\"" >> export_presets.cfg
+          echo 'preset/export_mode="file"' >> export_presets.cfg
+          echo 'preset/build_tools_version="34.0.0"' >> export_presets.cfg
+          echo 'preset/sdk_build_tools_version="34.0.0"' >> export_presets.cfg
           cat export_presets.cfg
         env:
           EXPORT_PRESET: ${{ env.EXPORT_PRESET }}
