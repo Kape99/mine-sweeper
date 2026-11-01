@@ -15,7 +15,7 @@ on:
         default: "1.0"
 
 env:
-  GODOT_VERSION: 4.7
+  GODOT_VERSION: 4.7.2
   APP_ID: com.yourdomain.minesweeper
   EXPORT_PRESET: Android
   BUILD_DIR: build
@@ -32,15 +32,15 @@ jobs:
         id: vars
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "version_code=${{ github.event.inputs.version_code }}" >> $GITHUB_OUTPUT
-          echo "version_string=${{ github.event.inputs.version_string }}" >> $GITHUB_OUTPUT
+            echo "version_code=${{ github.event.inputs.version_code }}" >> $GITHUB_OUTPUT
+            echo "version_string=${{ github.event.inputs.version_string }}" >> $GITHUB_OUTPUT
           else
-          tag="${{ github.ref_name }}"
-          version="${tag#v}"
-          echo "version_string=$version" >> $GITHUB_OUTPUT
-          IFS='.' read -r major minor patch <<< "$version"
-          code=$((major * 10000 + minor * 100 + ${patch:-0}))
-          echo "version_code=$code" >> $GITHUB_OUTPUT
+            tag="${{ github.ref_name }}"
+            version="${tag#v}"
+            echo "version_string=$version" >> $GITHUB_OUTPUT
+            IFS='.' read -r major minor patch <<< "$version"
+            code=$((major * 10000 + minor * 100 + ${patch:-0}))
+            echo "version_code=$code" >> $GITHUB_OUTPUT
           fi
 
       - name: Set up JDK 17
@@ -61,60 +61,54 @@ jobs:
       - name: Download Godot headless binary
         run: |
           mkdir -p godot
-          wget -q https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/Godot_v${GODOT_VERSION}-stable_linux_headless.64.zip             -O godot/godot.zip
+          wget -q https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip \
+            -O godot/godot.zip
           unzip -q godot/godot.zip -d godot
-          chmod +x godot/Godot_v${GODOT_VERSION}-stable_linux_headless.64
+          chmod +x godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64
 
       - name: Install Android export templates
         run: |
           mkdir -p ~/.local/share/godot/export_templates
-          wget -q https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/Godot_v${GODOT_VERSION}-stable_export_android.tpz             -O ~/.local/share/godot/export_templates/android.tpz
-
-      - name: Fail if signing secrets are missing
-        if: ${{ secrets.ANDROID_KEYSTORE_B64 == '' || secrets.ANDROID_KEYSTORE_PASSWORD == '' || secrets.ANDROID_KEY_ALIAS == '' || secrets.ANDROID_KEY_PASSWORD == '' }}
-        run: |
-          echo "ERROR: Missing Android signing secrets. Set ANDROID_KEYSTORE_B64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD."
-          exit 1
+          wget -q https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz \
+            -O ~/.local/share/godot/export_templates/android.tpz
 
       - name: Decode signing keystore
         run: |
           mkdir -p "${BUILD_DIR}"
           echo "${ANDROID_KEYSTORE_B64}" | base64 -d > "${BUILD_DIR}/release.keystore"
           echo "KEYSTORE_PATH=${BUILD_DIR}/release.keystore" >> $GITHUB_ENV
-          env:
+        env:
           BUILD_DIR: ${{ env.BUILD_DIR }}
           ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
 
       - name: Generate export preset
         run: |
           mkdir -p "${BUILD_DIR}"
-          cat > export_presets.cfg <<'EOF'
-          [preset "${EXPORT_PRESET}"]
-          name="${EXPORT_PRESET}"
-          platform="Android"
-          preset/custom_template_debug=""
-          preset/custom_template_release=""
-          preset/application_id="${APP_ID}"
-          preset/icon="res://Asset/Icons/Icon.png"
-          preset/version_code=${VERSION_CODE}
-          preset/version_string="${VERSION_STRING}"
-          preset/one_click_deploy=false
-          preset/architectures=PackedStringArray("arm64-v8a", "armeabi-v7a")
-          preset/x86_64=false
-          preset/x86=false
-          preset/armv7=true
-          preset/arm64_v8a=true
-          preset/byteswap=false
-          preset/keystore="${KEYSTORE_PATH}"
-          preset/keystore_pass="${ANDROID_KEYSTORE_PASSWORD}"
-          preset/key="${ANDROID_KEY_ALIAS}"
-          preset/key_pass="${ANDROID_KEY_PASSWORD}"
-          preset/export_mode="file"
-          preset/build_tools_version="34.0.0"
-          preset/sdk_build_tools_version="34.0.0"
-          EOF
+          echo '[preset "${EXPORT_PRESET}"]' > export_presets.cfg
+          echo 'name="${EXPORT_PRESET}"' >> export_presets.cfg
+          echo 'platform="Android"' >> export_presets.cfg
+          echo 'preset/custom_template_debug=""' >> export_presets.cfg
+          echo 'preset/custom_template_release=""' >> export_presets.cfg
+          echo 'preset/application_id="${APP_ID}"' >> export_presets.cfg
+          echo 'preset/icon="res://Asset/Icons/Icon.png"' >> export_presets.cfg
+          echo "preset/version_code=${VERSION_CODE}" >> export_presets.cfg
+          echo "preset/version_string=\"${VERSION_STRING}\"" >> export_presets.cfg
+          echo 'preset/one_click_deploy=false' >> export_presets.cfg
+          echo 'preset/architectures=PackedStringArray("arm64-v8a", "armeabi-v7a")' >> export_presets.cfg
+          echo 'preset/x86_64=false' >> export_presets.cfg
+          echo 'preset/x86=false' >> export_presets.cfg
+          echo 'preset/armv7=true' >> export_presets.cfg
+          echo 'preset/arm64_v8a=true' >> export_presets.cfg
+          echo 'preset/byteswap=false' >> export_presets.cfg
+          echo "preset/keystore=\"${KEYSTORE_PATH}\"" >> export_presets.cfg
+          echo "preset/keystore_pass=\"${ANDROID_KEYSTORE_PASSWORD}\"" >> export_presets.cfg
+          echo "preset/key=\"${ANDROID_KEY_ALIAS}\"" >> export_presets.cfg
+          echo "preset/key_pass=\"${ANDROID_KEY_PASSWORD}\"" >> export_presets.cfg
+          echo 'preset/export_mode="file"' >> export_presets.cfg
+          echo 'preset/build_tools_version="34.0.0"' >> export_presets.cfg
+          echo 'preset/sdk_build_tools_version="34.0.0"' >> export_presets.cfg
           cat export_presets.cfg
-          env:
+        env:
           EXPORT_PRESET: ${{ env.EXPORT_PRESET }}
           APP_ID: ${{ env.APP_ID }}
           VERSION_CODE: ${{ steps.vars.outputs.version_code }}
@@ -127,11 +121,11 @@ jobs:
 
       - name: Export Android App Bundle
         run: |
-          ./godot/Godot_v${GODOT_VERSION}-stable_linux_headless.64 \
-          --headless \
-          --export-release "${EXPORT_PRESET}" \
-          "${BUILD_DIR}/${ABB_NAME}.aab"
-          env:
+          ./godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 \
+            --headless \
+            --export-release "${EXPORT_PRESET}" \
+            "${BUILD_DIR}/${ABB_NAME}.aab"
+        env:
           EXPORT_PRESET: ${{ env.EXPORT_PRESET }}
           BUILD_DIR: ${{ env.BUILD_DIR }}
           ABB_NAME: ${{ env.ABB_NAME }}
@@ -144,7 +138,7 @@ jobs:
         run: |
           ls -lh "${BUILD_DIR}/${ABB_NAME}.aab"
           file "${BUILD_DIR}/${ABB_NAME}.aab"
-          env:
+        env:
           BUILD_DIR: ${{ env.BUILD_DIR }}
           ABB_NAME: ${{ env.ABB_NAME }}
 
