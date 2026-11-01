@@ -116,7 +116,6 @@ jobs:
           APP_ID: ${{ env.APP_ID }}
           VERSION_CODE: ${{ steps.vars.outputs.version_code }}
           VERSION_STRING: ${{ steps.vars.outputs.version_string }}
-          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
