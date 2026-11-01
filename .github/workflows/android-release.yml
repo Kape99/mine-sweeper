@@ -1,0 +1,118 @@
+name: Build Android App Bundle
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: "Android versionCode (e.g. 2)"
+        required: true
+        default: "1"
+      version_string:
+        description: "Android versionName (e.g. 1.0.1)"
+        required: true
+        default: "1.0"
+
+env:
+  GODOT_VERSION: 4.7
+  APP_ID: com.yourdomain.minesweeper
+  EXPORT_PRESET: Android
+  BUILD_DIR: build
+  ABB_NAME: MineSweeper
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK + NDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 34
+          target: android-34
+          build-tools: 34.0.0
+          ndk: 27.0.12077973
+          cmake: 3.22.1
+
+      - name: Download Godot headless binary
+        run: |
+          mkdir -p godot
+          wget -q https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/Godot_v${GODOT_VERSION}-stable_linux_headless.64.zip \
+            -O godot/godot.zip
+          unzip -q godot/godot.zip -d godot
+          chmod +x godot/Godot_v${GODOT_VERSION}-stable_linux_headless.64
+
+      - name: Download Android export templates
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates
+          wget -q https://downloads.tuxfamily.org/godotengine/${GODOT_VERSION}/Godot_v${GODOT_VERSION}-stable_export_android.tpz \
+            -O ~/.local/share/godot/export_templates/android.tpz
+
+      - name: Decode signing keystore
+        if: secrets.ANDROID_KEYSTORE_B64 != ''
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_B64 }}" | base64 -d > "${{ env.BUILD_DIR }}/release.keystore"
+          echo "KEYSTORE_PATH=${{ env.BUILD_DIR }}/release.keystore" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Generate export preset
+        run: |
+          mkdir -p "${{ env.BUILD_DIR }}"
+          cat > export_presets.cfg <<EOF
+[preset "${{ env.EXPORT_PRESET }}"]
+name="${{ env.EXPORT_PRESET }}"
+platform="Android"
+preset/custom_template_debug=""
+preset/custom_template_release=""
+preset/application_id="${{ env.APP_ID }}"
+preset/icon="res://Asset/Icons/Icon.png"
+preset/version_code=${{ github.event.inputs.version_code || 1 }}
+preset/version_string="${{ github.event.inputs.version_string || '1.0' }}"
+preset/one_click_deploy=false
+preset/architectures=PackedStringArray("arm64-v8a", "armeabi-v7a")
+preset/x86_64=false
+preset/x86=false
+preset/armv7=true
+preset/arm64_v8a=true
+preset/byteswap=false
+preset/keystore="${{ env.KEYSTORE_PATH }}"
+preset/keystore_pass="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
+preset/key="${{ secrets.ANDROID_KEY_ALIAS }}"
+preset/key_pass="${{ secrets.ANDROID_KEY_PASSWORD }}"
+preset/export_mode="file"
+preset/build_tools_version="34.0.0"
+preset/sdk_build_tools_version="34.0.0"
+EOF
+          cat export_presets.cfg
+
+      - name: Export Android App Bundle
+        run: |
+          ./godot/Godot_v${GODOT_VERSION}-stable_linux_headless.64 \
+            --headless \
+            --export-release "${{ env.EXPORT_PRESET }}" \
+            "${{ env.BUILD_DIR }}/${{ env.ABB_NAME }}.aab"
+        env:
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+
+      - name: Verify ABB
+        run: |
+          ls -lh "${{ env.BUILD_DIR }}/${{ env.ABB_NAME }}.aab"
+          file "${{ env.BUILD_DIR }}/${{ env.ABB_NAME }}.aab"
+
+      - name: Upload Android App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app-bundle
+          path: ${{ env.BUILD_DIR }}/${{ env.ABB_NAME }}.aab
+          retention-days: 30

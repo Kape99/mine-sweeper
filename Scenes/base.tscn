@@ -8,16 +8,6 @@
 [ext_resource type="Script" uid="uid://bmbpmlmqovo0v" path="res://Scripts/GUI/screen_manager.gd" id="16_screen_mgr"]
 [ext_resource type="PackedScene" uid="uid://cktrketomxyd5" path="res://Scenes/Menu/MainMenu.tscn" id="17_main_menu"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_t6nux"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nj83x"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_m86is"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_q62j5"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ixin1"]
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_e68ls"]
 shader = ExtResource("15_t7wxk")
 shader_parameter/lod = 20.0
@@ -26,6 +16,7 @@ shader_parameter/lod = 20.0
 script = ExtResource("1_smbv4")
 
 [node name="Camera" type="Camera2D" parent="." unique_id=1140760277]
+anchor_mode = 0
 script = ExtResource("2_buixl")
 
 [node name="ScreenManager" type="Control" parent="." unique_id=999000001]
@@ -35,7 +26,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 script = ExtResource("16_screen_mgr")
 
 [node name="ScreensContainer" type="Control" parent="." unique_id=1715830744]
@@ -46,17 +36,13 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
 
 [node name="GUI" type="CanvasLayer" parent="." unique_id=1828482509]
 
 [node name="Screen" type="MarginContainer" parent="GUI" unique_id=836711312]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
+mouse_filter = 0
 script = ExtResource("3_wqvgk")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="GUI/Screen" unique_id=2113179829]
@@ -120,9 +106,10 @@ layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -60.0
-offset_bottom = -16.0
 offset_left = -80.0
+offset_top = -60.0
 offset_right = 80.0
+offset_bottom = -16.0
 grow_horizontal = 2
+grow_vertical = 0
 text = "Back to Menu"
