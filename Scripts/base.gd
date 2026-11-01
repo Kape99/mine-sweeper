@@ -29,6 +29,7 @@ func _ready() -> void:
 	}
 	# Clean up static cell pools on exit so off-tree pooled nodes don't leak RIDs.
 	get_tree().root.tree_exiting.connect(BaseBoard.clear_pools)
+	_camera.reset_view()
 
 	_board_gui.reset.connect(_reset)
 	_board_gui.pause_requested.connect(_on_pause_requested)
@@ -105,6 +106,7 @@ func _reset() -> void:
 	_defuse_button.button_pressed = false
 	_board_gui.visible = false
 	_final_screen.visible = false
+	_camera.reset_view()
 
 	# Return to main menu through ScreenManager so overlays are cleared.
 	var sm: ScreenManager = $ScreenManager

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://build_preset_boards"]
+
+[ext_resource type="Script" path="res://Scripts/Tools/build_preset_boards.gd" id="1_script"]
+
+[node name="BuildPresetBoards" type="Node"]
+script = ExtResource("1_script")

@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[node name="Square50x50" type="Node2D" unique_id=692057218]
+
+[node name="GridContainer" type="GridContainer" parent="." unique_id=41578522]
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 50
