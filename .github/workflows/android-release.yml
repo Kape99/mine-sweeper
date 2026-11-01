@@ -88,15 +88,15 @@ jobs:
         run: |
           mkdir -p "${{ env.BUILD_DIR }}"
           cat > export_presets.cfg <<EOF
-[preset "${{ env.EXPORT_PRESET }}"]
-name="${{ env.EXPORT_PRESET }}"
+[preset "${EXPORT_PRESET}"]
+name="${EXPORT_PRESET}"
 platform="Android"
 preset/custom_template_debug=""
 preset/custom_template_release=""
-preset/application_id="${{ env.APP_ID }}"
+preset/application_id="${APP_ID}"
 preset/icon="res://Asset/Icons/Icon.png"
-preset/version_code=${{ steps.vars.outputs.version_code }}
-preset/version_string="${{ steps.vars.outputs.version_string }}"
+preset/version_code=${VERSION_CODE}
+preset/version_string="${VERSION_STRING}"
 preset/one_click_deploy=false
 preset/architectures=PackedStringArray("arm64-v8a", "armeabi-v7a")
 preset/x86_64=false
@@ -104,31 +104,47 @@ preset/x86=false
 preset/armv7=true
 preset/arm64_v8a=true
 preset/byteswap=false
-preset/keystore="${{ env.KEYSTORE_PATH }}"
-preset/keystore_pass="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
-preset/key="${{ secrets.ANDROID_KEY_ALIAS }}"
-preset/key_pass="${{ secrets.ANDROID_KEY_PASSWORD }}"
+preset/keystore="${KEYSTORE_PATH}"
+preset/keystore_pass="${ANDROID_KEYSTORE_PASSWORD}"
+preset/key="${ANDROID_KEY_ALIAS}"
+preset/key_pass="${ANDROID_KEY_PASSWORD}"
 preset/export_mode="file"
 preset/build_tools_version="34.0.0"
 preset/sdk_build_tools_version="34.0.0"
 EOF
           cat export_presets.cfg
+        env:
+          EXPORT_PRESET: ${{ env.EXPORT_PRESET }}
+          APP_ID: ${{ env.APP_ID }}
+          VERSION_CODE: ${{ steps.vars.outputs.version_code }}
+          VERSION_STRING: ${{ steps.vars.outputs.version_string }}
+          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: Export Android App Bundle
         run: |
           ./godot/Godot_v${GODOT_VERSION}-stable_linux_headless.64 \
             --headless \
-            --export-release "${{ env.EXPORT_PRESET }}" \
-            "${{ env.BUILD_DIR }}/${{ env.ABB_NAME }}.aab"
+            --export-release "${EXPORT_PRESET}" \
+            "${BUILD_DIR}/${ABB_NAME}.aab"
         env:
+          EXPORT_PRESET: ${{ env.EXPORT_PRESET }}
+          BUILD_DIR: ${{ env.BUILD_DIR }}
+          ABB_NAME: ${{ env.ABB_NAME }}
+          GODOT_VERSION: ${{ env.GODOT_VERSION }}
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
           ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_HOME }}
           JAVA_HOME: ${{ env.JAVA_HOME }}
 
       - name: Verify ABB
         run: |
-          ls -lh "${{ env.BUILD_DIR }}/${{ env.ABB_NAME }}.aab"
-          file "${{ env.BUILD_DIR }}/${{ env.ABB_NAME }}.aab"
+          ls -lh "${BUILD_DIR}/${ABB_NAME}.aab"
+          file "${BUILD_DIR}/${ABB_NAME}.aab"
+        env:
+          BUILD_DIR: ${{ env.BUILD_DIR }}
+          ABB_NAME: ${{ env.ABB_NAME }}
 
       - name: Upload Android App Bundle
         uses: actions/upload-artifact@v4
