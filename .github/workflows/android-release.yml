@@ -121,7 +121,7 @@ jobs:
           echo "keystore_pass=\"${ANDROID_KEYSTORE_PASSWORD}\"" >> export_presets.cfg
           echo "key=\"${ANDROID_KEY_ALIAS}\"" >> export_presets.cfg
           echo "key_pass=\"${ANDROID_KEY_PASSWORD}\"" >> export_presets.cfg
-          echo 'export_mode="file"' >> export_presets.cfg
+          echo 'export_mode="aab"' >> export_presets.cfg
           echo 'build_tools_version="34.0.0"' >> export_presets.cfg
           echo 'sdk_build_tools_version="34.0.0"' >> export_presets.cfg
           cat export_presets.cfg
