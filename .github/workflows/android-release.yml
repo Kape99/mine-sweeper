@@ -70,7 +70,10 @@ jobs:
         run: |
           mkdir -p ~/.local/share/godot/export_templates
           wget -q https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz \
-          -O ~/.local/share/godot/export_templates/android.tpz
+            -O /tmp/export_templates.tpz
+          cd ~/.local/share/godot/export_templates
+          unzip -q /tmp/export_templates.tpz
+          ls -la
 
       - name: Decode signing keystore
         run: |
