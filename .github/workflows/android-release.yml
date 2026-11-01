@@ -68,11 +68,13 @@ jobs:
 
       - name: Install Android export templates
         run: |
-          mkdir -p ~/.local/share/godot/export_templates
+          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
           wget -q https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz \
             -O /tmp/export_templates.tpz
-          cd ~/.local/share/godot/export_templates
+          cd ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
           unzip -q /tmp/export_templates.tpz
+          mv templates/* . 2>/dev/null || true
+          rmdir templates 2>/dev/null || true
           ls -la
 
       - name: Decode signing keystore
