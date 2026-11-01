@@ -72,12 +72,6 @@ jobs:
           wget -q https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz \
           -O ~/.local/share/godot/export_templates/android.tpz
 
-      - name: Fail if signing secrets are missing
-        if: ${{ secrets.ANDROID_KEYSTORE_B64 == '' || secrets.ANDROID_KEYSTORE_PASSWORD == '' || secrets.ANDROID_KEY_ALIAS == '' || secrets.ANDROID_KEY_PASSWORD == '' }}
-        run: |
-          echo "ERROR: Missing Android signing secrets. Set ANDROID_KEYSTORE_B64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD."
-          exit 1
-
       - name: Decode signing keystore
         run: |
           mkdir -p "${BUILD_DIR}"
