@@ -1,5 +1,25 @@
 # Android CI Setup (GitHub Actions)
 
+## Test APK (manual)
+
+`.github/workflows/android-apk.yml` builds an installable `.apk` for testing on a phone.
+It only runs manually: **Actions > Build Android APK > Run workflow**.
+
+| Input | Meaning |
+|---|---|
+| `build_type` | `release` (optimized, default) or `debug` (debug template, logs) |
+| `version_name` | Optional; defaults to `dev-<commit>` |
+
+- `versionCode` is the workflow run number, so each new APK installs over the previous one.
+- Release APKs are signed with the upload keystore when the secrets below are set,
+  otherwise with a CI debug key (kept in the Actions cache, so it stays the same between
+  runs unless the cache is evicted after ~7 days unused). Android refuses to update an app
+  signed with a different key: if an install fails with a signature error, uninstall first.
+- Download the APK from the run's **Artifacts** section (kept 14 days), unzip it and
+  install with `adb install -r MineSweeper-*.apk` or by opening it on the phone.
+
+## Play Store release (AAB)
+
 `.github/workflows/android-release.yml` builds a signed Android App Bundle (`.aab`)
 for the Google Play Store whenever you push a `v*` tag, and attaches it to a GitHub Release.
 

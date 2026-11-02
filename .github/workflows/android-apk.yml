@@ -1,0 +1,243 @@
+name: Build Android APK
+
+# Manual only: Actions tab > "Build Android APK" > Run workflow.
+# Produces an installable .apk (for sideloading / testing on a phone),
+# downloadable from the run's Artifacts section.
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "release = optimized template, debug = debug template (logs, remote debug)"
+        type: choice
+        options: [release, debug]
+        default: release
+      version_name:
+        description: "versionName shown on the device (leave empty for dev-<commit>)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: 4.7.2
+  PACKAGE_NAME: com.minesweeper.game
+  APP_NAME: Mine Sweeper
+  EXPORT_PRESET: Android
+  APK_NAME: MineSweeper
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute version
+        id: version
+        env:
+          INPUT_NAME: ${{ github.event.inputs.version_name }}
+        run: |
+          name="${INPUT_NAME:-dev-${GITHUB_SHA::7}}"
+          if ! [[ "$name" =~ ^[0-9A-Za-z._-]+$ ]]; then
+            echo "::error::Invalid versionName '$name'"; exit 1
+          fi
+          # Run number always increases, so a newer APK installs over an older one.
+          code="$GITHUB_RUN_NUMBER"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "versionName=$name versionCode=$code"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
+
+      - name: Cache Godot + export templates
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-${{ env.GODOT_VERSION }}
+
+      - name: Download Godot + export templates
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          base="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          mkdir -p ~/godot
+          wget -q "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -O "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+
+          tpl_dir=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$tpl_dir"
+          wget -q "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O "$RUNNER_TEMP/templates.tpz"
+          unzip -q "$RUNNER_TEMP/templates.tpz" -d "$RUNNER_TEMP/tpl"
+          mv "$RUNNER_TEMP"/tpl/templates/* "$tpl_dir/"
+          ls "$tpl_dir" | grep -i android
+
+      - name: Configure Godot editor settings
+        run: |
+          chmod +x ~/godot/godot
+          echo "$HOME/godot" >> "$GITHUB_PATH"
+          settings=~/.config/godot/editor_settings-$(echo "$GODOT_VERSION" | cut -d. -f1,2).tres
+          mkdir -p ~/.config/godot
+          cat > "$settings" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "${ANDROID_HOME}"
+          export/android/java_sdk_path = "${JAVA_HOME}"
+          EOF
+
+      # Reuse one debug key across runs (via the cache) so a newer debug-signed
+      # APK can be installed over an older one without uninstalling.
+      - name: Cache debug keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.android-ci/debug.keystore
+          key: android-debug-keystore-v1
+
+      - name: Create debug keystore
+        run: |
+          if [ ! -f ~/.android-ci/debug.keystore ]; then
+            mkdir -p ~/.android-ci
+            keytool -genkeypair -keystore ~/.android-ci/debug.keystore -alias androiddebugkey \
+              -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          fi
+          echo "DEBUG_KEYSTORE=$HOME/.android-ci/debug.keystore" >> "$GITHUB_ENV"
+
+      - name: Pick signing key
+        id: signing
+        env:
+          BUILD_TYPE: ${{ github.event.inputs.build_type }}
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          # Release APKs are signed with the upload key when the secrets exist,
+          # otherwise with the cached debug key created above. Debug APKs
+          # always use the debug key.
+          if [ "$BUILD_TYPE" = "release" ] && [ -n "$KS_B64" ] && [ -n "$KS_PASS" ] && [ -n "$KS_ALIAS" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+            keytool -list -keystore "$RUNNER_TEMP/upload.keystore" -storepass "$KS_PASS" > /dev/null
+            echo "key=upload" >> "$GITHUB_OUTPUT"
+            echo "Signing with the upload keystore"
+          else
+            echo "key=debug" >> "$GITHUB_OUTPUT"
+            echo "Signing with a generated debug keystore"
+          fi
+
+      - name: Write export preset
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          # export_presets.cfg is gitignored; generate a CI one.
+          # No Gradle build needed for an APK: Godot uses the prebuilt template.
+          cat > export_presets.cfg <<EOF
+          [preset.0]
+
+          name="${EXPORT_PRESET}"
+          platform="Android"
+          runnable=true
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/${APK_NAME}.apk"
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+
+          [preset.0.options]
+
+          custom_template/debug=""
+          custom_template/release=""
+          gradle_build/use_gradle_build=false
+          gradle_build/export_format=0
+          gradle_build/min_sdk=""
+          gradle_build/target_sdk=""
+          architectures/armeabi-v7a=true
+          architectures/arm64-v8a=true
+          architectures/x86=false
+          architectures/x86_64=false
+          keystore/debug=""
+          keystore/debug_user=""
+          keystore/debug_password=""
+          keystore/release=""
+          keystore/release_user=""
+          keystore/release_password=""
+          version/code=${VERSION_CODE}
+          version/name="${VERSION_NAME}"
+          package/unique_name="${PACKAGE_NAME}"
+          package/name="${APP_NAME}"
+          package/signed=true
+          package/app_category=2
+          package/retain_data_on_uninstall=false
+          package/exclude_from_recents=false
+          package/show_in_android_tv=false
+          package/show_in_app_library=true
+          package/show_as_launcher_app=false
+          launcher_icons/main_192x192="res://Asset/Icons/Icon.png"
+          screen/immersive_mode=true
+          screen/support_small=true
+          screen/support_normal=true
+          screen/support_large=true
+          screen/support_xlarge=true
+          permissions/custom_permissions=PackedStringArray()
+          permissions/vibrate=true
+          EOF
+
+      - name: Import project
+        run: godot --headless --import || true
+
+      - name: Export APK
+        env:
+          BUILD_TYPE: ${{ github.event.inputs.build_type }}
+          SIGNING_KEY: ${{ steps.signing.outputs.key }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+        run: |
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$DEBUG_KEYSTORE"
+          if [ "$SIGNING_KEY" = "upload" ]; then
+            export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$RUNNER_TEMP/upload.keystore"
+            export GODOT_ANDROID_KEYSTORE_RELEASE_USER="$KS_ALIAS"
+            export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$KS_PASS"
+          else
+            export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$GODOT_ANDROID_KEYSTORE_DEBUG_PATH"
+            export GODOT_ANDROID_KEYSTORE_RELEASE_USER="$GODOT_ANDROID_KEYSTORE_DEBUG_USER"
+            export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD"
+          fi
+          mkdir -p build
+          godot --headless "--export-${BUILD_TYPE}" "${EXPORT_PRESET}" "build/${APK_NAME}.apk"
+          test -s "build/${APK_NAME}.apk" || { echo "::error::APK was not produced"; exit 1; }
+
+      - name: Verify signature
+        env:
+          OUT_NAME: ${{ env.APK_NAME }}-${{ steps.version.outputs.name }}-${{ github.event.inputs.build_type }}
+        run: |
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs "build/${APK_NAME}.apk"
+          mv "build/${APK_NAME}.apk" "build/${OUT_NAME}.apk"
+          ls -lh build/
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}-${{ steps.version.outputs.name }}-${{ github.event.inputs.build_type }}
+          path: build/*.apk
+          retention-days: 14
