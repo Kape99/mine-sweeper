@@ -230,7 +230,7 @@ BaseBoard (abstract)
 - Tween-based wave animations (overlapping waves allowed; all are stopped on game over / clear)
 - Win/lose detection, signal emissions
 - `_get_nearby_cells(cell, distance)` — abstract, returns `Dictionary` used as a Set
-- `_build_tiles()` — builds the interactive tile, plus (wrap mode only) a `BoardCopyRenderer` that draws the 8 surrounding copies
+- `prepare(cols, rows, wrap)` + `build_step(budget_usec)` — builds the interactive tile (cells placed directly on a uniform grid), plus (wrap mode only) a `BoardCopyRenderer` that draws the 8 surrounding copies. The build can run in one go or a few milliseconds per frame; `start_game()` reuses a board already prepared for the same settings and otherwise builds it on the spot
 - `recenter_if_needed(camera_offset)` — called every frame in wrap mode only
 
 **Subclasses** only define:
@@ -315,6 +315,7 @@ Every property is a Godot property with a custom `set()` that calls `_persist(ke
 - **Two-finger pinch-zoom** with pivot-relative scaling
 - **Mouse wheel zoom** for desktop
 - **Bounds clamping** — *conditional*: in wrap mode there are no bounds (the board recenters instead, see [Board Topology](#board-topology-wrap-vs-classic)); in classic mode, `set_board_bounds()` clamps offset to the board's rect (with a margin), and small boards are centered automatically.
+- **Applies its own view.** Camera2D's built-in per-frame update is turned off: it re-applies the transform every frame, which Godot counts as a change and redraws the whole screen for — defeating low-processor mode (see [below](#why-build-the-next-board-while-the-menu-is-open)). `_process` applies offset/zoom only when they actually change, so code can keep assigning `offset` / `zoom` directly.
 
 ### UI
 
@@ -361,6 +362,24 @@ The copies used to be 8 full tiles of display-only Control nodes — 4 nodes per
 
 Chunking (rather than one node drawing everything) keeps a cell change cheap and lets the renderer cull off-screen chunks. Dynamically spawning/freeing tiles as the camera moves was rejected earlier for the same reason it's still unnecessary: the block is built once per game, never per frame.
 
+### Why build the next board while the menu is open?
+Even with drawn copies, a 50×50 board's 2,500 interactive cells take a few hundred ms to add to the tree, lay out and draw for the first time. While no game is running, `base.gd` builds the board for the menu's current settings in the background (`PREPARE_BUDGET_USEC` = 4 ms per frame, restarted `PREPARE_SETTLE_MSEC` after the last settings change, including the color scheme since cells take their colors when created). Start then just takes that board.
+
+- The background board is **transparent, not hidden**: a hidden board defers layout and first draw until it's shown — the very cost being avoided (first frame ~250–300 ms vs ~7 ms).
+- It is **paused** (`PROCESS_MODE_DISABLED`), and `_on_cell_pressed()` ignores taps on a paused board, so nothing can start a game on it.
+- Cells are **positioned directly** rather than by a `GridContainer`: a GridContainer re-lays out every child whenever one is added, which made building in steps quadratic (frames grew to 15–20 ms near the end). All cells of a board have the same size, so the result is identical.
+- The copies' chunks are revealed a few per frame (`BoardCopyRenderer.show_step()`), budgeted by a measured per-cell draw cost, because drawing all 8 copies for the first time was a single ~130 ms frame.
+
+Measured through `base.gd` on a 50×50 wrap board (headless, desktop CPU):
+
+| | Built on Start | Built in the background |
+|---|---|---|
+| Start (`_load_game()`) | ~205 ms | ~12 ms |
+| First frame | ~230 ms | ~16 ms |
+| Background build | — | ~1.2 s while in the menu, every frame ≤ ~11 ms |
+
+The project also enables **low-processor mode** (`application/run/low_processor_mode`): the screen is only redrawn when something changes, so an idle menu or a board nobody is touching costs almost nothing (measured: 0 redraws per second idle, vs ~145 with a stock Camera2D and ~2,000 uncapped). Animations, input and the background build still redraw as needed.
+
 ### Why recenter the board instead of the camera?
 Early attempts moved the `Camera2D.offset` directly from inside `BaseBoard.recenter_if_needed()`. This put two different systems (the generic, reusable `CameraController` and the board's own wrap logic) writing to the same property from different call sites (input events vs. `_process`), risking order-dependent bugs — e.g. a pinch-zoom recalculating `offset` in the same frame a recenter snapped it. Moving `_board_node.position` instead keeps a strict single-writer rule: `CameraController` owns `offset` (pan/zoom/touch), `BaseBoard` owns its own transform. The visual result is identical either way since the copies are pixel-identical to the center tile.
 
@@ -389,7 +408,9 @@ godot --headless --path . Scenes/Tests/test_board_wrapping.tscn
 
 | File | Assertions | Covers |
 |---|---|---|
+| `test_board_prepare.gd` | 22 | Stepped build progresses and finishes (copies included), cells sit on the uniform grid, `start_game()` reuses a prepared board and rebuilds for other settings; through `base.gd`: the menu builds the next board in the background (invisible, paused, ignores taps), rebuilds when a setting changes, and Start uses it |
 | `test_board_wrapping.gd` | 14 | Wrap mode builds a 9-tile block with toroidal neighbor wrap; classic mode builds 1 tile with edge-clipped neighbors; odd hex/triangle sizes are rounded up in wrap mode and the neighbor relation stays symmetric — checked for square, hex, and triangle boards |
+| `test_camera_controller.gd` | 5 | Camera2D's own per-frame update stays off, yet offset, zoom and `reset_view()` still reach the viewport |
 | `test_cell_binding.gd` | 15 | Collision polygon is non-empty, has the same vertex count, and has strictly larger area than the fill polygon — checked for all 5 cell scenes |
 | `test_chord_reveal.gd` | 9 | Correctly flagged neighbors match the cell number and all remaining hidden neighbors are revealed |
 | `test_long_press_defuse.gd` | 4 | Long-press toggles the flag on a hidden cell |

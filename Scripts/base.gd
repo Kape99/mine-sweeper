@@ -1,6 +1,8 @@
 ## Main game controller. Manages screen flow (main menu → gameplay → result screen),
 ## board instantiation, and signal wiring between the board and UI.
 ## Periodically refreshes board tiles to follow the camera for infinite scrolling.
+## While no game is running, builds the next board in the background so
+## Start is instant (see [method _prepare_board_step]).
 extends Node
 
 @onready var _main_menu: MainMenu = $GUI/Screen/MainMenu
@@ -19,6 +21,28 @@ var _board_scenes: Dictionary = {}
 
 ## Currently active board instance, or [code]null[/code] if none.
 var _board: BaseBoard
+
+## Time budget per frame for building the next board in the background.
+const PREPARE_BUDGET_USEC: int = 4000
+
+## How long the menu settings must stay unchanged before a background
+## build (re)starts, so stepping a SpinBox doesn't restart it every click.
+const PREPARE_SETTLE_MSEC: int = 300
+
+## Board being built in the background while no game is running, for the
+## menu's current settings, so Start doesn't have to build thousands of
+## cells in one frame. Fully transparent and paused until a game uses it.
+## (Transparent rather than hidden: a hidden board defers its layout and
+## drawing to the moment it's shown, which is exactly the cost to avoid.)
+var _prepared_board: BaseBoard = null
+
+## The settings [member _prepared_board] was built for (see
+## [method _get_prepare_key]).
+var _prepared_key: Array = []
+
+## Latest settings seen while preparing, and when they last changed.
+var _pending_key: Array = []
+var _pending_key_since: int = 0
 
 
 func _ready() -> void:
@@ -52,8 +76,76 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if _board and _board.get_child_count() > 0:
-		_board.recenter_if_needed(_camera.offset)
+	if _board:
+		if _board.get_child_count() > 0:
+			_board.recenter_if_needed(_camera.offset)
+	else:
+		_prepare_board_step()
+
+
+## Everything a freshly built board depends on. Cell colors are set when
+## cells are created, so the color scheme is part of it.
+func _get_prepare_key() -> Array:
+	return [
+		GlobalState.selected_board,
+		GlobalState.board_cols,
+		GlobalState.board_rows,
+		GlobalState.board_wrap,
+		GlobalState.selected_scheme,
+	]
+
+
+## Advances the background build of the next board by one frame's budget.
+func _prepare_board_step() -> void:
+	var key: Array = _get_prepare_key()
+	var now: int = Time.get_ticks_msec()
+	if key != _pending_key:
+		_pending_key = key
+		_pending_key_since = now
+	if now - _pending_key_since < PREPARE_SETTLE_MSEC:
+		return
+
+	if _prepared_board and key != _prepared_key:
+		if key[0] != _prepared_key[0]:
+			_discard_prepared_board()  # different board shape: different scene
+		else:
+			_prepared_board.prepare(GlobalState.board_cols, GlobalState.board_rows, GlobalState.board_wrap)
+			_prepared_key = key
+	if _prepared_board == null:
+		_prepared_board = _board_scenes[GlobalState.selected_board].instantiate()
+		_prepared_board.modulate = Color(1, 1, 1, 0)
+		# No input or processing until a game starts on it.
+		_prepared_board.process_mode = Node.PROCESS_MODE_DISABLED
+		add_child(_prepared_board)
+		_prepared_board.prepare(GlobalState.board_cols, GlobalState.board_rows, GlobalState.board_wrap)
+		_prepared_key = key
+	if not _prepared_board.is_built():
+		_prepared_board.build_step(PREPARE_BUDGET_USEC)
+
+
+## Frees the background board, returning its cells to the pool.
+func _discard_prepared_board() -> void:
+	if _prepared_board:
+		_prepared_board.clear()
+		_prepared_board.free()
+		_prepared_board = null
+	_prepared_key = []
+
+
+## Returns the background board if it was built for the current settings
+## (finishing it if needed happens in start_game), or a new board.
+func _take_board() -> BaseBoard:
+	if _prepared_board and _prepared_key == _get_prepare_key():
+		var board: BaseBoard = _prepared_board
+		_prepared_board = null
+		_prepared_key = []
+		board.modulate = Color.WHITE
+		board.process_mode = Node.PROCESS_MODE_INHERIT
+		return board
+	_discard_prepared_board()
+	var new_board: BaseBoard = _board_scenes[GlobalState.selected_board].instantiate()
+	add_child(new_board)
+	return new_board
 
 
 func _game_finished(is_win: bool, _time: float) -> void:
@@ -68,8 +160,7 @@ func _toggle_defuse(is_active: bool) -> void:
 
 ## Instantiates the selected board, starts a new game, and switches to gameplay view.
 func _load_game() -> void:
-	_board = _board_scenes[GlobalState.selected_board].instantiate()
-	add_child(_board)
+	_board = _take_board()
 	var mine_count: int = GlobalState.get_mine_count()
 
 	GlobalState.is_defusing = false

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://tbprep8527b76c0231"]
+
+[ext_resource type="Script" path="res://Scripts/Tests/test_board_prepare.gd" id="1_script"]
+
+[node name="TestBoardPrepare" type="Node"]
+script = ExtResource("1_script")

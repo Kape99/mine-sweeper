@@ -20,6 +20,26 @@ const PAN_MARGIN: float = 100.0
 ## Active touch points indexed by finger index.
 var _touch_points: Dictionary = {}
 
+## The view last applied to the viewport (see [method _process]).
+var _applied_view: Array = []
+
+
+func _ready() -> void:
+	# Camera2D re-applies its transform every frame, which counts as a
+	# change and forces a full redraw every frame — defeating the
+	# project's low-processor mode (redraw only when something changed).
+	# Apply it ourselves, only when the view actually changes.
+	set_process_internal(false)
+
+
+func _process(_delta: float) -> void:
+	if is_processing_internal():
+		set_process_internal(false)  # Camera2D may re-enable it, e.g. on re-entering the tree
+	var view: Array = [offset, zoom, global_position, get_viewport_rect().size, is_current()]
+	if view != _applied_view:
+		_applied_view = view
+		force_update_scroll()
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:

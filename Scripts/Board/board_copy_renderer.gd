@@ -28,10 +28,20 @@ var _chunk_cols: int = 0
 ## by scene path. Filled lazily on first draw, when cells are laid out.
 var _layouts: Dictionary = {}
 
+## Chunks still hidden by [method show_step], in the order they'll be shown.
+var _hidden_chunks: Array[CopyChunk] = []
+
+## Measured cost of drawing one cell, used by [method show_step] to decide
+## how many chunks fit in a frame. Starts pessimistic, then tracks the
+## slowest draw seen, so it adapts to the device.
+var _usec_per_cell: float = 20.0
+
 
 ## Creates one set of chunks per offset. [param offsets] are the copies'
-## positions relative to the logical tile.
-func setup(board: BaseBoard, offsets: Array[Vector2]) -> void:
+## positions relative to the logical tile. With [param hidden], chunks
+## start hidden and [method show_step] reveals them over several frames,
+## so their first draw doesn't all land in one long frame.
+func setup(board: BaseBoard, offsets: Array[Vector2], hidden: bool = false) -> void:
 	_board = board
 	_offsets = offsets
 	_chunk_cols = ceili(board.cols / float(CHUNK_SIZE))
@@ -47,9 +57,41 @@ func setup(board: BaseBoard, offsets: Array[Vector2]) -> void:
 				))
 				var chunk: CopyChunk = CopyChunk.new(self, cell_range)
 				chunk.position = offset
+				if hidden:
+					chunk.visible = false
+					_hidden_chunks.append(chunk)
 				add_child(chunk)
 				copy_chunks.append(chunk)
 		_chunks.append(copy_chunks)
+	# show_step() pops from the back: reveal copies in creation order.
+	_hidden_chunks.reverse()
+
+
+## Shows hidden chunks whose estimated first-draw cost fits in
+## [param budget_usec] (always at least one; all if negative). The draw
+## itself happens at the end of the frame. Returns true when all are shown.
+func show_step(budget_usec: int) -> bool:
+	var spent: float = 0.0
+	while not _hidden_chunks.is_empty():
+		var chunk: CopyChunk = _hidden_chunks[-1]
+		var cost: float = chunk.cell_range.get_area() * _usec_per_cell
+		if budget_usec >= 0 and spent > 0.0 and spent + cost > budget_usec:
+			break
+		_hidden_chunks.pop_back()
+		chunk.visible = true
+		spent += cost
+	return _hidden_chunks.is_empty()
+
+
+## True once every chunk is visible.
+func is_fully_shown() -> bool:
+	return _hidden_chunks.is_empty()
+
+
+## Called by chunks after drawing, to keep the per-cell cost estimate.
+func _record_draw_cost(cells: int, usec: int) -> void:
+	if cells > 0:
+		_usec_per_cell = maxf(_usec_per_cell * 0.9, usec / float(cells))
 
 
 ## Positions of the copies relative to the logical tile.
@@ -192,4 +234,6 @@ class CopyChunk:
 
 	func _draw() -> void:
 		redraw_pending = false
+		var start: int = Time.get_ticks_usec()
 		renderer._draw_cells(self, cell_range)
+		renderer._record_draw_cost(cell_range.get_area(), Time.get_ticks_usec() - start)

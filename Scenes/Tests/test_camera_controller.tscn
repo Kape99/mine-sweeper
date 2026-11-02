@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://tbcam24c376e3c28d"]
+
+[ext_resource type="Script" path="res://Scripts/Tests/test_camera_controller.gd" id="1_script"]
+
+[node name="TestCameraController" type="Node"]
+script = ExtResource("1_script")

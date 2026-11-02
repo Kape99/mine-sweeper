@@ -56,8 +56,11 @@ static var _pools_warmed: bool = false
 ## The logical board — 2D array [row][col] of the real, interactive cells.
 var board_state: Array = []
 
-## The GridContainer holding the interactive (logical) cells, or null.
-var _tile: GridContainer = null
+## The Control holding the interactive (logical) cells, or null. Cells
+## are positioned directly rather than by a GridContainer: they're all the
+## same size, and a GridContainer would re-lay out every cell each time one
+## is added, which made building the board in steps quadratic.
+var _tile: Control = null
 
 ## Draws the wrap-mode copies around [member _tile]; null in classic mode.
 var _copy_renderer: BoardCopyRenderer = null
@@ -88,6 +91,11 @@ var _display_logical_cell: CellBase = null
 
 ## Currently highlighted neighbors (from a long-press on a revealed cell).
 var _highlighted_neighbors: Array[CellBase] = []
+
+## Incremental build progress (see [method prepare] / [method build_step]):
+## row-major index of the next cell to create, and how many there are.
+var _build_next: int = 0
+var _build_total: int = 0
 
 
 func _ready() -> void:
@@ -178,21 +186,83 @@ func clear() -> void:
 		_tile.free()
 		_tile = null
 	board_state = []
+	_build_next = 0
+	_build_total = 0
 	_board_node.position = Vector2.ZERO
 
 
+## Starts a game. If the board was already built for these dimensions with
+## [method prepare] (e.g. in the background while the menu was open), that
+## build is reused; otherwise the board is built now, in one go.
 func start_game(p_cols: int, p_rows: int, p_mines: int, p_wrap: bool = true) -> void:
-	_wrap_mode = p_wrap
+	if not is_prepared_for(p_cols, p_rows, p_wrap):
+		prepare(p_cols, p_rows, p_wrap)
+	build_step(-1)
 	var requested: Vector2i = Vector2i(p_cols, p_rows)
-	var dims: Vector2i = _wrap_safe_dimensions(requested) if p_wrap else requested
-	cols = dims.x
-	rows = dims.y
 	mines = p_mines
-	if dims != requested:
+	if Vector2i(cols, rows) != requested:
 		# Keep the requested mine density on the enlarged board.
 		mines = roundi(p_mines * float(cols * rows) / float(p_cols * p_rows))
 	_to_be_explored = rows * cols - mines
-	reset()
+
+
+## Clears the board and sets it up for a [param p_cols] × [param p_rows]
+## game without creating any cells yet; [method build_step] creates them.
+func prepare(p_cols: int, p_rows: int, p_wrap: bool) -> void:
+	clear()
+	_wrap_mode = p_wrap
+	var dims: Vector2i = _get_dimensions(p_cols, p_rows, p_wrap)
+	cols = dims.x
+	rows = dims.y
+	_begin_build()
+
+
+## Creates cells for at most [param budget_usec] microseconds (all remaining
+## cells if negative). Returns true once the board is fully built.
+func build_step(budget_usec: int) -> bool:
+	if _tile == null:
+		return false
+	var start: int = Time.get_ticks_usec()
+	while _build_next < _build_total:
+		_add_cell(_build_next)
+		_build_next += 1
+		# Checking the clock every few cells keeps its cost negligible.
+		if budget_usec >= 0 and _build_next % 4 == 0 and Time.get_ticks_usec() - start >= budget_usec:
+			return false
+	if not _wrap_mode:
+		return true
+	if _copy_renderer == null:
+		# Built in one go: draw every copy right away. Built in steps: let
+		# the copies appear a few chunks per frame (their first draw is the
+		# single most expensive part of the build).
+		_add_copy_renderer(budget_usec >= 0)
+	var remaining: int = budget_usec - (Time.get_ticks_usec() - start) if budget_usec >= 0 else -1
+	return _copy_renderer.show_step(maxi(remaining, 0) if budget_usec >= 0 else -1)
+
+
+## True once every cell exists (and, in wrap mode, every copy is shown).
+func is_built() -> bool:
+	if _tile == null or _build_next < _build_total:
+		return false
+	return not _wrap_mode or (_copy_renderer != null and _copy_renderer.is_fully_shown())
+
+
+## True if this board was prepared for exactly these settings and no game
+## has been played on it yet, so [method start_game] can reuse it.
+func is_prepared_for(p_cols: int, p_rows: int, p_wrap: bool) -> bool:
+	return (
+		_tile != null
+		and not _is_game_started
+		and not _is_game_over
+		and p_wrap == _wrap_mode
+		and _get_dimensions(p_cols, p_rows, p_wrap) == Vector2i(cols, rows)
+	)
+
+
+## Actual board dimensions for the requested ones (wrap mode may round up).
+func _get_dimensions(p_cols: int, p_rows: int, p_wrap: bool) -> Vector2i:
+	var requested: Vector2i = Vector2i(p_cols, p_rows)
+	return _wrap_safe_dimensions(requested) if p_wrap else requested
 
 
 ## In wrap mode each dimension must be a multiple of this so the cell
@@ -210,9 +280,10 @@ func _wrap_safe_dimensions(dims: Vector2i) -> Vector2i:
 	return Vector2i(ceili(dims.x / float(m.x)) * m.x, ceili(dims.y / float(m.y)) * m.y)
 
 
+## Rebuilds the board (same dimensions) for a new game, in one go.
 func reset() -> void:
-	clear()
-	_build_tiles()
+	prepare(cols, rows, _wrap_mode)
+	build_step(-1)
 
 
 func _connect_signals(cell: CellBase) -> void:
@@ -272,31 +343,47 @@ static func clear_pools() -> void:
 	_pools_warmed = false
 
 
-## Builds the interactive tile and, in wrap mode, the renderer that draws
-## the 8 surrounding copies. Classic mode has no copies.
-func _build_tiles() -> void:
-	_tile = GridContainer.new()
-	_tile.columns = cols
-	_tile.add_theme_constant_override("h_separation", GRID_H_SEPARATION)
-	_tile.add_theme_constant_override("v_separation", GRID_V_SEPARATION)
-
-	if _wrap_mode:
-		# Added first so the copies draw beneath the interactive tile.
-		_copy_renderer = BoardCopyRenderer.new()
-		_board_node.add_child(_copy_renderer)
-		_copy_renderer.setup(self, _get_copy_offsets())
+## Creates the (empty) interactive tile. Cells are then added by
+## [method _add_cell], all at once or spread over frames.
+func _begin_build() -> void:
+	_tile = Control.new()
+	_tile.mouse_filter = Control.MOUSE_FILTER_PASS
+	_tile.size = get_board_size() - Vector2(GRID_H_SEPARATION, GRID_V_SEPARATION)
 	_board_node.add_child(_tile)
+	board_state = []
+	_build_next = 0
+	_build_total = cols * rows
 
-	var board: Array = []
-	for row: int in rows:
-		board.append([])
-		for col: int in cols:
-			var cell_instance: CellBase = _acquire_cell(_get_cell_type_idx(col, row))
-			_tile.add_child(cell_instance)
-			cell_instance.coord = Vector2i(col, row)
-			_connect_signals(cell_instance)
-			board[row].append(cell_instance)
-	board_state = board
+
+## Creates the cell at row-major [param index]. Cells are created in order,
+## so a new row starts exactly when its first cell is added.
+func _add_cell(index: int) -> void:
+	var col: int = index % cols
+	var row: int = index / cols
+	if col == 0:
+		board_state.append([])
+	var cell_instance: CellBase = _acquire_cell(_get_cell_type_idx(col, row))
+	# Same layout a GridContainer would produce: a uniform grid of
+	# cell size + separation.
+	cell_instance.position = Vector2(
+		col * (_cell_size.x + GRID_H_SEPARATION),
+		row * (_cell_size.y + GRID_V_SEPARATION)
+	)
+	cell_instance.size = _cell_size
+	_tile.add_child(cell_instance)
+	cell_instance.coord = Vector2i(col, row)
+	_connect_signals(cell_instance)
+	board_state[row].append(cell_instance)
+
+
+## Adds the renderer that draws the 8 copies around the tile (wrap mode).
+## Only done once every cell exists, since it draws from all of them.
+func _add_copy_renderer(hidden: bool) -> void:
+	_copy_renderer = BoardCopyRenderer.new()
+	_board_node.add_child(_copy_renderer)
+	# First child, so the copies draw beneath the interactive tile.
+	_board_node.move_child(_copy_renderer, 0)
+	_copy_renderer.setup(self, _get_copy_offsets(), hidden)
 
 
 ## Offsets of the 8 copies around the logical tile, in board-node space.
@@ -550,7 +637,9 @@ func _first_move(starting_cell: CellBase) -> void:
 
 
 func _on_cell_pressed(cell: CellBase, _p_nearby: int) -> void:
-	if _is_game_over:
+	# A board being built in the background is paused (see base.gd); it
+	# must never start a game from a stray tap.
+	if _is_game_over or not can_process():
 		return
 	var logical_cell: CellBase = _get_center_cell(cell)
 	if GlobalState.is_defusing:

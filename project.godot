@@ -17,6 +17,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="Minesweaper"
 config/description="A minimals MineSweeper game"
 run/main_scene="res://Scenes/base.tscn"
+run/low_processor_mode=true
 config/features=PackedStringArray("4.7", "Mobile")
 boot_splash/bg_color=Color(0.756863, 0.847059, 0.764706, 1)
 boot_splash/image="res://Asset/Icons/Icon.png"
