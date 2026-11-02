@@ -3,9 +3,8 @@ extends BaseBoard
 
 
 ## The hex honeycomb stagger is an X-axis offset baked into alternating
-## cell variants, keyed by row parity. Using the *global* row (continuing
-## across tile boundaries, via posmod for negative rows) keeps the zigzag
-## unbroken at tile seams.
+## cell variants, keyed by row parity. Wrap mode keeps the row count even,
+## so the zigzag stays unbroken at the seams between copies.
 func _get_cell_type_idx(_col: int, row: int) -> int:
 	return posmod(row, 2)
 

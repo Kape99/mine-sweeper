@@ -1,5 +1,5 @@
 ## Verifies that a mine explosion shows Color.RED + white icon on both the
-## logical cell and its wrap-mode display copies.
+## logical cell and its wrap-mode copies, and that the copies are redrawn.
 extends TestCase
 
 const SQUARE_SCENE: String = "res://Scenes/Board/square_board.tscn"
@@ -15,8 +15,12 @@ func run() -> void:
 	var board: BaseBoard = load(SQUARE_SCENE).instantiate()
 	add_child(board)
 	board.start_game(3, 3, 1, true)
-
+	# Let the initial draw of the copies happen.
+	await get_tree().process_frame
+	var renderer: BoardCopyRenderer = board._copy_renderer
 	var mine: CellBase = board.board_state[1][1]
+	assert_false(renderer.is_redraw_pending(mine.coord), "Copies are drawn after the first frame")
+
 	mine.mark_as_mine()
 	# Trigger the explosion reveal path, which syncs display copies.
 	mine.explore()
@@ -25,22 +29,14 @@ func run() -> void:
 	assert_eq(mine._cell_triangle.modulate, Color.RED, "Logical mine polygon is red")
 	assert_eq(mine._cell_icon.modulate, Color.WHITE, "Logical mine icon is white")
 
-	# Find a display copy in a non-center tile.
-	var display_copy: Control = null
-	for tile_idx: int in board._tiles.size():
-		if tile_idx == board.CENTER_TILE_INDEX:
-			continue
-		var tile: GridContainer = board._tiles[tile_idx]
-		var idx: int = mine.coord.y * board.cols + mine.coord.x
-		if idx >= 0 and idx < tile.get_child_count():
-			display_copy = tile.get_child(idx)
-			break
-	assert_true(display_copy != null, "Found a display copy of the mine cell")
-
-	var poly: Polygon2D = display_copy.get_child(0)
-	var icon: TextureRect = display_copy.get_child(2)
-	assert_eq(poly.modulate, Color.RED, "Display copy polygon is red")
-	assert_eq(icon.modulate, Color.WHITE, "Display copy icon is white")
+	# The copies draw exactly what get_cell_visual() returns.
+	var visual: Dictionary = renderer.get_cell_visual(mine)
+	assert_eq(visual.fill, Color.RED, "Copy of the mine is drawn red")
+	assert_eq(visual.icon_modulate, Color.WHITE, "Copy of the mine icon is drawn white")
+	assert_eq(visual.icon, CellBase.MINE_ICON, "Copy of the mine shows the mine icon")
+	assert_true(renderer.is_redraw_pending(mine.coord), "Explosion schedules a redraw of the copies")
+	await get_tree().process_frame
+	assert_false(renderer.is_redraw_pending(mine.coord), "Copies are redrawn on the next frame")
 
 	board.free()
 	BaseBoard.clear_pools()

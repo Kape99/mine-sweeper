@@ -202,6 +202,65 @@ func set_icon(icon: Texture2D, icon_color: Color) -> void:
 	_cell_icon.modulate = icon_color
 
 
+# -- Read-only visual state, used by BoardCopyRenderer to draw copies -----
+
+## Current fill color of the cell shape (including highlights).
+func get_fill_color() -> Color:
+	return _cell_triangle.color * _cell_triangle.modulate
+
+
+## Text currently shown (neighbor count), or empty.
+func get_text() -> String:
+	return _cell_text.text
+
+
+## Modulate applied to the text.
+func get_text_modulate() -> Color:
+	return _cell_text.modulate
+
+
+## The label's current rect in its parent ("Content") space. Its size can
+## grow with the text, so it's read per draw rather than cached.
+func get_text_rect() -> Rect2:
+	return Rect2(_cell_text.position, _cell_text.size)
+
+
+## Icon currently shown (flag / mine), or null.
+func get_icon() -> Texture2D:
+	return _cell_icon.texture
+
+
+## Modulate applied to the icon.
+func get_icon_modulate() -> Color:
+	return _cell_icon.modulate
+
+
+## Describes how this cell scene lays out its visuals, relative to the
+## cell. Identical for every instance of the same scene, so callers cache
+## it per [member Node.scene_file_path]. The cell must be inside the tree.
+## Control positions are returned raw (local to their parent) because the
+## renderer must apply Control pixel snapping to them itself.
+func get_render_layout() -> Dictionary:
+	var to_cell: Transform2D = get_global_transform().affine_inverse()
+	var poly_xform: Transform2D = to_cell * _cell_triangle.get_global_transform()
+	var polygon: PackedVector2Array = PackedVector2Array()
+	for point: Vector2 in _cell_triangle.polygon:
+		polygon.append(poly_xform * (point + _cell_triangle.offset))
+	var content: Control = _cell_text.get_parent() as Control
+	return {
+		"polygon": polygon,
+		# Content's parent is a Node2D (not snapped); Content itself is a Control.
+		"content_parent_xform": to_cell * (content.get_parent() as CanvasItem).get_global_transform(),
+		"content_position": content.position,
+		"font": _cell_text.get_theme_font("font"),
+		"font_size": _cell_text.get_theme_font_size("font_size"),
+		"font_color": _cell_text.get_theme_color("font_color"),
+		"icon_position": _cell_icon.position,
+		"icon_size": _cell_icon.size,
+		"icon_stretch": _cell_icon.stretch_mode,
+	}
+
+
 func _process(_delta: float) -> void:
 	if not _touch_pressed or _long_press_triggered:
 		return

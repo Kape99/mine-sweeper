@@ -168,6 +168,7 @@ mine-sweeper/
 │   ├── Settings.gd                  Autoload singleton (Settings) — persisted user prefs
 │   ├── Board/
 │   │   ├── base_board.gd            Abstract board (game logic + tile block)
+│   │   ├── board_copy_renderer.gd   Draws the wrap-mode copies (no node per copied cell)
 │   │   ├── square_board.gd          Square grid + Chebyshev neighbors
 │   │   ├── hexagon_board.gd         Hex grid + offset-coord neighbors
 │   │   └── triangle_board.gd        Triangle grid + edge neighbors
@@ -229,7 +230,7 @@ BaseBoard (abstract)
 - Tween-based wave animations (overlapping waves allowed; all are stopped on game over / clear)
 - Win/lose detection, signal emissions
 - `_get_nearby_cells(cell, distance)` — abstract, returns `Dictionary` used as a Set
-- `_build_tiles()` — builds either a 3×3 tile block (wrap mode) or a single tile (classic mode)
+- `_build_tiles()` — builds the interactive tile, plus (wrap mode only) a `BoardCopyRenderer` that draws the 8 surrounding copies
 - `recenter_if_needed(camera_offset)` — called every frame in wrap mode only
 
 **Subclasses** only define:
@@ -248,7 +249,7 @@ The board supports two topology modes, selectable from the MainMenu or Settings 
 
 | | **Wrap** (default) | **Classic** |
 |---|---|---|
-| Tile block | 3×3 grid — 1 interactive center tile + 8 visual copies | Single tile, no copies |
+| Tile block | 3×3 block — 1 interactive center tile + 8 drawn copies | Single tile, no copies |
 | Scrolling | Infinite — camera recenters by exactly one board size when it drifts past 50% of a board dimension from center | Bounded — camera clamped to the board's rect via `CameraController.set_board_bounds()` |
 | Neighbor lookup | Toroidal — coordinates wrap with `posmod()` | Hard edges — out-of-bounds neighbors are skipped |
 | Board size | Rounded up to a valid wrap size (see below) | As chosen |
@@ -256,9 +257,9 @@ The board supports two topology modes, selectable from the MainMenu or Settings 
 
 **Why wrap mode needs even dimensions on hex/triangle boards:** hexagon neighbor offsets depend on row parity, and triangle orientation (up/down) on `(col + row)` parity. If the seam joins two rows/columns of the same parity, the neighbor relation becomes asymmetric there (a mine counts toward a cell that doesn't consider the mine its neighbor). `BaseBoard.start_game()` therefore rounds the size up via `_get_wrap_dimension_multiple()` — hexagon: even rows; triangle: even rows and columns — scaling the mine count to keep the requested density.
 
-**Why a 3×3 tile block instead of true infinite generation?** Cells are full interactive scenes (`Area2D` + `CollisionPolygon2D` + `Label` + `TextureRect`), not simple sprites — they can't be represented as a shader or generated on the fly without real nodes for hit-testing. A fixed 3×3 block (9× the base cell count) gives seamless continuous scrolling with a bounded, one-time node cost, whichis a small, safe tradeoff for the board sizes this game uses (max ~19×22 cells).
+**How the copies are drawn:** only the center tile has real cell nodes. The 8 copies are drawn by `BoardCopyRenderer` (`Scripts/Board/board_copy_renderer.gd`): each copy is split into 8×8-cell chunks, and each chunk is a single `Node2D` whose `_draw()` paints its cells straight from the logical cells' current fill color, text and icon. A cell change (`_sync_display_to_copies()` on explore/defuse/highlight) only queues a redraw of that cell's chunk in each copy. Taps on copies are mapped back to logical cells mathematically (`_find_display_logical_cell()`), so the copies need no nodes for input either.
 
-**Why snapping by exactly one board size is invisible:** all 8 surrounding tiles are kept as pixel-perfect visual mirrors of the center tile (synced via `_sync_display_to_copies()` on every explore/defuse). Shifting the tile block by a full board dimension lands the camera on an identical-looking tile, so the recenter jump is imperceptible.
+**Why snapping by exactly one board size is invisible:** the copies are pixel-identical to the center tile — including Control pixel snapping of the cells' labels and icons, which the renderer replicates (`_snap()`). Shifting the tile block by a full board dimension lands the camera on an identical-looking tile, so the recenter jump is imperceptible. (Checked by screenshotting a windowed run and diffing the center tile against a copy: 0 differing pixels for all three shapes. The old node-based copies drew numbers top-left instead of centered, differing on ~7.5% of pixels.)
 
 ### Cell State
 
@@ -347,11 +348,21 @@ GDScript 4 has no native Set type. Dictionary with unused values is the standard
 ### Why explicit mark_as_mine() / increment_nearby()?
 The original `nearby` setter silently accumulated on assignment (`cell.nearby = 1` actually did `nearby += 1`). Code reading `cell.nearby = -1` looked like it *set* the value. Explicit methods make intent unambiguous.
 
-### Why a 3×3 tile block for wrap mode instead of a shader or true infinite generation?
-Cells need real `Area2D` + `CollisionPolygon2D` for tap input and per-cell state — none of that can live in a shader, so a purely cosmetic "infinite" rendering trick isn't enough. Dynamically spawning/freeing tiles as the camera moves was considered but rejected: it adds churn (node creation/destruction every frame near a boundary) for a marginal memory win, since the largest configured board (~19×22 = 418 cells) only costs ~3,760 cells total at 9× duplication — a one-time cost at game start, not a per-frame one.
+### Why draw the wrap-mode copies instead of instancing them?
+The copies used to be 8 full tiles of display-only Control nodes — 4 nodes per cell, ~100k nodes on a 50×50 board — and they dominated build, first-frame and teardown time. Drawing them from a few hundred chunk nodes keeps the 3×3 block (so recentering stays a simple one-board shift) at a fraction of the cost. Measured on a 50×50 wrap board (headless, desktop CPU):
+
+| | Node copies | Drawn copies |
+|---|---|---|
+| `start_game()` | 1,100–1,400 ms | ~150 ms |
+| First frame | ~500 ms | ~135 ms |
+| `clear()` | ~640 ms | ~120 ms |
+| Nodes | ~100k | ~20k |
+| Frame after one cell change | — | ~2 ms (one 8×8 chunk redrawn in each copy) |
+
+Chunking (rather than one node drawing everything) keeps a cell change cheap and lets the renderer cull off-screen chunks. Dynamically spawning/freeing tiles as the camera moves was rejected earlier for the same reason it's still unnecessary: the block is built once per game, never per frame.
 
 ### Why recenter the board instead of the camera?
-Early attempts moved the `Camera2D.offset` directly from inside `BaseBoard.recenter_if_needed()`. This put two different systems (the generic, reusable `CameraController` and the board's own wrap logic) writing to the same property from different call sites (input events vs. `_process`), risking order-dependent bugs — e.g. a pinch-zoom recalculating `offset` in the same frame a recenter snapped it. Moving `_board_node.position` instead keeps a strict single-writer rule: `CameraController` owns `offset` (pan/zoom/touch), `BaseBoard` owns its own transform. The visual result is identical either way since all tiles are perfect mirrors of each other.
+Early attempts moved the `Camera2D.offset` directly from inside `BaseBoard.recenter_if_needed()`. This put two different systems (the generic, reusable `CameraController` and the board's own wrap logic) writing to the same property from different call sites (input events vs. `_process`), risking order-dependent bugs — e.g. a pinch-zoom recalculating `offset` in the same frame a recenter snapped it. Moving `_board_node.position` instead keeps a strict single-writer rule: `CameraController` owns `offset` (pan/zoom/touch), `BaseBoard` owns its own transform. The visual result is identical either way since the copies are pixel-identical to the center tile.
 
 ### Why is a single tile's collision polygon derived from its fill polygon at runtime?
 Each cell scene originally hand-authored two separate hardcoded vertex arrays — one for the visible `Polygon2D` fill, one for the `CollisionPolygon2D` hit area — that had to be kept in sync manually. `CellBase._bind_collision_shape()` now computes the collision polygon by scaling the fill polygon outward from its centroid (`COLLISION_SCALE = 1.1`) at `_ready()`, so there's one source of truth per cell shape and no risk of the two drifting apart when a shape is tweaked.
@@ -382,7 +393,7 @@ godot --headless --path . Scenes/Tests/test_board_wrapping.tscn
 | `test_cell_binding.gd` | 15 | Collision polygon is non-empty, has the same vertex count, and has strictly larger area than the fill polygon — checked for all 5 cell scenes |
 | `test_chord_reveal.gd` | 9 | Correctly flagged neighbors match the cell number and all remaining hidden neighbors are revealed |
 | `test_long_press_defuse.gd` | 4 | Long-press toggles the flag on a hidden cell |
-| `test_mine_color_sync.gd` | 5 | A mined cell explosion shows red background + white icon on both the logical cell and wrap-mode display copies |
+| `test_mine_color_sync.gd` | 8 | A mined cell explosion shows red background + white mine icon on the logical cell, the wrap-mode copies draw the same, and their chunks are redrawn on the next frame |
 | `test_mine_placement.gd` | 10 | Distance-2 safe zone around the first tap; on a 5×5 board with 16 mines every mine is still placed and the mine count / win target match; overlapping reveal waves don't cancel each other |
 | `test_neighbor_highlight.gd` | 11 | Holding a revealed number highlights its hidden neighbors, and releasing clears it |
 | `test_pause_overlay.gd` | 12 | Drives `base.tscn`: Resume un-dims the board, the overlay is in screen space, Esc backs out of Settings to the same overlay, Restart builds a new board, Quit returns to the menu |

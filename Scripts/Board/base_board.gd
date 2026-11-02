@@ -1,19 +1,17 @@
 ## Infinite scrolling board with toroidal (wrap-around) topology.
-## A single logical board (cols × rows) is the source of truth. It is
-## surrounded by a fixed [constant TILE_GRID_SIZE] × [constant TILE_GRID_SIZE]
-## grid of visual copies (mirroring its state), so the camera always has
-## buffer content around it. When the camera drifts past a single board's
-## edge, the whole tile block + camera offset are shifted by one board
-## dimension — giving seamless infinite scrolling without ever spawning or
-## freeing nodes during gameplay.
+## A single logical board (cols × rows) of interactive cells is the source
+## of truth. In wrap mode it is surrounded by the 8 other tiles of a
+## [constant TILE_GRID_SIZE] × [constant TILE_GRID_SIZE] block of visual
+## copies, drawn by a [BoardCopyRenderer] straight from the logical cells
+## (no node per copied cell), so the camera always has buffer content
+## around it. When the camera drifts past a single board's edge, the whole
+## block is shifted by one board dimension — giving seamless infinite
+## scrolling without ever spawning or freeing nodes during gameplay.
 class_name BaseBoard
 extends Control
 
 const REVEAL_DELAY_FACTOR: float = 0.02
 const EXPLOSION_VIBRATION_MS: int = 500
-
-const FLAG_ICON: Texture2D = preload("res://Asset/Icons/flag.svg")
-const MINE_ICON: Texture2D = preload("res://Asset/Icons/mine.svg")
 
 const GRID_H_SEPARATION: int = 4
 const GRID_V_SEPARATION: int = 4
@@ -21,9 +19,6 @@ const GRID_V_SEPARATION: int = 4
 ## Number of tile copies per axis surrounding (and including) the logical
 ## board. 3 means a 3×3 block — one ring of buffer tiles around the center.
 const TILE_GRID_SIZE: int = 3
-
-## Index (row-major) of the tile that holds the real, interactive cells.
-const CENTER_TILE_INDEX: int = TILE_GRID_SIZE * TILE_GRID_SIZE / 2
 
 ## Fraction of a single board's size that triggers a recenter.
 const RECENTER_THRESHOLD: float = 0.5
@@ -61,8 +56,11 @@ static var _pools_warmed: bool = false
 ## The logical board — 2D array [row][col] of the real, interactive cells.
 var board_state: Array = []
 
-## All tile GridContainers, including the center (logical) one.
-var _tiles: Array[GridContainer] = []
+## The GridContainer holding the interactive (logical) cells, or null.
+var _tile: GridContainer = null
+
+## Draws the wrap-mode copies around [member _tile]; null in classic mode.
+var _copy_renderer: BoardCopyRenderer = null
 
 var _cell_size: Vector2 = Vector2.ZERO
 var _explored: int = 0
@@ -74,9 +72,6 @@ var _to_be_explored: int = 0
 ## Reveal animations currently running. Several waves may overlap (e.g. a
 ## second tap during a long flood fill) and must not cancel each other.
 var _active_tweens: Array[Tween] = []
-
-## Cached lightweight display cell scenes, keyed by cell type index.
-var _display_cell_scenes: Dictionary = {}
 
 ## When true (default), the board is toroidal — neighbors wrap, camera
 ## recenter is active, and there are no camera bounds. When false, the
@@ -171,16 +166,17 @@ func clear() -> void:
 	_defused_count = 0
 	_is_game_started = false
 	_is_game_over = false
-	for tile_idx: int in _tiles.size():
-		var tile: GridContainer = _tiles[tile_idx]
-		var is_center: bool = not _wrap_mode or (tile_idx == CENTER_TILE_INDEX)
-		for cell in tile.get_children():
-			if is_center and cell is CellBase:
+	if _copy_renderer:
+		_copy_renderer.free()
+		_copy_renderer = null
+	if _tile:
+		for cell: Node in _tile.get_children():
+			if cell is CellBase:
 				_release_cell(cell)
 			else:
 				cell.free()
-		tile.free()
-	_tiles.clear()
+		_tile.free()
+		_tile = null
 	board_state = []
 	_board_node.position = Vector2.ZERO
 
@@ -276,123 +272,52 @@ static func clear_pools() -> void:
 	_pools_warmed = false
 
 
-## Creates the tile block. In wrap mode this is a TILE_GRID_SIZE² grid
-## (one interactive center tile + visual copies). In classic mode only a
-## single tile is built — no copies, no wrapping offsets.
+## Builds the interactive tile and, in wrap mode, the renderer that draws
+## the 8 surrounding copies. Classic mode has no copies.
 func _build_tiles() -> void:
-	var board_size: Vector2 = get_board_size()
-	var total: int = TILE_GRID_SIZE * TILE_GRID_SIZE if _wrap_mode else 1
-
-	for i: int in total:
-		var grid: GridContainer = GridContainer.new()
-		grid.columns = cols
-		grid.add_theme_constant_override("h_separation", GRID_H_SEPARATION)
-		grid.add_theme_constant_override("v_separation", GRID_V_SEPARATION)
-		_board_node.add_child(grid)
-
-		var dx: int = 0
-		var dy: int = 0
-		if _wrap_mode:
-			dx = (i % TILE_GRID_SIZE) - TILE_GRID_SIZE / 2
-			dy = (i / TILE_GRID_SIZE) - TILE_GRID_SIZE / 2
-			grid.position = Vector2(dx * board_size.x, dy * board_size.y)
-		_tiles.append(grid)
-
-		# Global row/col offset of this tile, so alternating patterns (hex
-		# X-offset rows, triangle Y-offset columns) continue seamlessly
-		# across tile boundaries in wrap mode. Zero in classic mode.
-		var col_offset: int = dx * cols
-		var row_offset: int = dy * rows
-
-		var is_center: bool = not _wrap_mode or (i == CENTER_TILE_INDEX)
-		if is_center:
-			var board: Array = []
-			for row: int in rows:
-				board.append([])
-				for col: int in cols:
-					var cell_instance: CellBase = _acquire_cell(
-						_get_cell_type_idx(col_offset + col, row_offset + row)
-					)
-					grid.add_child(cell_instance)
-					cell_instance.coord = Vector2i(col, row)
-					_connect_signals(cell_instance)
-					board[row].append(cell_instance)
-			board_state = board
-		else:
-			for row: int in rows:
-				for col: int in cols:
-					grid.add_child(_create_display_cell(col_offset + col, row_offset + row))
+	_tile = GridContainer.new()
+	_tile.columns = cols
+	_tile.add_theme_constant_override("h_separation", GRID_H_SEPARATION)
+	_tile.add_theme_constant_override("v_separation", GRID_V_SEPARATION)
 
 	if _wrap_mode:
-		# All cells start in the unknown state, so display copies already match.
-		# Per-cell sync happens on explore/defuse.
-		pass
+		# Added first so the copies draw beneath the interactive tile.
+		_copy_renderer = BoardCopyRenderer.new()
+		_board_node.add_child(_copy_renderer)
+		_copy_renderer.setup(self, _get_copy_offsets())
+	_board_node.add_child(_tile)
+
+	var board: Array = []
+	for row: int in rows:
+		board.append([])
+		for col: int in cols:
+			var cell_instance: CellBase = _acquire_cell(_get_cell_type_idx(col, row))
+			_tile.add_child(cell_instance)
+			cell_instance.coord = Vector2i(col, row)
+			_connect_signals(cell_instance)
+			board[row].append(cell_instance)
+	board_state = board
 
 
-## Returns the index into the `cells` array for a given global (col, row).
-## [param col] and [param row] may be negative or exceed [member cols] /
-## [member rows] when called for a tile other than the center one —
-## implementations must wrap/modulo as needed to keep the pattern
-## continuous across tile boundaries.
-## Override in subclasses that use multiple cell types.
+## Offsets of the 8 copies around the logical tile, in board-node space.
+func _get_copy_offsets() -> Array[Vector2]:
+	var board_size: Vector2 = get_board_size()
+	var half: int = TILE_GRID_SIZE / 2
+	var offsets: Array[Vector2] = []
+	for dy: int in range(-half, half + 1):
+		for dx: int in range(-half, half + 1):
+			if dx != 0 or dy != 0:
+				offsets.append(Vector2(dx * board_size.x, dy * board_size.y))
+	return offsets
+
+
+## Returns the index into the `cells` array for a given (col, row).
+## Override in subclasses that use multiple cell types. Copies reuse the
+## logical cell's variant, which is consistent across seams because wrap
+## mode enforces even dimensions where the pattern depends on parity
+## (see [method _get_wrap_dimension_multiple]).
 func _get_cell_type_idx(_col: int, _row: int) -> int:
 	return 0
-
-
-## Creates a lightweight display-only cell for non-center tiles.
-## Mirrors the real cell's shape without the heavy Area2D/state overhead.
-func _create_display_cell(p_col: int, p_row: int) -> Control:
-	var idx: int = _get_cell_type_idx(p_col, p_row)
-	if not _display_cell_scenes.has(idx):
-		_display_cell_scenes[idx] = _build_display_cell_scene(idx)
-	return _display_cell_scenes[idx].instantiate()
-
-
-## Builds a stripped-down PackedScene for a display-only cell variant.
-func _build_display_cell_scene(p_idx: int) -> PackedScene:
-	var template: CellBase = cells[p_idx].instantiate()
-	var cell: Control = Control.new()
-	cell.custom_minimum_size = template.custom_minimum_size
-	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var area: Area2D = template.get_node("Area2D")
-	var poly: Polygon2D = template.get_node("Area2D/Polygon2D")
-	var node2d: Node2D = template.get_node("Area2D/Node2D")
-	var content: Control = template.get_node("Area2D/Node2D/Content")
-	var label: Label = template.get_node("Area2D/Node2D/Content/Label")
-	var icon: TextureRect = template.get_node("Area2D/Node2D/Content/TextureRect")
-
-	var poly_copy: Polygon2D = poly.duplicate()
-	poly_copy.position = area.position + poly.position
-	poly_copy.modulate = GlobalState.secondary_color
-	cell.add_child(poly_copy)
-	poly_copy.owner = cell
-
-	var label_copy: Label = label.duplicate()
-	label_copy.position = area.position + node2d.position + content.position + label.position
-	label_copy.size = label.size
-	label_copy.anchors_preset = Control.PRESET_TOP_LEFT
-	label_copy.horizontal_alignment = label.horizontal_alignment
-	label_copy.vertical_alignment = label.vertical_alignment
-	label_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	cell.add_child(label_copy)
-	label_copy.owner = cell
-
-	var icon_copy: TextureRect = icon.duplicate()
-	icon_copy.position = area.position + node2d.position + content.position + icon.position
-	icon_copy.size = icon.size
-	icon_copy.anchors_preset = Control.PRESET_TOP_LEFT
-	icon_copy.expand_mode = icon.expand_mode
-	icon_copy.stretch_mode = icon.stretch_mode
-	icon_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	cell.add_child(icon_copy)
-	icon_copy.owner = cell
-
-	template.free()
-
-	var ps: PackedScene = PackedScene.new()
-	ps.pack(cell)
-	return ps
 
 
 ## Maps any clicked cell (copy or the real one) back to the logical cell.
@@ -419,7 +344,7 @@ func _process(_delta: float) -> void:
 
 ## Handles taps and long-presses on non-center display tiles.
 func _unhandled_input(event: InputEvent) -> void:
-	if not _wrap_mode or _tiles.is_empty() or board_state.is_empty():
+	if not _wrap_mode or _copy_renderer == null or board_state.is_empty():
 		return
 
 	var is_press: bool = (
@@ -467,11 +392,8 @@ func _find_display_logical_cell(global_pos: Vector2) -> CellBase:
 		_cell_size.y + GRID_V_SEPARATION
 	)
 
-	for i: int in _tiles.size():
-		if i == CENTER_TILE_INDEX:
-			continue
-		var tile: GridContainer = _tiles[i]
-		var tile_origin: Vector2 = board_origin + tile.position
+	for offset: Vector2 in _copy_renderer.get_offsets():
+		var tile_origin: Vector2 = board_origin + offset
 		var local_pos: Vector2 = canvas_pos - tile_origin
 		if local_pos.x < 0 or local_pos.y < 0:
 			continue
@@ -493,7 +415,7 @@ func _find_display_logical_cell(global_pos: Vector2) -> CellBase:
 ## under the camera, so the jump is imperceptible — giving the illusion of
 ## infinite scrolling.
 func recenter_if_needed(camera_offset: Vector2) -> void:
-	if not _wrap_mode or _tiles.is_empty() or not _is_game_started:
+	if not _wrap_mode or _tile == null or not _is_game_started:
 		return
 
 	var board_size: Vector2 = get_board_size()
@@ -516,54 +438,11 @@ func recenter_if_needed(camera_offset: Vector2) -> void:
 		_board_node.position.y -= board_size.y
 
 
-## Updates every non-center tile's cell at [param source]'s coordinate to
-## mirror its current appearance.
+## Redraws every copy of [param source] (wrap mode only). Copies read the
+## cell's current visuals when drawn, so this only schedules the redraw.
 func _sync_display_to_copies(source: CellBase) -> void:
-	if _tiles.size() <= CENTER_TILE_INDEX:
-		return
-	var idx: int = source.coord.y * cols + source.coord.x
-	for tile_idx: int in _tiles.size():
-		if tile_idx == CENTER_TILE_INDEX:
-			continue
-		var tile: GridContainer = _tiles[tile_idx]
-		if idx < 0 or idx >= tile.get_child_count():
-			continue
-		_apply_display_from_source(tile.get_child(idx), source)
-
-
-func _apply_display_from_source(target: Node, source: CellBase) -> void:
-	# Display copies are lightweight Controls with children: Polygon2D, Label, TextureRect
-	if target.get_child_count() < 3:
-		return
-	var poly: Polygon2D = target.get_child(0)
-	var label: Label = target.get_child(1)
-	var icon: TextureRect = target.get_child(2)
-
-	if source.is_explored():
-		if source.is_mine():
-			poly.modulate = Color.RED
-			label.modulate = Color.WHITE
-			icon.modulate = Color.WHITE
-			icon.texture = MINE_ICON
-			label.text = ""
-		else:
-			poly.modulate = GlobalState.main_color
-			label.modulate = GlobalState.secondary_color
-			icon.modulate = GlobalState.secondary_color
-			icon.texture = null
-			label.text = str(source.nearby) if source.nearby > 0 else ""
-	elif source.is_defused():
-		poly.modulate = GlobalState.secondary_color
-		label.modulate = GlobalState.main_color
-		icon.modulate = GlobalState.main_color
-		icon.texture = FLAG_ICON
-		label.text = ""
-	else:
-		poly.modulate = GlobalState.secondary_color
-		label.modulate = GlobalState.main_color
-		icon.modulate = GlobalState.main_color
-		icon.texture = null
-		label.text = ""
+	if _copy_renderer:
+		_copy_renderer.mark_dirty(source.coord)
 
 
 ## Highlights the neighbors of [param cell] and all their display copies.

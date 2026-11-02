@@ -2,10 +2,9 @@ class_name TriangleBoard
 extends BaseBoard
 
 
-## The triangle up/down stagger is a Y-axis offset baked into alternating
-## cell variants, keyed by column parity. Using the *global* column
-## (continuing across tile boundaries, via posmod for negative columns)
-## keeps the zigzag unbroken at tile seams.
+## The triangle up/down orientation alternates with (col + row) parity.
+## Wrap mode keeps both dimensions even, so the pattern stays unbroken at
+## the seams between copies.
 func _get_cell_type_idx(col: int, row: int) -> int:
 	return posmod(col + row, cells.size())
 
