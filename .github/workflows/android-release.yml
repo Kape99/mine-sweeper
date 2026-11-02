@@ -35,15 +35,25 @@ jobs:
 
       - name: Compute version
         id: version
+        env:
+          INPUT_NAME: ${{ github.event.inputs.version_name }}
+          INPUT_CODE: ${{ github.event.inputs.version_code }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            name="${{ github.event.inputs.version_name }}"
-            code="${{ github.event.inputs.version_code }}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            name="$INPUT_NAME"
+            code="$INPUT_CODE"
           else
             name="${GITHUB_REF_NAME#v}"            # v1.2.3-beta -> 1.2.3-beta
             core="${name%%-*}"                     # 1.2.3
+            if ! [[ "$core" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+              echo "::error::Tag '$GITHUB_REF_NAME' is not vMAJOR[.MINOR[.PATCH]]"; exit 1
+            fi
             IFS='.' read -r major minor patch <<< "$core"
-            code=$(( ${major:-0} * 10000 + ${minor:-0} * 100 + ${patch:-0} ))
+            # 10# forces base 10 so parts like "08" aren't read as octal
+            code=$(( 10#${major:-0} * 10000 + 10#${minor:-0} * 100 + 10#${patch:-0} ))
+          fi
+          if ! [[ "$name" =~ ^[0-9A-Za-z._-]+$ ]]; then
+            echo "::error::Invalid versionName '$name'"; exit 1
           fi
           if ! [[ "$code" =~ ^[0-9]+$ ]] || [ "$code" -lt 1 ]; then
             echo "::error::Invalid versionCode '$code' derived from '$name'"; exit 1
@@ -104,15 +114,22 @@ jobs:
         run: |
           chmod +x ~/godot/godot
           echo "$HOME/godot" >> "$GITHUB_PATH"
+          # Godot 4.3+ names the file after major.minor, e.g. editor_settings-4.7.tres
+          settings=~/.config/godot/editor_settings-$(echo "$GODOT_VERSION" | cut -d. -f1,2).tres
           mkdir -p ~/.config/godot
-          cat > ~/.config/godot/editor_settings-4.7.tres <<EOF
+          cat > "$settings" <<EOF
           [gd_resource type="EditorSettings" format=3]
 
           [resource]
           export/android/android_sdk_path = "${ANDROID_HOME}"
           export/android/java_sdk_path = "${JAVA_HOME}"
           EOF
-          cat ~/.config/godot/editor_settings-4.7.tres
+          cat "$settings"
+
+          # Godot's export check wants a debug keystore to exist even for release builds
+          keytool -genkeypair -keystore "$RUNNER_TEMP/debug.keystore" -alias androiddebugkey \
+            -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US" -noprompt
 
       - name: Decode upload keystore
         env:
@@ -193,6 +210,9 @@ jobs:
 
       - name: Export signed AAB
         env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.temp }}/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
           GODOT_ANDROID_KEYSTORE_RELEASE_PATH: ${{ runner.temp }}/upload.keystore
           GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.ANDROID_KEY_ALIAS }}
           GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -205,8 +225,13 @@ jobs:
       - name: Verify signature
         run: |
           ls -lh build/
-          jarsigner -verify "build/${AAB_NAME}.aab" | tail -1
-          mv "build/${AAB_NAME}.aab" "build/${AAB_NAME}-${{ steps.version.outputs.name }}.aab"
+          # jarsigner exits 0 even for unsigned files, so check its output
+          out=$(jarsigner -verify -verbose -certs "build/${AAB_NAME}.aab")
+          echo "$out" | tail -5
+          echo "$out" | grep -q "jar verified." || { echo "::error::AAB is not signed"; exit 1; }
+          mv "build/${AAB_NAME}.aab" "build/${AAB_NAME}-${VERSION_NAME}.aab"
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.name }}
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
