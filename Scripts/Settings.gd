@@ -85,21 +85,26 @@ func _apply_fullscreen() -> void:
 
 ## Apply quality preset to 2D MSAA and pixel snapping on the root viewport.
 ## (Changing the equivalent ProjectSettings at runtime has no effect —
-## they're only read at startup.)
+## they're only read at startup.) 2D MSAA isn't supported by the
+## Compatibility (GLES3) renderer this project uses, so there only the
+## pixel snapping applies; MSAA kicks in if the project moves to
+## Forward+/Mobile.
 func _apply_graphics_quality() -> void:
 	if not is_inside_tree():
 		return
 	var viewport: Viewport = get_viewport()
+	var msaa: Viewport.MSAA = Viewport.MSAA_2X
 	match graphics_quality:
 		"low":
-			viewport.msaa_2d = Viewport.MSAA_DISABLED
+			msaa = Viewport.MSAA_DISABLED
 			viewport.snap_2d_vertices_to_pixel = true
 		"high":
-			viewport.msaa_2d = Viewport.MSAA_4X
+			msaa = Viewport.MSAA_4X
 			viewport.snap_2d_vertices_to_pixel = false
 		_:
-			viewport.msaa_2d = Viewport.MSAA_2X
 			viewport.snap_2d_vertices_to_pixel = false
+	if RenderingServer.get_current_rendering_method() != "gl_compatibility":
+		viewport.msaa_2d = msaa
 
 
 ## Apply volume settings to AudioServer buses immediately.
