@@ -1,47 +1,68 @@
 name: Build Android App Bundle
 
+# Push a tag like v1.2.3 -> signed .aab is built and attached to a GitHub Release.
+#   git tag v1.2.3 && git push origin v1.2.3
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
+      version_name:
+        description: "versionName (e.g. 1.0.1)"
+        required: true
+        default: "0.0.0"
       version_code:
-        description: "Android versionCode (e.g. 2)"
+        description: "versionCode (integer, must increase for every Play upload)"
         required: true
         default: "1"
-      version_string:
-        description: "Android versionName (e.g. 1.0.1)"
-        required: true
-        default: "1.0"
+
+permissions:
+  contents: write # needed to create the GitHub Release
 
 env:
   GODOT_VERSION: 4.7.2
-  APP_ID: com.yourdomain.minesweeper
+  PACKAGE_NAME: com.minesweeper.game # Play Store package id - cannot change after first upload
+  APP_NAME: Mine Sweeper
   EXPORT_PRESET: Android
-  BUILD_DIR: build
-  ABB_NAME: MineSweeper
+  AAB_NAME: MineSweeper
 
 jobs:
-  build:
+  build-aab:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set version variables
-        id: vars
+      - name: Compute version
+        id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "version_code=${{ github.event.inputs.version_code }}" >> $GITHUB_OUTPUT
-          echo "version_string=${{ github.event.inputs.version_string }}" >> $GITHUB_OUTPUT
+            name="${{ github.event.inputs.version_name }}"
+            code="${{ github.event.inputs.version_code }}"
           else
-          tag="${{ github.ref_name }}"
-          version="${tag#v}"
-          echo "version_string=$version" >> $GITHUB_OUTPUT
-          IFS='.' read -r major minor patch <<< "$version"
-          code=$((major * 10000 + minor * 100 + ${patch:-0}))
-          echo "version_code=$code" >> $GITHUB_OUTPUT
+            name="${GITHUB_REF_NAME#v}"            # v1.2.3-beta -> 1.2.3-beta
+            core="${name%%-*}"                     # 1.2.3
+            IFS='.' read -r major minor patch <<< "$core"
+            code=$(( ${major:-0} * 10000 + ${minor:-0} * 100 + ${patch:-0} ))
           fi
+          if ! [[ "$code" =~ ^[0-9]+$ ]] || [ "$code" -lt 1 ]; then
+            echo "::error::Invalid versionCode '$code' derived from '$name'"; exit 1
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "versionName=$name versionCode=$code"
+
+      - name: Check signing secrets
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          missing=0
+          for v in KS_B64 KS_PASS KS_ALIAS; do
+            if [ -z "${!v}" ]; then echo "::error::Secret for $v is not set"; missing=1; fi
+          done
+          exit $missing
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -49,118 +70,154 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Set up Android SDK + NDK
-        uses: android-actions/setup-android@v4
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
         with:
-          api-level: 34
-          target: android-34
-          build-tools: 34.0.0
-          ndk: 27.0.12077973
-          cmake: 3.22.1
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
 
-      - name: Download Godot headless binary
-        run: |
-          mkdir -p godot
-          wget -q https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip \
-          -O godot/godot.zip
-          unzip -q godot/godot.zip -d godot
-          chmod +x godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64
+      - name: Cache Godot + export templates
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-${{ env.GODOT_VERSION }}
 
-      - name: Install Android export templates
+      - name: Download Godot + export templates
+        if: steps.godot-cache.outputs.cache-hit != 'true'
         run: |
-          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          wget -q https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz \
-            -O /tmp/export_templates.tpz
-          cd ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          unzip -q /tmp/export_templates.tpz
-          mv templates/* . 2>/dev/null || true
-          rmdir templates 2>/dev/null || true
-          ls -la
+          base="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          mkdir -p ~/godot
+          wget -q "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -O "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
 
-      - name: Decode signing keystore
+          tpl_dir=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$tpl_dir"
+          wget -q "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O "$RUNNER_TEMP/templates.tpz"
+          unzip -q "$RUNNER_TEMP/templates.tpz" -d "$RUNNER_TEMP/tpl"
+          mv "$RUNNER_TEMP"/tpl/templates/* "$tpl_dir/"
+          ls "$tpl_dir" | grep -i android
+
+      - name: Configure Godot editor settings
         run: |
-          mkdir -p "${BUILD_DIR}"
-          echo "${ANDROID_KEYSTORE_B64}" | base64 -d > "${BUILD_DIR}/release.keystore"
-          echo "KEYSTORE_PATH=${BUILD_DIR}/release.keystore" >> $GITHUB_ENV
+          chmod +x ~/godot/godot
+          echo "$HOME/godot" >> "$GITHUB_PATH"
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-4.7.tres <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "${ANDROID_HOME}"
+          export/android/java_sdk_path = "${JAVA_HOME}"
+          EOF
+          cat ~/.config/godot/editor_settings-4.7.tres
+
+      - name: Decode upload keystore
         env:
-          BUILD_DIR: ${{ env.BUILD_DIR }}
-          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
-
-      - name: Generate export preset
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          mkdir -p "${BUILD_DIR}"
-          echo '[preset.0]' > export_presets.cfg
-          echo "name=\"${EXPORT_PRESET}\"" >> export_presets.cfg
-          echo 'platform="Android"' >> export_presets.cfg
-          echo 'runnable=true' >> export_presets.cfg
-          echo 'dedicated_server=false' >> export_presets.cfg
-          echo 'custom_features=""' >> export_presets.cfg
-          echo 'export_filter="all_resources"' >> export_presets.cfg
-          echo 'include_filter=""' >> export_presets.cfg
-          echo 'exclude_filter=""' >> export_presets.cfg
-          echo "export_path=\"${BUILD_DIR}/${ABB_NAME}.aab\"" >> export_presets.cfg
-          echo 'encryption_include_filters=""' >> export_presets.cfg
-          echo 'encryption_exclude_filters=""' >> export_presets.cfg
-          echo 'encrypt_pck=false' >> export_presets.cfg
-          echo 'encrypt_directory=false' >> export_presets.cfg
-          echo 'script_export_mode=2' >> export_presets.cfg
-          echo '' >> export_presets.cfg
-          echo '[preset.0.options]' >> export_presets.cfg
-          echo "application_id=\"${APP_ID}\"" >> export_presets.cfg
-          echo "version_code=${VERSION_CODE}" >> export_presets.cfg
-          echo "version_string=\"${VERSION_STRING}\"" >> export_presets.cfg
-          echo 'icon="res://Asset/Icons/Icon.png"' >> export_presets.cfg
-          echo 'one_click_deploy=false' >> export_presets.cfg
-          echo 'architectures=PackedStringArray("arm64-v8a", "armeabi-v7a")' >> export_presets.cfg
-          echo 'x86_64=false' >> export_presets.cfg
-          echo 'x86=false' >> export_presets.cfg
-          echo 'armv7=true' >> export_presets.cfg
-          echo 'arm64_v8a=true' >> export_presets.cfg
-          echo 'byteswap=false' >> export_presets.cfg
-          echo "keystore=\"${KEYSTORE_PATH}\"" >> export_presets.cfg
-          echo "keystore_pass=\"${ANDROID_KEYSTORE_PASSWORD}\"" >> export_presets.cfg
-          echo "key=\"${ANDROID_KEY_ALIAS}\"" >> export_presets.cfg
-          echo "key_pass=\"${ANDROID_KEY_PASSWORD}\"" >> export_presets.cfg
-          echo 'export_mode="aab"' >> export_presets.cfg
-          echo 'build_tools_version="34.0.0"' >> export_presets.cfg
-          echo 'sdk_build_tools_version="34.0.0"' >> export_presets.cfg
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+          # Fails early if the keystore or password secret is wrong
+          keytool -list -keystore "$RUNNER_TEMP/upload.keystore" -storepass "$KS_PASS" > /dev/null
+
+      - name: Write export preset
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          # export_presets.cfg is gitignored; generate a CI one.
+          # Signing credentials are NOT written here - Godot reads them from
+          # GODOT_ANDROID_KEYSTORE_RELEASE_* env vars in the export step.
+          cat > export_presets.cfg <<EOF
+          [preset.0]
+
+          name="${EXPORT_PRESET}"
+          platform="Android"
+          runnable=true
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/${AAB_NAME}.aab"
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+
+          [preset.0.options]
+
+          custom_template/debug=""
+          custom_template/release=""
+          gradle_build/use_gradle_build=true
+          gradle_build/export_format=1
+          gradle_build/compress_native_libraries=false
+          gradle_build/min_sdk=""
+          gradle_build/target_sdk=""
+          architectures/armeabi-v7a=true
+          architectures/arm64-v8a=true
+          architectures/x86=false
+          architectures/x86_64=false
+          keystore/debug=""
+          keystore/debug_user=""
+          keystore/debug_password=""
+          keystore/release=""
+          keystore/release_user=""
+          keystore/release_password=""
+          version/code=${VERSION_CODE}
+          version/name="${VERSION_NAME}"
+          package/unique_name="${PACKAGE_NAME}"
+          package/name="${APP_NAME}"
+          package/signed=true
+          package/app_category=2
+          package/retain_data_on_uninstall=false
+          package/exclude_from_recents=false
+          package/show_in_android_tv=false
+          package/show_in_app_library=true
+          package/show_as_launcher_app=false
+          launcher_icons/main_192x192="res://Asset/Icons/Icon.png"
+          screen/immersive_mode=true
+          screen/support_small=true
+          screen/support_normal=true
+          screen/support_large=true
+          screen/support_xlarge=true
+          permissions/custom_permissions=PackedStringArray()
+          EOF
           cat export_presets.cfg
-        env:
-          EXPORT_PRESET: ${{ env.EXPORT_PRESET }}
-          APP_ID: ${{ env.APP_ID }}
-          VERSION_CODE: ${{ steps.vars.outputs.version_code }}
-          VERSION_STRING: ${{ steps.vars.outputs.version_string }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          BUILD_DIR: ${{ env.BUILD_DIR }}
 
-      - name: Export Android App Bundle
+      - name: Import project
+        run: godot --headless --import || true
+
+      - name: Export signed AAB
+        env:
+          GODOT_ANDROID_KEYSTORE_RELEASE_PATH: ${{ runner.temp }}/upload.keystore
+          GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.ANDROID_KEY_ALIAS }}
+          GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          ./godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 \
-          --headless \
-          --export-release "${EXPORT_PRESET}" \
-          "${BUILD_DIR}/${ABB_NAME}.aab"
-        env:
-          EXPORT_PRESET: ${{ env.EXPORT_PRESET }}
-          BUILD_DIR: ${{ env.BUILD_DIR }}
-          ABB_NAME: ${{ env.ABB_NAME }}
-          GODOT_VERSION: ${{ env.GODOT_VERSION }}
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
-          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_HOME }}
-          JAVA_HOME: ${{ env.JAVA_HOME }}
+          mkdir -p build
+          godot --headless --install-android-build-template \
+            --export-release "${EXPORT_PRESET}" "build/${AAB_NAME}.aab"
+          test -s "build/${AAB_NAME}.aab" || { echo "::error::AAB was not produced"; exit 1; }
 
-      - name: Verify ABB
+      - name: Verify signature
         run: |
-          ls -lh "${BUILD_DIR}/${ABB_NAME}.aab"
-          file "${BUILD_DIR}/${ABB_NAME}.aab"
-        env:
-          BUILD_DIR: ${{ env.BUILD_DIR }}
-          ABB_NAME: ${{ env.ABB_NAME }}
+          ls -lh build/
+          jarsigner -verify "build/${AAB_NAME}.aab" | tail -1
+          mv "build/${AAB_NAME}.aab" "build/${AAB_NAME}-${{ steps.version.outputs.name }}.aab"
 
-      - name: Upload Android App Bundle
+      - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-app-bundle
-          path: ${{ env.BUILD_DIR }}/${{ env.ABB_NAME }}.aab
+          name: ${{ env.AAB_NAME }}-${{ steps.version.outputs.name }}
+          path: build/*.aab
           retention-days: 30
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/*.aab
+          generate_release_notes: true
