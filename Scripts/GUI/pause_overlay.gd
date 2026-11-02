@@ -17,14 +17,17 @@ func _ready() -> void:
 	var bg: ColorRect = ColorRect.new()
 	bg.name = "Background"
 	bg.color = Color(0, 0, 0, 0.55)
-	bg.anchors_preset = Control.PRESET_FULL_RECT
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
+	# Assigning `anchors_preset` does nothing on a control made in code;
+	# this is the call that actually anchors (and sizes) it.
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
+	# A full-screen CenterContainer keeps the buttons centered at any size.
 	var center: CenterContainer = CenterContainer.new()
-	center.anchors_preset = Control.PRESET_CENTER
-	center.custom_minimum_size = Vector2(280, 0)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", BUTTON_SPACING)

@@ -173,11 +173,10 @@ func _load_game() -> void:
 	_main_menu.visible = false
 	# Center camera on the board and configure bounds based on mode.
 	if GlobalState.board_wrap:
-		_camera.offset = _board.get_board_size() / 2.0
 		_camera.reset_view()  # clears any stale bounds from a previous game
-		_camera.offset = _board.get_board_size() / 2.0  # re-center after reset
+		_camera.offset = _board.get_content_size() / 2.0
 	else:
-		_camera.set_board_bounds(_board.get_board_position(), _board.get_board_size())
+		_camera.set_board_bounds(_board.get_board_position(), _board.get_content_size())
 
 
 func _defused_changed(defused: int) -> void:

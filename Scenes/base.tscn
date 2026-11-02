@@ -16,7 +16,6 @@ shader_parameter/lod = 20.0
 script = ExtResource("1_smbv4")
 
 [node name="Camera" type="Camera2D" parent="." unique_id=1140760277]
-anchor_mode = 0
 script = ExtResource("2_buixl")
 
 [node name="ScreenManager" type="Control" parent="." unique_id=999000001]
@@ -26,12 +25,18 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 script = ExtResource("16_screen_mgr")
 
 [node name="GUI" type="CanvasLayer" parent="." unique_id=1828482509]
 
 [node name="Screen" type="MarginContainer" parent="GUI" unique_id=836711312]
-mouse_filter = 0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 script = ExtResource("3_wqvgk")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="GUI/Screen" unique_id=2113179829]
@@ -92,8 +97,10 @@ vertical_alignment = 1
 unique_name_in_owner = true
 custom_minimum_size = Vector2(160, 44)
 layout_mode = 1
-anchors_preset = 2
+anchors_preset = 7
+anchor_left = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -80.0
 offset_top = -60.0

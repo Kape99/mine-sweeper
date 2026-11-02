@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://tbui6bbaf6852379"]
+
+[ext_resource type="Script" path="res://Scripts/Tests/test_ui_layout.gd" id="1_script"]
+
+[node name="TestUiLayout" type="Node"]
+script = ExtResource("1_script")

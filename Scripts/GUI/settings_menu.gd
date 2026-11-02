@@ -8,6 +8,9 @@ extends Control
 ## Padding (px) inside the settings panel on each side.
 const PANEL_PADDING: int = 24
 
+## Width (px) of the settings panel; its height follows the content.
+const PANEL_WIDTH: int = 360
+
 ## Vertical spacing between setting rows.
 const ROW_SPACING: int = 16
 
@@ -29,19 +32,23 @@ func _build_ui() -> void:
 	var bg: ColorRect = ColorRect.new()
 	bg.name = "Background"
 	bg.color = Color(0, 0, 0, 0.6)
-	bg.anchors_preset = Control.PRESET_FULL_RECT
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
+	# Assigning `anchors_preset` does nothing on a control made in code;
+	# this is the call that actually anchors (and sizes) it.
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# A full-screen CenterContainer centers the panel at its content size.
+	var center: CenterContainer = CenterContainer.new()
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	_panel = VBoxContainer.new()
 	_panel.name = "Panel"
-	_panel.anchors_preset = Control.PRESET_CENTER
-	_panel.offset_left = -180
-	_panel.offset_top = -260
-	_panel.offset_right = 180
-	_panel.offset_bottom = 260
+	_panel.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	_panel.add_theme_constant_override("separation", ROW_SPACING)
-	add_child(_panel)
+	center.add_child(_panel)
 
 	# Title
 	var title: Label = _make_label("SETTINGS", 28)

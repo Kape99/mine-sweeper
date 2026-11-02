@@ -151,6 +151,12 @@ func get_board_size() -> Vector2:
 	)
 
 
+## Size of the cells as drawn: [method get_board_size] minus the one
+## trailing separation it includes. Use this to center or frame the board.
+func get_content_size() -> Vector2:
+	return get_board_size() - Vector2(GRID_H_SEPARATION, GRID_V_SEPARATION)
+
+
 func get_board_position() -> Vector2:
 	return _board_node.position if _board_node else Vector2.ZERO
 
@@ -348,7 +354,7 @@ static func clear_pools() -> void:
 func _begin_build() -> void:
 	_tile = Control.new()
 	_tile.mouse_filter = Control.MOUSE_FILTER_PASS
-	_tile.size = get_board_size() - Vector2(GRID_H_SEPARATION, GRID_V_SEPARATION)
+	_tile.size = get_content_size()
 	_board_node.add_child(_tile)
 	board_state = []
 	_build_next = 0

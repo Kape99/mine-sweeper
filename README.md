@@ -329,6 +329,11 @@ Every property is a Godot property with a custom `set()` that calls `_persist(ke
 - **BoardGUI**: defuse counter (`flagged/total`), reset button, pause button
 - **Screen.gd**: safe-area margin computation for notched devices, scales relative to 480×800 base resolution
 
+**Layout rules that keep the UI centered *and* the board tappable:**
+- Full-screen containers (`GUI/Screen`, `ScreenManager`, `BoardGUI`, `ScreensContainer`) are anchored to the full rect **and** use `mouse_filter = IGNORE`. A full-screen `STOP` control swallows every tap meant for the board; shrinking the container instead (no anchors) breaks every screen laid out inside it. Only real widgets (buttons, the score bar) and modal backgrounds (pause, settings, menu) use `STOP`.
+- In screens built from code (`PauseOverlay`, `SettingsMenu`), use `set_anchors_and_offsets_preset()` after `add_child()`. Assigning `anchors_preset` on a control created in code does nothing in Godot 4, which left those screens stuck in the top-left corner.
+- The camera keeps Camera2D's default centered anchor: `offset` is the center of the view, which is what `set_board_bounds()`, the pan clamp and the wrap recenter all assume.
+
 ## Design Decisions
 
 ### Why place mines after first click?
@@ -418,6 +423,7 @@ godot --headless --path . Scenes/Tests/test_board_wrapping.tscn
 | `test_mine_placement.gd` | 10 | Distance-2 safe zone around the first tap; on a 5×5 board with 16 mines every mine is still placed and the mine count / win target match; overlapping reveal waves don't cancel each other |
 | `test_neighbor_highlight.gd` | 11 | Holding a revealed number highlights its hidden neighbors, and releasing clears it |
 | `test_pause_overlay.gd` | 12 | Drives `base.tscn`: Resume un-dims the board, the overlay is in screen space, Esc backs out of Settings to the same overlay, Restart builds a new board, Quit returns to the menu |
+| `test_ui_layout.gd` | 17 | Drives `base.tscn`: the GUI root and HUD cover the viewport; HUD, pause, settings and end screen are centered and on screen; during a game only the HUD's own widgets block taps (checked over the whole screen); classic and wrap boards start centered |
 | `test_settings_persistence.gd` | 7 | Value clamping, `setting_changed` signal payload, and a real round-trip through `user://settings.cfg` via a fresh `ConfigFile` read |
 
 ### Writing a new test
