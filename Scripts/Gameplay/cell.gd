@@ -89,6 +89,8 @@ func _ready() -> void:
 func reset_state() -> void:
 	nearby = 0
 	_cell_state = CellState.UNKNOWN
+	_touch_pressed = false
+	_long_press_triggered = false
 	set_display(GlobalState.secondary_color, GlobalState.main_color)
 	_cell_icon.texture = null
 	_cell_text.text = ""

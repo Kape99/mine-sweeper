@@ -10,6 +10,11 @@ func _get_cell_type_idx(_col: int, row: int) -> int:
 	return posmod(row, 2)
 
 
+## Neighbor offsets depend on row parity, so wrapping needs an even row count.
+func _get_wrap_dimension_multiple() -> Vector2i:
+	return Vector2i(1, 2)
+
+
 func _get_nearby_cells(cell: CellBase, distance: int = 1) -> Dictionary:
 	var result: Dictionary = {}
 	var visited: Dictionary = {cell.coord: true}

@@ -35,7 +35,8 @@ func _test_square() -> void:
 func _test_hexagon() -> void:
 	var wrap: BaseBoard = _load_board(HEX_SCENE, 9, 13, 15, true)
 	assert_eq(wrap._tiles.size(), 9, "Hex wrap: builds 9 tiles")
-	assert_eq(wrap.board_state.size(), 13, "Hex wrap: board_state has 13 rows")
+	assert_eq(wrap.board_state.size(), 14, "Hex wrap: odd row count (13) is rounded up to 14")
+	assert_eq(_count_asymmetric_pairs(wrap), 0, "Hex wrap: neighbor relation is symmetric across the seam")
 	wrap.free()
 
 	var classic: BaseBoard = _load_board(HEX_SCENE, 9, 13, 15, false)
@@ -50,8 +51,10 @@ func _test_hexagon() -> void:
 
 
 func _test_triangle() -> void:
-	var wrap: BaseBoard = _load_board(TRIANGLE_SCENE, 11, 12, 15, true)
+	var wrap: BaseBoard = _load_board(TRIANGLE_SCENE, 11, 13, 15, true)
 	assert_eq(wrap._tiles.size(), 9, "Triangle wrap: builds 9 tiles")
+	assert_eq(Vector2i(wrap.cols, wrap.rows), Vector2i(12, 14), "Triangle wrap: odd 11x13 is rounded up to 12x14")
+	assert_eq(_count_asymmetric_pairs(wrap), 0, "Triangle wrap: neighbor relation is symmetric across the seam")
 	wrap.free()
 
 	var classic: BaseBoard = _load_board(TRIANGLE_SCENE, 11, 12, 15, false)
@@ -66,6 +69,19 @@ func _test_triangle() -> void:
 		"Triangle classic: corner has fewer neighbors than wrap (%d < %d)" % [classic_neighbors, wrap_neighbors])
 	classic.free()
 	wrap_reload.free()
+
+
+## Number of (a, b) pairs where b is a neighbor of a but a is not a
+## neighbor of b. Must be 0, or mine counts disagree with flood fill/chord.
+func _count_asymmetric_pairs(board: BaseBoard) -> int:
+	var count: int = 0
+	for row: int in board.rows:
+		for col: int in board.cols:
+			var a: CellBase = board.board_state[row][col]
+			for b: CellBase in board._get_nearby_cells(a).keys():
+				if not board._get_nearby_cells(b).has(a):
+					count += 1
+	return count
 
 
 func _load_board(scene_path: String, cols: int, rows: int, mines: int, wrap: bool) -> BaseBoard:

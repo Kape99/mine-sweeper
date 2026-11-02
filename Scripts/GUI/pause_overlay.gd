@@ -60,15 +60,14 @@ func _get_base() -> Node:
 	return get_tree().root.find_child("Base", true, false)
 
 
-## Called by ScreenManager after the fade-out completes.
+## Resume/Restart/Quit go through base.gd, which owns the board node that
+## must be un-dimmed (Base itself is a plain Node, not the gameplay Control).
 func _on_resume() -> void:
-	_get_screen_manager().hide_pause(_get_base())
+	_get_base().resume_game()
 
 
 func _on_restart() -> void:
-	var base: Node = _get_base()
-	_get_screen_manager().hide_pause(base)
-	base.restart_game()
+	_get_base().restart_game()
 
 
 func _on_settings() -> void:
@@ -76,6 +75,4 @@ func _on_settings() -> void:
 
 
 func _on_quit() -> void:
-	var base: Node = _get_base()
-	_get_screen_manager().hide_pause(base)
-	base.return_to_menu()
+	_get_base().return_to_menu()

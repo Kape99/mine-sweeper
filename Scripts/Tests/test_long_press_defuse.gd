@@ -24,7 +24,7 @@ func run() -> void:
 	press.index = 0
 	cell._on_area_2d_input_event(null, press, 0)
 
-	await get_tree().create_timer(0.5).timeout
+	await wait_wall_ms(CellBase.LONG_PRESS_THRESHOLD_MS + 150)
 
 	assert_true(cell.is_defused(), "Long press toggles defuse on unknown cell")
 	assert_eq(pressed_count, 0, "Long press does not emit cell_pressed")

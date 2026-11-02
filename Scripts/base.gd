@@ -101,7 +101,11 @@ func _game_started(mine_count: int) -> void:
 ## Returns to the main menu, freeing the current board.
 func _reset() -> void:
 	if _board:
+		# clear() returns the interactive cells to the static pool so the
+		# next game reuses them instead of re-instantiating every cell.
+		_board.clear()
 		_board.free()
+		_board = null
 	GlobalState.is_defusing = false
 	_defuse_button.button_pressed = false
 	_board_gui.visible = false
@@ -111,6 +115,12 @@ func _reset() -> void:
 	# Return to main menu through ScreenManager so overlays are cleared.
 	var sm: ScreenManager = $ScreenManager
 	sm.show_main_menu(_main_menu)
+
+
+## Public wrapper used by PauseOverlay: closes the overlay and un-dims the board.
+func resume_game() -> void:
+	if _board:
+		$ScreenManager.hide_pause(_board)
 
 
 ## Public wrapper used by PauseOverlay.
@@ -138,13 +148,17 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _handle_back_button() -> void:
 	var sm: ScreenManager = $ScreenManager
-	if _board and _board.get_child_count() > 0:
+	var current: Control = sm.get_current_screen()
+	if current is SettingsMenu:
+		# Back out of Settings to whatever opened it (MainMenu or PauseOverlay).
+		sm.pop()
+	elif _board:
 		# Gameplay is active — toggle pause
-		if sm.get_current_screen() is PauseOverlay:
+		if current is PauseOverlay:
 			sm.hide_pause(_board)
 		else:
 			sm.show_pause(_board)
-	# If no game is active (main menu), back button does nothing.
+	# Otherwise (plain main menu) the back button does nothing.
 
 
 func _on_pause_requested() -> void:

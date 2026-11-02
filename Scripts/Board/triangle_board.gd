@@ -10,6 +10,12 @@ func _get_cell_type_idx(col: int, row: int) -> int:
 	return posmod(col + row, cells.size())
 
 
+## Up/down orientation depends on (col + row) parity, so wrapping needs an
+## even column and row count.
+func _get_wrap_dimension_multiple() -> Vector2i:
+	return Vector2i(2, 2)
+
+
 func _is_upward_triangle(col: int, row: int) -> bool:
 	return posmod(col + row, 2) == 0
 

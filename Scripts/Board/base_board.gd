@@ -35,6 +35,11 @@ const PAN_MARGIN: float = 100.0
 ## Number of interactive cells to pre-create per variant at startup.
 const POOL_PREWARM: int = 200
 
+## Preferred radius of the mine-free zone around the first tapped cell.
+## Shrinks automatically (down to just the tapped cell) when the board is
+## too small to fit the requested mines outside it.
+const SAFE_ZONE_DISTANCE: int = 2
+
 @export var cols: int = 10
 @export var rows: int = 10
 @export var mines: int = 10
@@ -65,7 +70,10 @@ var _defused_count: int = 0
 var _is_game_started: bool = false
 var _is_game_over: bool = false
 var _to_be_explored: int = 0
-var _active_tween: Tween = null
+
+## Reveal animations currently running. Several waves may overlap (e.g. a
+## second tap during a long flood fill) and must not cancel each other.
+var _active_tweens: Array[Tween] = []
 
 ## Cached lightweight display cell scenes, keyed by cell type index.
 var _display_cell_scenes: Dictionary = {}
@@ -158,7 +166,7 @@ func get_bounds() -> Rect2:
 
 
 func clear() -> void:
-	_kill_active_tween()
+	_kill_active_tweens()
 	_explored = 0
 	_defused_count = 0
 	_is_game_started = false
@@ -178,12 +186,32 @@ func clear() -> void:
 
 
 func start_game(p_cols: int, p_rows: int, p_mines: int, p_wrap: bool = true) -> void:
-	cols = p_cols
-	rows = p_rows
-	mines = p_mines
 	_wrap_mode = p_wrap
+	var requested: Vector2i = Vector2i(p_cols, p_rows)
+	var dims: Vector2i = _wrap_safe_dimensions(requested) if p_wrap else requested
+	cols = dims.x
+	rows = dims.y
+	mines = p_mines
+	if dims != requested:
+		# Keep the requested mine density on the enlarged board.
+		mines = roundi(p_mines * float(cols * rows) / float(p_cols * p_rows))
 	_to_be_explored = rows * cols - mines
 	reset()
+
+
+## In wrap mode each dimension must be a multiple of this so the cell
+## parity pattern (hex row stagger, triangle up/down) stays consistent
+## across the seam — otherwise the neighbor relation becomes asymmetric
+## there and the displayed numbers stop matching the flood fill / chord
+## logic. Override in subclasses whose topology depends on parity.
+func _get_wrap_dimension_multiple() -> Vector2i:
+	return Vector2i.ONE
+
+
+## Rounds [param dims] up to the nearest valid wrap-mode size.
+func _wrap_safe_dimensions(dims: Vector2i) -> Vector2i:
+	var m: Vector2i = _get_wrap_dimension_multiple()
+	return Vector2i(ceili(dims.x / float(m.x)) * m.x, ceili(dims.y / float(m.y)) * m.y)
 
 
 func reset() -> void:
@@ -225,6 +253,10 @@ func _release_cell(cell: CellBase) -> void:
 		cell.cell_defused.disconnect(_handle_defuse)
 	if cell.cell_exploded.is_connected(_handle_explosion):
 		cell.cell_exploded.disconnect(_handle_explosion)
+	if cell.cell_highlight_requested.is_connected(_on_cell_highlight_requested):
+		cell.cell_highlight_requested.disconnect(_on_cell_highlight_requested)
+	if cell.cell_highlight_cleared.is_connected(_clear_neighbor_highlight):
+		cell.cell_highlight_cleared.disconnect(_clear_neighbor_highlight)
 	var parent: Node = cell.get_parent()
 	if parent:
 		parent.remove_child(cell)
@@ -585,16 +617,25 @@ func _handle_explosion(_cell: CellBase) -> void:
 			Input.vibrate_handheld(EXPLOSION_VIBRATION_MS)
 
 
-func _kill_active_tween() -> void:
-	if _active_tween and _active_tween.is_valid():
-		_active_tween.kill()
-	_active_tween = null
+func _kill_active_tweens() -> void:
+	for tween: Tween in _active_tweens:
+		if tween.is_valid():
+			tween.kill()
+	_active_tweens.clear()
 
 
-func _create_tween() -> Tween:
-	_kill_active_tween()
-	_active_tween = create_tween()
-	return _active_tween
+## Starts a new reveal animation alongside any that are still running.
+## Overlapping waves are safe: [method CellBase.explore] is a no-op on a
+## cell that's already explored or flagged.
+func _create_reveal_tween() -> Tween:
+	var still_running: Array[Tween] = []
+	for tween: Tween in _active_tweens:
+		if tween.is_valid():
+			still_running.append(tween)
+	_active_tweens = still_running
+	var new_tween: Tween = create_tween()
+	_active_tweens.append(new_tween)
+	return new_tween
 
 
 func _reveal_mines_from(origin: CellBase) -> void:
@@ -611,7 +652,9 @@ func _reveal_mines_from(origin: CellBase) -> void:
 		func(a: CellBase, b: CellBase) -> bool:
 			return a.coord.distance_to(origin_coord) < b.coord.distance_to(origin_coord)
 	)
-	var tween: Tween = _create_tween()
+	# Game over: stop any pending reveal waves before showing the mines.
+	_kill_active_tweens()
+	var tween: Tween = _create_reveal_tween()
 	for cel: CellBase in mine_cells:
 		var cell: CellBase = cel
 		tween.tween_callback(
@@ -685,7 +728,7 @@ func _chord_reveal(cell: CellBase) -> void:
 		func(a: CellBase, b: CellBase) -> bool:
 			return a.coord.distance_to(cell.coord) < b.coord.distance_to(cell.coord)
 	)
-	var tween: Tween = _create_tween()
+	var tween: Tween = _create_reveal_tween()
 	for reveal_cell: CellBase in to_reveal:
 		var rc: CellBase = reveal_cell
 		tween.tween_callback(func(): rc.explore()).set_delay(REVEAL_DELAY_FACTOR)
@@ -715,7 +758,7 @@ func _explore_nearby(cell: CellBase) -> void:
 		func(a: CellBase, b: CellBase) -> bool:
 			return a.coord.distance_to(cell.coord) < b.coord.distance_to(cell.coord)
 	)
-	var tween: Tween = _create_tween()
+	var tween: Tween = _create_reveal_tween()
 	for neighbor_cell: CellBase in to_reveal:
 		var nc: CellBase = neighbor_cell
 		tween.tween_callback(
@@ -725,16 +768,7 @@ func _explore_nearby(cell: CellBase) -> void:
 
 
 func _place_mines(cell: CellBase) -> void:
-	var invalid_cells: Dictionary = _get_nearby_cells(cell, 2)
-	invalid_cells[cell] = false
-
-	var valid_indices: Array[int] = []
-	var child_count: int = cols * rows
-	for i: int in child_count:
-		var r: int = i / cols
-		var c: int = i % cols
-		if not invalid_cells.has(board_state[r][c]):
-			valid_indices.append(i)
+	var valid_indices: Array[int] = _get_mine_candidates(cell)
 
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	if GlobalState.board_seed != 0:
@@ -746,16 +780,34 @@ func _place_mines(cell: CellBase) -> void:
 		valid_indices[i] = valid_indices[j]
 		valid_indices[j] = tmp
 
-	var actual_mines: int = mini(mines, valid_indices.size())
-	for i: int in actual_mines:
+	# The mine count and win target must reflect what was actually placed,
+	# otherwise the HUD lies and the win check fires at the wrong time.
+	mines = mini(mines, valid_indices.size())
+	_to_be_explored = rows * cols - mines
+	for i: int in mines:
 		var idx: int = valid_indices[i]
-		var r: int = idx / cols
-		var c: int = idx % cols
-		var mine_cell: CellBase = board_state[r][c]
+		var mine_cell: CellBase = board_state[idx / cols][idx % cols]
 		mine_cell.mark_as_mine()
-		for cell_to_update: CellBase in _get_nearby_cells(board_state[r][c]):
-			var neighbor_coord: Vector2i = cell_to_update.coord
-			board_state[neighbor_coord.y][neighbor_coord.x].increment_nearby()
+		for neighbor: CellBase in _get_nearby_cells(mine_cell):
+			neighbor.increment_nearby()
+
+
+## Returns row-major indices of cells that may hold a mine. Uses the
+## largest safe zone around [param first_cell] (up to [constant
+## SAFE_ZONE_DISTANCE]) that still leaves room for every requested mine;
+## on tiny or dense boards it shrinks down to excluding only the tapped cell.
+func _get_mine_candidates(first_cell: CellBase) -> Array[int]:
+	var candidates: Array[int] = []
+	for distance: int in range(SAFE_ZONE_DISTANCE, -1, -1):
+		var excluded: Dictionary = _get_nearby_cells(first_cell, distance) if distance > 0 else {}
+		excluded[first_cell] = true
+		candidates.clear()
+		for i: int in cols * rows:
+			if not excluded.has(board_state[i / cols][i % cols]):
+				candidates.append(i)
+		if candidates.size() >= mines:
+			break
+	return candidates
 
 
 func _get_nearby_cells(_cell: CellBase, _distance: int = 1) -> Dictionary:

@@ -41,7 +41,9 @@ Board dimensions and mine density are configurable from the main menu (rows, col
 4. Revealing a **mine** ends the game — all remaining mines are shown in a ripple from the explosion point
 5. **Win** by revealing every non-mine cell
 
-The first tap is always safe: mines are placed *after* the first click, excluding the tapped cell and its neighbors within distance 2.
+The first tap is always safe: mines are placed *after* the first click, excluding the tapped cell and its neighbors within distance 2. On boards too small or dense for that, the safe zone shrinks (distance 1, then just the tapped cell) so every requested mine still fits — the mine counter and win condition always reflect the mines actually placed.
+
+The **seed** (0 = random) only seeds the mine-placement RNG: the same seed, board type, size, mine count and first tap give the same layout.
 
 ---
 
@@ -159,9 +161,7 @@ mine-sweeper/
 │   │   ├── SettingsMenu.tscn         Standalone settings screen
 │   │   └── PauseOverlay.tscn         In-game pause overlay
 │   └── Tests/
-│       ├── test_board_wrapping.tscn
-│       ├── test_cell_binding.tscn
-│       └── test_settings_persistence.tscn
+│       └── test_*.tscn              One scene per test suite
 ├── Scripts/
 │   ├── base.gd                      Main game controller
 │   ├── global_state.gd              Autoload singleton (GlobalState) — game config
@@ -179,13 +179,10 @@ mine-sweeper/
 │   │   ├── screen_manager.gd        Screen push/pop stack with transitions
 │   │   ├── main_menu.gd             MainMenu logic (selection state + signals)
 │   │   ├── settings_menu.gd         SettingsMenu logic (bound to Settings)
-│   │   ├── pause_overlay.gd         Pause overlay logic
-│   │   └── difficulty_selector.gd   Legacy menu selector (unused, kept for reference)
+│   │   └── pause_overlay.gd         Pause overlay logic
 │   └── Tests/
 │       ├── test_case.gd             Minimal test-case base class
-│       ├── test_board_wrapping.gd
-│       ├── test_cell_binding.gd
-│       ├── test_settings_persistence.gd
+│       ├── test_*.gd                One file per suite (see Testing)
 │       └── run_tests.sh             Aggregate test runner (shell script)
 └── Asset/
     ├── Icons/                        SVG icons (mine, flag, arrows, etc.)
@@ -199,17 +196,20 @@ The main gameplay scene (`base.tscn`) is always loaded:
 ```
 Base (Node)                          ← base.gd — game controller
 ├── Camera (Camera2D)                ← camera_controller.gd
-└── GUI (CanvasLayer)
-    ├── ScreenManager (Control)      ← screen_manager.gd — screen stack
-    │   └── Container                ← pushed screens (Settings, Pause) live here
-    └── Screen (MarginContainer)     ← safe area margins
-        ├── MainMenu                  ← instance of Scenes/Menu/MainMenu.tscn
-        ├── BoardGUI                  ← hidden until game starts
-        │   ├── DefuseButton
-        │   ├── PauseButton
-        │   └── ScoreTracker
-        └── FinalScreen               ← hidden until game ends
-            └── BackToMenu
+├── ScreenManager (Control)          ← screen_manager.gd — screen stack logic
+└── GUI (CanvasLayer)                ← screen space, unaffected by the camera
+    ├── Screen (MarginContainer)     ← safe area margins
+    │   ├── MainMenu                  ← instance of Scenes/Menu/MainMenu.tscn
+    │   ├── BoardGUI                  ← hidden until game starts
+    │   │   ├── DefuseButton
+    │   │   ├── PauseButton
+    │   │   └── ScoreTracker
+    │   └── FinalScreen               ← hidden until game ends
+    │       └── BackToMenu
+    └── ScreensContainer (Control)    ← %ScreensContainer: MainMenu, Settings and
+                                         Pause are shown here, on top of the HUD.
+                                         mouse_filter = IGNORE; each screen blocks
+                                         input with its own background.
 ```
 
 Board scenes are instantiated *dynamically* as children of Base when a game starts, and freed on reset. `MainMenu` participates in the `ScreenManager` stack (see [UI](#ui)) even though it lives inline in `base.tscn` — `ScreenManager.show_main_menu()` treats it as the base of the navigation stack.
@@ -226,7 +226,7 @@ BaseBoard (abstract)
 **BaseBoard** (`base_board.gd`) owns all game logic and the tile block (see [Board Topology](#board-topology-wrap-vs-classic) for wrap/classic details):
 - Mine placement via Fisher-Yates shuffle — O(n) guaranteed, no retry loops
 - BFS flood fill for empty cell expansion — O(n) with visited set
-- Tween-based wave animations (one active tween at a time, new kills old)
+- Tween-based wave animations (overlapping waves allowed; all are stopped on game over / clear)
 - Win/lose detection, signal emissions
 - `_get_nearby_cells(cell, distance)` — abstract, returns `Dictionary` used as a Set
 - `_build_tiles()` — builds either a 3×3 tile block (wrap mode) or a single tile (classic mode)
@@ -251,7 +251,10 @@ The board supports two topology modes, selectable from the MainMenu or Settings 
 | Tile block | 3×3 grid — 1 interactive center tile + 8 visual copies | Single tile, no copies |
 | Scrolling | Infinite — camera recenters by exactly one board size when it drifts past 50% of a board dimension from center | Bounded — camera clamped to the board's rect via `CameraController.set_board_bounds()` |
 | Neighbor lookup | Toroidal — coordinates wrap with `posmod()` | Hard edges — out-of-bounds neighbors are skipped |
+| Board size | Rounded up to a valid wrap size (see below) | As chosen |
 | Feel | Left edge connects to right edge, top to bottom (like Pac-Man) | Traditional bounded Minesweeper board |
+
+**Why wrap mode needs even dimensions on hex/triangle boards:** hexagon neighbor offsets depend on row parity, and triangle orientation (up/down) on `(col + row)` parity. If the seam joins two rows/columns of the same parity, the neighbor relation becomes asymmetric there (a mine counts toward a cell that doesn't consider the mine its neighbor). `BaseBoard.start_game()` therefore rounds the size up via `_get_wrap_dimension_multiple()` — hexagon: even rows; triangle: even rows and columns — scaling the mine count to keep the requested density.
 
 **Why a 3×3 tile block instead of true infinite generation?** Cells are full interactive scenes (`Area2D` + `CollisionPolygon2D` + `Label` + `TextureRect`), not simple sprites — they can't be represented as a shader or generated on the fly without real nodes for hit-testing. A fixed 3×3 block (9× the base cell count) gives seamless continuous scrolling with a bounded, one-time node cost, whichis a small, safe tradeoff for the board sizes this game uses (max ~19×22 cells).
 
@@ -295,7 +298,7 @@ Cell exposes explicit methods instead of magic setters:
 |---|---|---|
 | `master_volume`, `music_volume`, `sfx_volume` | `float` (0.0–1.0) | Clamped in the setter; `master_volume` applies live to the `AudioServer` "Master" bus |
 | `vibration_enabled` | `bool` | Gates haptic feedback on cell taps and explosions |
-| `graphics_quality` | `String` | `"low"` / `"medium"` / `"high"` — controls 2D MSAA and pixel snapping |
+| `graphics_quality` | `String` | `"low"` / `"medium"` / `"high"` — sets the root viewport's 2D MSAA (off / 2× / 4×) and vertex pixel snapping |
 | `fullscreen` | `bool` | Applies immediately via `DisplayServer.window_set_mode()` |
 | `board_wrap` | `bool` | Wrap vs. classic board topology, default `true` |
 | `nickname`, `language` | `String` | Reserved for future use |
@@ -335,8 +338,8 @@ The original random-rejection loop degrades as the board fills — approaching O
 ### Why BFS instead of recursive flood fill?
 GDScript has a call stack limit. Deep recursion on large boards can overflow. Iterative BFS with an array-as-queue is stack-safe and equally efficient.
 
-### Why a single Tween instead of per-cell Timers?
-Flood fill and mine reveal can touch hundreds of cells. One Tween with sequential callbacks uses a single object. Per-cell Timers would create N concurrent timer nodes — wasteful and harder to cancel.
+### Why one Tween per wave instead of per-cell Timers?
+Flood fill and mine reveal can touch hundreds of cells. One Tween with sequential callbacks per wave uses a single object. Per-cell Timers would create N concurrent timer nodes — wasteful and harder to cancel. Waves are tracked in `_active_tweens` and may overlap (tapping again mid-wave must not cancel the earlier wave); `explore()` is a no-op on already-revealed or flagged cells, so overlapping waves are safe.
 
 ### Why Dictionary-as-Set for neighbors?
 GDScript 4 has no native Set type. Dictionary with unused values is the standard workaround — O(1) lookup, O(1) insert, deduplication by key.
@@ -365,20 +368,24 @@ The project has no editor dependency (no GUT or other addon) — tests are plain
 ./Scripts/Tests/run_tests.sh
 ```
 
-Runs every `Scenes/Tests/test_*.tscn` as its own `godot --headless` process, prints per-assertion `PASS`/`FAIL` lines, and exits non-zero if any suite failed. Individual suites can also be run directly:
+Runs `godot --headless --import` first (a stale `.godot/` class cache makes every `class_name` type unresolvable, so scenes fail to load and hang), then every `Scenes/Tests/test_*.tscn` as its own `godot --headless` process with a per-suite timeout (`SUITE_TIMEOUT`, default 60 s). Prints per-assertion `PASS`/`FAIL` lines and exits non-zero if any suite failed or timed out. Individual suites can also be run directly:
 
 ```bash
-godot --headless Scenes/Tests/test_board_wrapping.tscn
+godot --headless --path . Scenes/Tests/test_board_wrapping.tscn
 ```
 
 ### Suites
 
 | File | Assertions | Covers |
 |---|---|---|
-| `test_board_wrapping.gd` | 11 | Wrap mode builds a 9-tile block with toroidal neighbor wrap; classic mode builds 1 tile with edge-clipped neighbors — checked for square, hex, and triangle boards |
+| `test_board_wrapping.gd` | 14 | Wrap mode builds a 9-tile block with toroidal neighbor wrap; classic mode builds 1 tile with edge-clipped neighbors; odd hex/triangle sizes are rounded up in wrap mode and the neighbor relation stays symmetric — checked for square, hex, and triangle boards |
 | `test_cell_binding.gd` | 15 | Collision polygon is non-empty, has the same vertex count, and has strictly larger area than the fill polygon — checked for all 5 cell scenes |
 | `test_chord_reveal.gd` | 9 | Correctly flagged neighbors match the cell number and all remaining hidden neighbors are revealed |
+| `test_long_press_defuse.gd` | 4 | Long-press toggles the flag on a hidden cell |
 | `test_mine_color_sync.gd` | 5 | A mined cell explosion shows red background + white icon on both the logical cell and wrap-mode display copies |
+| `test_mine_placement.gd` | 10 | Distance-2 safe zone around the first tap; on a 5×5 board with 16 mines every mine is still placed and the mine count / win target match; overlapping reveal waves don't cancel each other |
+| `test_neighbor_highlight.gd` | 11 | Holding a revealed number highlights its hidden neighbors, and releasing clears it |
+| `test_pause_overlay.gd` | 12 | Drives `base.tscn`: Resume un-dims the board, the overlay is in screen space, Esc backs out of Settings to the same overlay, Restart builds a new board, Quit returns to the menu |
 | `test_settings_persistence.gd` | 7 | Value clamping, `setting_changed` signal payload, and a real round-trip through `user://settings.cfg` via a fresh `ConfigFile` read |
 
 ### Writing a new test
@@ -392,27 +399,5 @@ godot --headless Scenes/Tests/test_board_wrapping.tscn
 ### Gotchas this caught (worth knowing before writing more tests)
 
 - **GDScript lambdas capture value-type locals by snapshot, not by reference.** A lambda that reassigns an outer `var received_key: String` won't be visible to the caller. Use a mutable container (`Array`, `Dictionary`) instead — see `test_settings_persistence.gd`'s `_test_signal_emission()`.
+- **Use `wait_wall_ms()` for anything timed with `Time.get_ticks_msec()`** (e.g. long-press). `SceneTreeTimer` counts game time, and the large first-frame delta at startup can make a 0.5 s timer fire after ~360 ms of real time.
 - **`Object.get()` / `Object._set()` are reserved virtual method names.** Defining a method literally named `get` or `_set` on any `Node`/`Object` subclass with an incompatible signature breaks compilation silently in the editor and only surfaces when the script is actually loaded (e.g. as an autoload at game start).
-
-### Seed Validation
-
-The game ensures that no two different seed values can produce identical first turn mine configurations. This is a new design constraint that adds significant complexity to the mine placement algorithm:
-- **Seed Longevity**: Must remain valid across arbitrary recomputations of early-game states.
-- **Config Switching**: Different board types and difficulties must produce unique safe zones for the same seed value.
-- **Hash Consistency**: The mine placement hash must be consistent across all valid board sizes and configurations for a given seed.
-
-## Implementation Challenges
-**Simple Hashing Approaches Fail**:
-- Basic shuffling produces duplicate safe zones across difficulties.
-- Modified hash values produce duplicate safe zones across board types.
-- Enhanced seeding fails safe zone validation across different board scenes.
-
-**Solution**:
-Implemented a controlled randomization system that generates different mine placements while ensuring unique safe zones. This required a non-trivial evolution of the randomization algorithm to meet both:
-1. Complete placement diversity across seed values
-2. Unique safe zone guarantees
-3. Compatibility with all board types and difficulties
-
-## Accessibility
-- **Known Seeds**: We've identified safe seed values like `257189688`, `69903475`, `8170328`, `724916`, `5664`, `394`, and `1000` which produce challenging mine configurations.
-- **Seed Validation Testing**: Each new seed undergoes rigorous testing to ensure valid safe zone generation;

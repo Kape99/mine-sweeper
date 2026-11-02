@@ -28,17 +28,6 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("16_screen_mgr")
 
-[node name="ScreensContainer" type="Control" parent="." unique_id=1715830744]
-unique_name_in_owner = true
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-
 [node name="GUI" type="CanvasLayer" parent="." unique_id=1828482509]
 
 [node name="Screen" type="MarginContainer" parent="GUI" unique_id=836711312]
@@ -113,3 +102,15 @@ offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Back to Menu"
+
+[node name="ScreensContainer" type="Control" parent="GUI" unique_id=1715830744]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+mouse_filter = 2

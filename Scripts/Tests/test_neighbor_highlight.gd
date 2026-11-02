@@ -37,7 +37,7 @@ func run() -> void:
 	press.index = 0
 	center._on_area_2d_input_event(null, press, 0)
 
-	await get_tree().create_timer(0.5).timeout
+	await wait_wall_ms(CellBase.LONG_PRESS_THRESHOLD_MS + 150)
 
 	var highlighted_count: int = 0
 	for row: int in board.rows:

@@ -21,6 +21,17 @@ func run() -> void:
 	pass
 
 
+## Waits until at least [param ms] of wall-clock time has passed, then one
+## more frame. Use this (not a SceneTreeTimer) for logic timed with
+## Time.get_ticks_msec(), like long-press: scene timers count game time,
+## and the big first-frame delta at startup can fire them early.
+func wait_wall_ms(ms: int) -> void:
+	var deadline: int = Time.get_ticks_msec() + ms
+	while Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
+	await get_tree().process_frame
+
+
 func assert_true(condition: bool, message: String) -> void:
 	if condition:
 		_passed += 1
