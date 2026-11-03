@@ -274,4 +274,4 @@ func _on_no_border_toggled(toggled_on: bool) -> void:
 
 
 func _on_wrap_mode_changed(wrap: bool) -> void:
-	Settings.board_wrap = wrap
+	GlobalState.board_wrap = wrap

@@ -40,7 +40,7 @@ func _ready() -> void:
 ## [param dismiss_current] — when true (default), the current screen is
 ## animated out and queued for removal. When false, the current screen is
 ## hidden immediately (modulate → 0) without being destroyed, so it can
-## be restored by a later pop() — used by PauseOverlay pushing Settings.
+## be restored by a later pop() — used by PauseOverlay pushing an overlay.
 func push(screen: Control, animated: bool = true, dismiss_current: bool = true) -> void:
 	if _current:
 		if dismiss_current:
@@ -64,7 +64,7 @@ func pop() -> bool:
 			_animate_out(_current, true)
 			_current = null
 		# Restore a screen that was hidden (not destroyed) by a
-		# dismiss_current push — e.g. PauseOverlay underneath Settings.
+		# dismiss_current push — e.g. PauseOverlay underneath an overlay.
 		if _dismissed_screen and is_instance_valid(_dismissed_screen):
 			var restored: Control = _dismissed_screen
 			_dismissed_screen = null

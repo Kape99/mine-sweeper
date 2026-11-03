@@ -11,7 +11,6 @@ class_name BaseBoard
 extends Control
 
 const REVEAL_DELAY_FACTOR: float = 0.02
-const EXPLOSION_VIBRATION_MS: int = 500
 
 const GRID_H_SEPARATION: int = 4
 const GRID_V_SEPARATION: int = 4
@@ -424,11 +423,9 @@ func _process(_delta: float) -> void:
 	if not _display_touch_active or _display_long_press_triggered:
 		return
 	var elapsed: int = Time.get_ticks_msec() - _display_touch_start_time
-	if elapsed <= CellBase.LONG_PRESS_THRESHOLD_MS:
+	if elapsed <= Settings.long_press_threshold_ms:
 		return
 	_display_long_press_triggered = true
-	if Settings.vibration_enabled:
-		Input.vibrate_handheld(CellBase.LONG_PRESS_VIBRATION_MS)
 	if _display_logical_cell and _display_logical_cell.is_explored() and _display_logical_cell.nearby > 0:
 		_highlight_neighbors(_display_logical_cell)
 
@@ -465,12 +462,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_display_long_press_triggered = false
 		_clear_neighbor_highlight()
 		if had_long_press:
-			if cell and not cell.is_explored() and _display_touch_position.distance_to(event.position) < CellBase.TAP_THRESHOLD:
+			if cell and not cell.is_explored() and _display_touch_position.distance_to(event.position) < Settings.tap_threshold:
 				cell.defuse()
 			return
-		if _display_touch_position.distance_to(event.position) < CellBase.TAP_THRESHOLD:
-			if Settings.vibration_enabled:
-				Input.vibrate_handheld(CellBase.TAP_VIBRATION_MS)
+		if _display_touch_position.distance_to(event.position) < Settings.tap_threshold:
+
 			if cell:
 				_on_cell_pressed(cell, cell.nearby)
 
@@ -585,8 +581,7 @@ func _handle_explosion(_cell: CellBase) -> void:
 		on_game_finished.emit(false, 0.0)
 		_reveal_mines_from(_cell)
 		_sync_display_to_copies(_cell)
-		if Settings.vibration_enabled:
-			Input.vibrate_handheld(EXPLOSION_VIBRATION_MS)
+
 
 
 func _kill_active_tweens() -> void:

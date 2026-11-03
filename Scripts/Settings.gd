@@ -10,128 +10,34 @@ signal setting_changed(key: String, value: Variant)
 
 var _config: ConfigFile = ConfigFile.new()
 
-## Master volume (0.0 – 1.0).
-var master_volume: float:
+## Maximum distance (px) between touch-down and touch-up to register a tap.
+var tap_threshold: float:
 	set(v):
-		master_volume = clampf(v, 0.0, 1.0)
-		_persist("master_volume", master_volume)
+		tap_threshold = clampf(v, 1.0, 100.0)
+		_persist("tap_threshold", tap_threshold)
 
-## Music volume (0.0 – 1.0), applied on top of master_volume.
-var music_volume: float:
+## Time (ms) a finger must stay down to trigger a long-press defuse toggle.
+var long_press_threshold_ms: int:
 	set(v):
-		music_volume = clampf(v, 0.0, 1.0)
-		_persist("music_volume", music_volume)
+		long_press_threshold_ms = clampi(v, 50, 5000)
+		_persist("long_press_threshold_ms", long_press_threshold_ms)
 
-## SFX volume (0.0 – 1.0), applied on top of master_volume.
-var sfx_volume: float:
+## Whether a double tap (instead of a single tap) triggers explore.
+var use_double_tap: bool:
 	set(v):
-		sfx_volume = clampf(v, 0.0, 1.0)
-		_persist("sfx_volume", sfx_volume)
+		use_double_tap = v
+		_persist("use_double_tap", use_double_tap)
 
-## Whether haptic feedback / vibration is enabled.
-var vibration_enabled: bool:
+## Max time (ms) between two taps to count as a double tap.
+var double_tap_window_ms: int:
 	set(v):
-		vibration_enabled = v
-		_persist("vibration_enabled", vibration_enabled)
-
-## Preferred graphics quality preset.
-## Accepted values: "low", "medium", "high".
-var graphics_quality: String:
-	set(v):
-		graphics_quality = v
-		_apply_graphics_quality()
-		_persist("graphics_quality", graphics_quality)
-
-## Whether the game runs fullscreen.
-var fullscreen: bool:
-	set(v):
-		fullscreen = v
-		_persist("fullscreen", fullscreen)
-		_apply_fullscreen()
-
-## Whether the board wraps on itself (toroidal) or has hard edges (classic).
-var board_wrap: bool:
-	set(v):
-		board_wrap = v
-		GlobalState.board_wrap = v
-		_persist("board_wrap", board_wrap)
-
-## Player nickname (used for online / leaderboard display later).
-var nickname: String:
-	set(v):
-		nickname = v.strip_edges()
-		_persist("nickname", nickname)
-
-## Language code, e.g. "en", "it".
-var language: String:
-	set(v):
-		language = v
-		_persist("language", language)
+		double_tap_window_ms = clampi(v, 150, 2000)
+		_persist("double_tap_window_ms", double_tap_window_ms)
 
 
 func _ready() -> void:
 	_load()
-	_apply_audio_buses()
 	setting_changed.connect(_on_setting_changed)
-
-
-## Apply current fullscreen setting immediately.
-func _apply_fullscreen() -> void:
-	if fullscreen:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-	else:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-
-
-## Apply quality preset to 2D MSAA and pixel snapping on the root viewport.
-## (Changing the equivalent ProjectSettings at runtime has no effect —
-## they're only read at startup.) 2D MSAA isn't supported by the
-## Compatibility (GLES3) renderer this project uses, so there only the
-## pixel snapping applies; MSAA kicks in if the project moves to
-## Forward+/Mobile.
-func _apply_graphics_quality() -> void:
-	if not is_inside_tree():
-		return
-	var viewport: Viewport = get_viewport()
-	var msaa: Viewport.MSAA = Viewport.MSAA_2X
-	match graphics_quality:
-		"low":
-			msaa = Viewport.MSAA_DISABLED
-			viewport.snap_2d_vertices_to_pixel = true
-		"high":
-			msaa = Viewport.MSAA_4X
-			viewport.snap_2d_vertices_to_pixel = false
-		_:
-			viewport.snap_2d_vertices_to_pixel = false
-	if RenderingServer.get_current_rendering_method() != "gl_compatibility":
-		viewport.msaa_2d = msaa
-
-
-## Apply volume settings to AudioServer buses immediately.
-## Creates the bus if it doesn't exist yet (Godot always has at least
-## one "Master" bus by default, so this is safe).
-func _apply_audio_buses() -> void:
-	var master_bus_idx: int = AudioServer.get_bus_index("Master")
-	if master_bus_idx >= 0:
-		AudioServer.set_bus_volume_db(master_bus_idx, linear_to_db(master_volume))
-
-
-func _on_setting_changed(key: String, _value: Variant) -> void:
-	match key:
-		"master_volume":
-			var idx: int = AudioServer.get_bus_index("Master")
-			if idx >= 0:
-				AudioServer.set_bus_volume_db(idx, linear_to_db(master_volume))
-		"music_volume", "sfx_volume":
-			# Stored for future AudioStreamPlayer bus routing.
-			pass
-
-
-## Read a value from the loaded ConfigFile.
-func get_setting(key: String, default: Variant = null) -> Variant:
-	if _config.has_section_key(CONFIG_SECTION, key):
-		return _config.get_value(CONFIG_SECTION, key)
-	return default
 
 
 ## Internal setter that persists and emits the signal.
@@ -148,7 +54,7 @@ func _save() -> void:
 		push_warning("Settings: failed to save config (%s)" % error_string(err))
 
 
-## Load config from disk, falling back to current in-memory defaults for
+## Load config from disk, falling back to current in-code defaults for
 ## anything that isn't stored yet.
 func _load() -> void:
 	var err: Error = _config.load(CONFIG_PATH)
@@ -160,25 +66,10 @@ func _load() -> void:
 		push_warning("Settings: failed to load config (%s)" % error_string(err))
 		return
 
-	# Apply loaded values to typed properties (clamps / applies side-effects)
-	var raw_master: float = _config.get_value(CONFIG_SECTION, "master_volume", 1.0)
-	master_volume = raw_master
-
-	var raw_music: float = _config.get_value(CONFIG_SECTION, "music_volume", 1.0)
-	music_volume = raw_music
-
-	var raw_sfx: float = _config.get_value(CONFIG_SECTION, "sfx_volume", 1.0)
-	sfx_volume = raw_sfx
-
-	vibration_enabled = _config.get_value(CONFIG_SECTION, "vibration_enabled", true)
-	graphics_quality = _config.get_value(CONFIG_SECTION, "graphics_quality", "medium")
-	nickname = _config.get_value(CONFIG_SECTION, "nickname", "")
-	language = _config.get_value(CONFIG_SECTION, "language", "en")
-
-	var raw_fullscreen: bool = _config.get_value(CONFIG_SECTION, "fullscreen", false)
-	fullscreen = raw_fullscreen  # triggers _apply_fullscreen via setter
-
-	board_wrap = _config.get_value(CONFIG_SECTION, "board_wrap", true)
+	tap_threshold = _config.get_value(CONFIG_SECTION, "tap_threshold", 15.0)
+	long_press_threshold_ms = _config.get_value(CONFIG_SECTION, "long_press_threshold_ms", 400)
+	use_double_tap = _config.get_value(CONFIG_SECTION, "use_double_tap", false)
+	double_tap_window_ms = _config.get_value(CONFIG_SECTION, "double_tap_window_ms", 350)
 
 
 ## Reset all settings to their in-code defaults and persist.
@@ -188,12 +79,18 @@ func reset_to_defaults() -> void:
 
 
 func _apply_defaults() -> void:
-	master_volume = 1.0
-	music_volume = 1.0
-	sfx_volume = 1.0
-	vibration_enabled = true
-	graphics_quality = "medium"
-	fullscreen = false
-	board_wrap = true
-	nickname = ""
-	language = "en"
+	tap_threshold = 15.0
+	long_press_threshold_ms = 400
+	use_double_tap = false
+	double_tap_window_ms = 350
+
+
+## Reads a stored setting by key (fallback to default if missing).
+func get_setting(key: String, default: Variant = null) -> Variant:
+	if _config.has_section_key(CONFIG_SECTION, key):
+		return _config.get_value(CONFIG_SECTION, key)
+	return default
+
+
+func _on_setting_changed(key: String, _value: Variant) -> void:
+	pass

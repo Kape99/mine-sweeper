@@ -1,7 +1,6 @@
 ## Settings menu screen.
-## Built programmatically so the UI stays in sync with Settings.gd without
-## hand-authoring a complex .tscn. Each control is wired to the matching
-## Settings property via its setter, which persists automatically.
+## Currently a placeholder: no settings remain. Kept so PauseOverlay can
+## still push it.
 class_name SettingsMenu
 extends Control
 
@@ -24,8 +23,6 @@ var _panel: Control
 
 func _ready() -> void:
 	_build_ui()
-	# Refresh all controls to reflect current stored values
-	_refresh_all()
 
 
 func _build_ui() -> void:
@@ -57,46 +54,21 @@ func _build_ui() -> void:
 
 	_panel.add_child(HSeparator.new())
 
-	# --- Audio ---
-	_panel.add_child(_make_section_header("Audio"))
+	# --- Timers ---
+	_panel.add_child(_make_section_header("Timers"))
 
-	_panel.add_child(_make_row("Master", _make_slider(Settings.master_volume, 0.0, 1.0, 0.05,
-		func(v): Settings.master_volume = v)))
+	_panel.add_child(_make_row("Tap threshold", _make_slider(Settings.tap_threshold, 1.0, 100.0, 1.0,
+		func(v): Settings.tap_threshold = v)))
 
-	_panel.add_child(_make_row("Music", _make_slider(Settings.music_volume, 0.0, 1.0, 0.05,
-		func(v): Settings.music_volume = v)))
+	_panel.add_child(_make_row("Long press ms", _make_slider(float(Settings.long_press_threshold_ms), 50.0, 5000.0, 50.0,
+		func(v): Settings.long_press_threshold_ms = int(v))))
 
-	_panel.add_child(_make_row("SFX", _make_slider(Settings.sfx_volume, 0.0, 1.0, 0.05,
-		func(v): Settings.sfx_volume = v)))
+	var dt_row: HBoxContainer = _make_row("Double tap", _make_checkbox(Settings.use_double_tap,
+		func(v): Settings.use_double_tap = v))
+	_panel.add_child(dt_row)
 
-	# --- Haptics ---
-	_panel.add_child(_make_section_header("Haptics"))
-
-	var vib_row: HBoxContainer = _make_row("Vibration", _make_checkbox(Settings.vibration_enabled,
-		func(v): Settings.vibration_enabled = v))
-	_panel.add_child(vib_row)
-
-	# --- Graphics ---
-	_panel.add_child(_make_section_header("Graphics"))
-
-	var quality_row: HBoxContainer = _make_row("Quality", _make_option_button(
-		["Low", "Medium", "High"],
-		_settings_index_for_quality(),
-		func(idx): Settings.graphics_quality = _quality_for_index(idx)
-	))
-	_panel.add_child(quality_row)
-
-	var fs_row: HBoxContainer = _make_row("Fullscreen", _make_checkbox(Settings.fullscreen,
-		func(v): Settings.fullscreen = v))
-	_panel.add_child(fs_row)
-
-	_panel.add_child(_make_row("Wrap Board", _make_checkbox(Settings.board_wrap,
-		func(v): Settings.board_wrap = v)))
-
-	# --- Spacer ---
-	var spacer: Control = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 20)
-	_panel.add_child(spacer)
+	_panel.add_child(_make_row("Double tap ms", _make_slider(float(Settings.double_tap_window_ms), 150.0, 2000.0, 50.0,
+		func(v): Settings.double_tap_window_ms = int(v))))
 
 	# --- Back button ---
 	var back: Button = Button.new()
@@ -112,66 +84,6 @@ func _on_back_pressed() -> void:
 		sm.pop()
 
 
-## Rebuild all controls from current Settings values (used on pop/push so
-## sliders reflect any changes made while the menu was hidden).
-func _refresh_all() -> void:
-	for child: Node in _panel.get_children():
-		_refresh_row(child)
-
-
-func _refresh_row(node: Node) -> void:
-	if node is HBoxContainer:
-		for c in node.get_children():
-			if c is HSlider:
-				c.value = _slider_value_for_row(node)
-			elif c is CheckBox:
-				c.button_pressed = _checkbox_value_for_row(node)
-			elif c is OptionButton:
-				_option_select_for_row(node)
-
-
-func _slider_value_for_row(row: HBoxContainer) -> float:
-	var label: String = (row.get_child(0) as Label).text.strip_edges().to_lower()
-	match label:
-		"master": return Settings.master_volume
-		"music":  return Settings.music_volume
-		"sfx":    return Settings.sfx_volume
-	return 0.5
-
-
-func _checkbox_value_for_row(row: HBoxContainer) -> bool:
-	var label: String = (row.get_child(0) as Label).text.strip_edges().to_lower()
-	match label:
-		"vibration": return Settings.vibration_enabled
-		"fullscreen": return Settings.fullscreen
-		"wrap board": return Settings.board_wrap
-	return false
-
-
-func _option_select_for_row(row: HBoxContainer) -> void:
-	var ob: OptionButton = row.get_child(1) as OptionButton
-	if not ob:
-		return
-	var label: String = (row.get_child(0) as Label).text.strip_edges().to_lower()
-	match label:
-		"quality":
-			ob.select(_settings_index_for_quality())
-
-
-func _settings_index_for_quality() -> int:
-	match Settings.graphics_quality:
-		"low":    return 0
-		"high":   return 2
-		_:       return 1  # medium
-
-
-func _quality_for_index(idx: int) -> String:
-	match idx:
-		0: return "low"
-		2: return "high"
-		_: return "medium"
-
-
 # ── UI builder helpers ──────────────────────────────────────────────────
 
 func _make_label(text: String, font_size: int = 18) -> Label:
@@ -185,6 +97,13 @@ func _make_section_header(text: String) -> Label:
 	var l: Label = _make_label(text.to_upper(), 13)
 	l.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7, 1))
 	return l
+
+
+func _make_checkbox(checked: bool, on_toggled: Callable) -> CheckBox:
+	var cb: CheckBox = CheckBox.new()
+	cb.button_pressed = checked
+	cb.toggled.connect(on_toggled)
+	return cb
 
 
 func _make_row(label_text: String, control: Control) -> HBoxContainer:
@@ -213,20 +132,3 @@ func _make_slider(value: float, min_val: float, max_val: float, step: float,
 	s.ticks_on_borders = true
 	s.value_changed.connect(on_changed)
 	return s
-
-
-func _make_checkbox(checked: bool, on_toggled: Callable) -> CheckBox:
-	var cb: CheckBox = CheckBox.new()
-	cb.button_pressed = checked
-	cb.toggled.connect(on_toggled)
-	return cb
-
-
-func _make_option_button(items: PackedStringArray, selected: int,
-		on_selected: Callable) -> OptionButton:
-	var ob: OptionButton = OptionButton.new()
-	for item: String in items:
-		ob.add_item(item.capitalize())
-	ob.select(selected)
-	ob.item_selected.connect(on_selected)
-	return ob

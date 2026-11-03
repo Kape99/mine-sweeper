@@ -4,16 +4,12 @@ class_name CellBase
 extends Container
 
 ## Maximum distance (in pixels) between touch-down and touch-up to register a tap.
+## Read from Settings.tap_threshold at runtime.
 const TAP_THRESHOLD: float = 15.0
 
 ## Time (ms) a finger must stay down to trigger a long-press defuse toggle.
+## Read from Settings.long_press_threshold_ms at runtime.
 const LONG_PRESS_THRESHOLD_MS: int = 400
-
-## Haptic feedback duration (ms) on cell tap.
-const TAP_VIBRATION_MS: int = 100
-
-## Haptic feedback duration (ms) on long-press.
-const LONG_PRESS_VIBRATION_MS: int = 50
 
 ## Visual highlight color for neighbors of a held revealed cell.
 ## Chosen to be clearly distinct from all scheme colors.
@@ -82,6 +78,12 @@ var _long_press_triggered: bool = false
 ## True if the finger moved beyond TAP_THRESHOLD while holding.
 var _touch_dragged: bool = false
 
+## Time (ms) of the first tap in a potential double-tap sequence.
+var _pending_tap_time: int = 0
+
+## Screen position of the first tap in a potential double-tap sequence.
+var _pending_tap_position: Vector2 = Vector2.ZERO
+
 
 func _ready() -> void:
 	_bind_collision_shape()
@@ -94,6 +96,7 @@ func reset_state() -> void:
 	_cell_state = CellState.UNKNOWN
 	_touch_pressed = false
 	_long_press_triggered = false
+	_pending_tap_time = 0
 	set_display(GlobalState.secondary_color, GlobalState.main_color)
 	_cell_icon.texture = null
 	_cell_text.text = ""
@@ -268,11 +271,10 @@ func _process(_delta: float) -> void:
 	if not _touch_pressed or _long_press_triggered:
 		return
 	var elapsed: int = Time.get_ticks_msec() - _touch_start_time
-	if elapsed <= LONG_PRESS_THRESHOLD_MS:
+	if elapsed <= Settings.long_press_threshold_ms:
 		return
 	_long_press_triggered = true
-	if Settings.vibration_enabled:
-		Input.vibrate_handheld(LONG_PRESS_VIBRATION_MS)
+	_pending_tap_time = 0
 	if is_explored() and nearby > 0:
 		cell_highlight_requested.emit(self)
 
@@ -293,14 +295,20 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 		_touch_position = event.position
 		_long_press_triggered = false
 		_touch_dragged = false
+		# Clear a stale pending tap when a new press begins.
+		if Settings.use_double_tap and _pending_tap_time > 0:
+			var now: int = Time.get_ticks_msec()
+			if now - _pending_tap_time > Settings.double_tap_window_ms:
+				_pending_tap_time = 0
 		get_viewport().set_input_as_handled()
 		return
 
 	var is_drag_event: bool = event is InputEventScreenDrag
 
 	if is_drag_event and _touch_pressed:
-		if _touch_position.distance_to(event.position) > TAP_THRESHOLD:
+		if _touch_position.distance_to(event.position) > Settings.tap_threshold:
 			_touch_dragged = true
+			_pending_tap_time = 0
 		get_viewport().set_input_as_handled()
 		return
 
@@ -310,7 +318,7 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 		var was_dragged: bool = _touch_dragged
 		_long_press_triggered = false
 		_touch_dragged = false
-		var within_threshold: bool = _touch_position.distance_to(event.position) < TAP_THRESHOLD
+		var within_threshold: bool = _touch_position.distance_to(event.position) < Settings.tap_threshold
 		if had_long_press:
 			if is_explored():
 				cell_highlight_cleared.emit()
@@ -319,7 +327,24 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 			get_viewport().set_input_as_handled()
 			return
 		if within_threshold:
-			if Settings.vibration_enabled:
-				Input.vibrate_handheld(TAP_VIBRATION_MS)
-			cell_pressed.emit(self, nearby)
+			if GlobalState.is_defusing:
+				# Defuse mode: a single tap toggles defuse. Delegate to the
+				# board (via cell_pressed) so defuse/chord/explore logic lives
+				# in one place (BaseBoard._on_cell_pressed) instead of being
+				# duplicated here, which could call cell.defuse() twice.
+				cell_pressed.emit(self, nearby)
+			elif Settings.use_double_tap:
+				var now: int = Time.get_ticks_msec()
+				if _pending_tap_time > 0 \
+					and now - _pending_tap_time <= Settings.double_tap_window_ms \
+					and _pending_tap_position.distance_to(event.position) < Settings.tap_threshold:
+					# Second tap within window → double tap → explore.
+					_pending_tap_time = 0
+					cell_pressed.emit(self, nearby)
+				else:
+					# First tap → remember it, wait for possible second tap.
+					_pending_tap_time = now
+					_pending_tap_position = event.position
+			else:
+				cell_pressed.emit(self, nearby)
 			get_viewport().set_input_as_handled()

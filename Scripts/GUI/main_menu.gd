@@ -44,15 +44,6 @@ func _connect_signals() -> void:
 	_start_button.pressed.connect(_on_start)
 	_settings_button.pressed.connect(_on_settings)
 	_quit_button.pressed.connect(_on_quit)
-	# Wrap can also be toggled from SettingsMenu while this menu is hidden.
-	Settings.setting_changed.connect(_on_setting_changed)
-
-
-func _on_setting_changed(key: String, _value: Variant) -> void:
-	if key == "board_wrap":
-		_wrap_label.text = BOARD_MODE_NAMES[1 if GlobalState.board_wrap else 0]
-
-
 func _sync_from_global_state() -> void:
 	_board_type_label.text = BOARD_TYPE_NAMES[GlobalState.selected_board]
 	_rows_spin.value = GlobalState.board_rows
