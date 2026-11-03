@@ -431,8 +431,6 @@ func _process(_delta: float) -> void:
 		Input.vibrate_handheld(CellBase.LONG_PRESS_VIBRATION_MS)
 	if _display_logical_cell and _display_logical_cell.is_explored() and _display_logical_cell.nearby > 0:
 		_highlight_neighbors(_display_logical_cell)
-	elif _display_logical_cell and not _display_logical_cell.is_explored():
-		_display_logical_cell.defuse()
 
 
 ## Handles taps and long-presses on non-center display tiles.
@@ -467,6 +465,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_display_long_press_triggered = false
 		_clear_neighbor_highlight()
 		if had_long_press:
+			if cell and not cell.is_explored() and _display_touch_position.distance_to(event.position) < CellBase.TAP_THRESHOLD:
+				cell.defuse()
 			return
 		if _display_touch_position.distance_to(event.position) < CellBase.TAP_THRESHOLD:
 			if Settings.vibration_enabled:

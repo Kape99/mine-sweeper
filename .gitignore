@@ -40,3 +40,9 @@ mono_crash.*.json
 .venv
 
 android
+
+# Secrets / signing
+.secret
+*.keystore
+keystore
+.kystore

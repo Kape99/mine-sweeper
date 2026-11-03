@@ -79,6 +79,9 @@ var _touch_start_time: int = 0
 ## True if the long-press action already fired for the current hold.
 var _long_press_triggered: bool = false
 
+## True if the finger moved beyond TAP_THRESHOLD while holding.
+var _touch_dragged: bool = false
+
 
 func _ready() -> void:
 	_bind_collision_shape()
@@ -272,8 +275,6 @@ func _process(_delta: float) -> void:
 		Input.vibrate_handheld(LONG_PRESS_VIBRATION_MS)
 	if is_explored() and nearby > 0:
 		cell_highlight_requested.emit(self)
-	elif not is_explored():
-		defuse()
 
 
 func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int, _local_shape: Object = null) -> void:
@@ -291,16 +292,34 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 		_touch_start_time = Time.get_ticks_msec()
 		_touch_position = event.position
 		_long_press_triggered = false
+		_touch_dragged = false
+		get_viewport().set_input_as_handled()
+		return
+
+	var is_drag_event: bool = event is InputEventScreenDrag
+
+	if is_drag_event and _touch_pressed:
+		if _touch_position.distance_to(event.position) > TAP_THRESHOLD:
+			_touch_dragged = true
+		get_viewport().set_input_as_handled()
 		return
 
 	if is_release_event:
 		_touch_pressed = false
 		var had_long_press: bool = _long_press_triggered
+		var was_dragged: bool = _touch_dragged
 		_long_press_triggered = false
+		_touch_dragged = false
+		var within_threshold: bool = _touch_position.distance_to(event.position) < TAP_THRESHOLD
 		if had_long_press:
-			cell_highlight_cleared.emit()
+			if is_explored():
+				cell_highlight_cleared.emit()
+			elif not was_dragged and within_threshold:
+				defuse()
+			get_viewport().set_input_as_handled()
 			return
-		if _touch_position.distance_to(event.position) < TAP_THRESHOLD:
+		if within_threshold:
 			if Settings.vibration_enabled:
 				Input.vibrate_handheld(TAP_VIBRATION_MS)
 			cell_pressed.emit(self, nearby)
+			get_viewport().set_input_as_handled()
