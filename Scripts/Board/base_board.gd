@@ -88,6 +88,11 @@ var _display_touch_position: Vector2 = Vector2.ZERO
 var _display_long_press_triggered: bool = false
 var _display_logical_cell: CellBase = null
 
+## Double-tap tracking for taps on wrap-mode display copies (mirrors CellBase).
+var _display_pending_tap_time: int = 0
+var _display_pending_tap_position: Vector2 = Vector2.ZERO
+var _display_pending_cell: CellBase = null
+
 ## Currently highlighted neighbors (from a long-press on a revealed cell).
 var _highlighted_neighbors: Array[CellBase] = []
 
@@ -294,6 +299,8 @@ func reset() -> void:
 func _connect_signals(cell: CellBase) -> void:
 	if not cell.cell_pressed.is_connected(_on_cell_pressed):
 		cell.cell_pressed.connect(_on_cell_pressed)
+	if not cell.cell_open_requested.is_connected(_on_cell_open_requested):
+		cell.cell_open_requested.connect(_on_cell_open_requested)
 	if not cell.cell_explored.is_connected(_handle_explored):
 		cell.cell_explored.connect(_handle_explored)
 	if not cell.cell_defused.is_connected(_handle_defuse):
@@ -319,6 +326,8 @@ func _acquire_cell(p_idx: int) -> CellBase:
 func _release_cell(cell: CellBase) -> void:
 	if cell.cell_pressed.is_connected(_on_cell_pressed):
 		cell.cell_pressed.disconnect(_on_cell_pressed)
+	if cell.cell_open_requested.is_connected(_on_cell_open_requested):
+		cell.cell_open_requested.disconnect(_on_cell_open_requested)
 	if cell.cell_explored.is_connected(_handle_explored):
 		cell.cell_explored.disconnect(_handle_explored)
 	if cell.cell_defused.is_connected(_handle_defuse):
@@ -426,6 +435,7 @@ func _process(_delta: float) -> void:
 	if elapsed <= Settings.long_press_threshold_ms:
 		return
 	_display_long_press_triggered = true
+	_display_pending_cell = null
 	if _display_logical_cell and _display_logical_cell.is_explored() and _display_logical_cell.nearby > 0:
 		_highlight_neighbors(_display_logical_cell)
 
@@ -465,10 +475,30 @@ func _unhandled_input(event: InputEvent) -> void:
 			if cell and not cell.is_explored() and _display_touch_position.distance_to(event.position) < Settings.tap_threshold:
 				cell.defuse()
 			return
-		if _display_touch_position.distance_to(event.position) < Settings.tap_threshold:
+		if cell and _display_touch_position.distance_to(event.position) < Settings.tap_threshold:
+			_on_display_tap(cell, event.position)
 
-			if cell:
-				_on_cell_pressed(cell, cell.nearby)
+
+## Same tap rules as [method CellBase._on_area_2d_input_event], for taps on
+## wrap-mode display copies: a double tap always opens; a single tap goes to
+## [method _on_cell_pressed], which decides what it does.
+func _on_display_tap(cell: CellBase, pos: Vector2) -> void:
+	var now: int = Time.get_ticks_msec()
+	var is_double_tap: bool = (
+		Settings.use_double_tap
+		and _display_pending_cell == cell
+		and now - _display_pending_tap_time <= Settings.double_tap_window_ms
+		and _display_pending_tap_position.distance_to(pos) < Settings.tap_threshold
+	)
+	if is_double_tap:
+		_display_pending_cell = null
+		_on_cell_open_requested(cell)
+		return
+	if Settings.use_double_tap:
+		_display_pending_cell = cell
+		_display_pending_tap_time = now
+		_display_pending_tap_position = pos
+	_on_cell_pressed(cell, cell.nearby)
 
 
 ## Finds the logical cell under a position on a non-center display tile.
@@ -642,20 +672,46 @@ func _on_cell_pressed(cell: CellBase, _p_nearby: int) -> void:
 	# must never start a game from a stray tap.
 	if _is_game_over or not can_process():
 		return
+	# The first tap (single, or the first half of a double) always opens and
+	# starts the game, whatever the mode.
+	if not _is_game_started:
+		_on_cell_open_requested(cell)
+		return
 	var logical_cell: CellBase = _get_center_cell(cell)
 	if GlobalState.is_defusing:
 		if logical_cell.is_explored() and logical_cell.nearby > 0:
 			_chord_reveal(logical_cell)
 		else:
 			logical_cell.defuse()
-	elif logical_cell.is_explored() and logical_cell.nearby > 0:
-		_chord_reveal(logical_cell)
-	else:
-		if not _is_game_started:
-			_first_move(logical_cell)
-		logical_cell.explore()
-		if logical_cell.nearby == 0:
-			_explore_nearby(logical_cell)
+	elif not Settings.use_double_tap:
+		_open_cell(logical_cell)
+	# else: normal mode with double tap on — a single tap waits for the second.
+
+
+## Double tap: always opens the cell, in any mode. A flag is removed first —
+## including the one the first tap of the pair just placed in defuse mode.
+func _on_cell_open_requested(cell: CellBase) -> void:
+	if _is_game_over or not can_process():
+		return
+	var logical_cell: CellBase = _get_center_cell(cell)
+	if logical_cell.is_defused():
+		logical_cell.defuse()
+	_open_cell(logical_cell)
+
+
+## Explores [param logical_cell], or chord-reveals it if it's a revealed number.
+## Already-open blank cells are a no-op (e.g. the second half of a double tap
+## whose first tap started the game).
+func _open_cell(logical_cell: CellBase) -> void:
+	if logical_cell.is_explored():
+		if logical_cell.nearby > 0:
+			_chord_reveal(logical_cell)
+		return
+	if not _is_game_started:
+		_first_move(logical_cell)
+	logical_cell.explore()
+	if logical_cell.nearby == 0:
+		_explore_nearby(logical_cell)
 
 
 ## Chord reveal: if number of defused neighbors equals cell's nearby count,

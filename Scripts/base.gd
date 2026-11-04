@@ -163,8 +163,11 @@ func _load_game() -> void:
 	_board = _take_board()
 	var mine_count: int = GlobalState.get_mine_count()
 
-	GlobalState.is_defusing = false
-	_defuse_button.button_pressed = false
+	# Games start in defuse mode. The first tap always opens a cell (see
+	# BaseBoard._on_cell_pressed), so the game can start even though the HUD
+	# with the defuse button stays hidden until then.
+	GlobalState.is_defusing = true
+	_defuse_button.button_pressed = true
 	_board.start_game(GlobalState.board_cols, GlobalState.board_rows, mine_count, GlobalState.board_wrap)
 	_board.on_game_started.connect(_game_started)
 	_board.on_defuse_changed.connect(_defused_changed)

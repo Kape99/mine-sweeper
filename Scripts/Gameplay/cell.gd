@@ -34,9 +34,14 @@ var _cell_state: CellState = CellState.UNKNOWN
 @onready var _cell_triangle: Polygon2D = $Area2D/Polygon2D
 @onready var _cell_collision: CollisionPolygon2D = $Area2D/CollisionPolygon2D
 
-## Emitted when the player taps this cell. [param cell] is self, [param p_nearby]
+## Emitted on every single tap (also the first tap of a double tap); the
+## board decides what it does. [param cell] is self, [param p_nearby]
 ## is the mine-neighbor count (or -1 if mine).
 signal cell_pressed(cell: CellBase, p_nearby: int)
+
+## Emitted on a double tap (when [member Settings.use_double_tap] is on).
+## A double tap always opens the cell, even in defuse mode or when flagged.
+signal cell_open_requested(cell: CellBase)
 
 ## Emitted when a non-mine cell transitions to explored state.
 signal cell_explored(cell: CellBase)
@@ -312,7 +317,11 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 		get_viewport().set_input_as_handled()
 		return
 
-	if is_release_event:
+	# One physical tap arrives twice — as a touch AND a mouse event — because
+	# of input pointing emulation (emulate_touch_from_mouse in project.godot,
+	# emulate_mouse_from_touch by default). Only the first release of a press
+	# counts; the duplicate would toggle defuse back or fake a double tap.
+	if is_release_event and _touch_pressed:
 		_touch_pressed = false
 		var had_long_press: bool = _long_press_triggered
 		var was_dragged: bool = _touch_dragged
@@ -327,24 +336,24 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 			get_viewport().set_input_as_handled()
 			return
 		if within_threshold:
-			if GlobalState.is_defusing:
-				# Defuse mode: a single tap toggles defuse. Delegate to the
-				# board (via cell_pressed) so defuse/chord/explore logic lives
-				# in one place (BaseBoard._on_cell_pressed) instead of being
-				# duplicated here, which could call cell.defuse() twice.
-				cell_pressed.emit(self, nearby)
-			elif Settings.use_double_tap:
-				var now: int = Time.get_ticks_msec()
-				if _pending_tap_time > 0 \
-					and now - _pending_tap_time <= Settings.double_tap_window_ms \
-					and _pending_tap_position.distance_to(event.position) < Settings.tap_threshold:
-					# Second tap within window → double tap → explore.
-					_pending_tap_time = 0
-					cell_pressed.emit(self, nearby)
-				else:
-					# First tap → remember it, wait for possible second tap.
+			var now: int = Time.get_ticks_msec()
+			var is_double_tap: bool = (
+				Settings.use_double_tap
+				and _pending_tap_time > 0
+				and now - _pending_tap_time <= Settings.double_tap_window_ms
+				and _pending_tap_position.distance_to(event.position) < Settings.tap_threshold
+			)
+			if is_double_tap:
+				# Double tap always opens the cell, in any mode.
+				_pending_tap_time = 0
+				cell_open_requested.emit(self)
+			else:
+				if Settings.use_double_tap:
+					# Remember this tap; a second one within the window opens.
 					_pending_tap_time = now
 					_pending_tap_position = event.position
-			else:
+				# The board decides what a single tap does (open, flag, or
+				# nothing) so that logic lives in one place:
+				# BaseBoard._on_cell_pressed.
 				cell_pressed.emit(self, nearby)
 			get_viewport().set_input_as_handled()
