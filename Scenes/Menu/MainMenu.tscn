@@ -38,6 +38,13 @@ alignment = 1
 layout_mode = 2
 alignment = 1
 
+[node name="BoardTypeDesc" type="Label" parent="CenterContainer/Panel/BoardTypeRow"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Board:"
+horizontal_alignment = 2
+vertical_alignment = 1
+
 [node name="BoardTypePrev" type="Button" parent="CenterContainer/Panel/BoardTypeRow" unique_id=637043120]
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
@@ -54,90 +61,43 @@ custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 text = "▶"
 
-[node name="RowsRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+[node name="DifficultyRow" type="HBoxContainer" parent="CenterContainer/Panel"]
 layout_mode = 2
 alignment = 1
 
-[node name="RowsDesc" type="Label" parent="CenterContainer/Panel/RowsRow"]
+[node name="DifficultyDesc" type="Label" parent="CenterContainer/Panel/DifficultyRow"]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-text = "Rows:"
+text = "Difficulty:"
 horizontal_alignment = 2
 vertical_alignment = 1
-custom_minimum_size = Vector2(100, 0)
 
-[node name="RowsSpin" type="SpinBox" parent="CenterContainer/Panel/RowsRow"]
+[node name="DifficultyPrev" type="Button" parent="CenterContainer/Panel/DifficultyRow"]
+custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
-min_value = 5
-max_value = 50
-value = 18
-step = 1
-rounded = true
-custom_minimum_size = Vector2(100, 0)
+text = "◀"
 
-[node name="ColsRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+[node name="DifficultyLabel" type="Label" parent="CenterContainer/Panel/DifficultyRow"]
 layout_mode = 2
-alignment = 1
-
-[node name="ColsDesc" type="Label" parent="CenterContainer/Panel/ColsRow"]
-layout_mode = 2
-text = "Cols:"
-horizontal_alignment = 2
+text = "Medium"
+horizontal_alignment = 1
 vertical_alignment = 1
-custom_minimum_size = Vector2(100, 0)
 
-[node name="ColsSpin" type="SpinBox" parent="CenterContainer/Panel/ColsRow"]
+[node name="DifficultyNext" type="Button" parent="CenterContainer/Panel/DifficultyRow"]
+custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
-min_value = 5
-max_value = 50
-value = 18
-step = 1
-rounded = true
-custom_minimum_size = Vector2(100, 0)
-
-[node name="BombRow" type="HBoxContainer" parent="CenterContainer/Panel"]
-layout_mode = 2
-alignment = 1
-
-[node name="BombDesc" type="Label" parent="CenterContainer/Panel/BombRow"]
-layout_mode = 2
-text = "Bombs %:"
-horizontal_alignment = 2
-vertical_alignment = 1
-custom_minimum_size = Vector2(100, 0)
-
-[node name="BombSpin" type="SpinBox" parent="CenterContainer/Panel/BombRow"]
-layout_mode = 2
-min_value = 1
-max_value = 60
-value = 15
-step = 1
-rounded = true
-suffix = "%"
-custom_minimum_size = Vector2(100, 0)
-
-[node name="SeedRow" type="HBoxContainer" parent="CenterContainer/Panel"]
-layout_mode = 2
-alignment = 1
-
-[node name="SeedDesc" type="Label" parent="CenterContainer/Panel/SeedRow"]
-layout_mode = 2
-text = "Seed:"
-horizontal_alignment = 2
-vertical_alignment = 1
-custom_minimum_size = Vector2(100, 0)
-
-[node name="SeedSpin" type="SpinBox" parent="CenterContainer/Panel/SeedRow"]
-layout_mode = 2
-min_value = 0
-max_value = 999999
-value = 0
-step = 1
-rounded = true
-custom_minimum_size = Vector2(100, 0)
+text = "▶"
 
 [node name="WrapRow" type="HBoxContainer" parent="CenterContainer/Panel" unique_id=475272870]
 layout_mode = 2
 alignment = 1
+
+[node name="WrapDesc" type="Label" parent="CenterContainer/Panel/WrapRow"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Mode:"
+horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="WrapPrev" type="Button" parent="CenterContainer/Panel/WrapRow" unique_id=895660568]
 custom_minimum_size = Vector2(44, 44)
@@ -154,13 +114,6 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 text = "▶"
-
-[node name="NoBorderRow" type="HBoxContainer" parent="CenterContainer/Panel" unique_id=1528356872]
-layout_mode = 2
-alignment = 1
-
-[node name="NoBorderCheck" type="CheckBox" parent="CenterContainer/Panel/NoBorderRow" unique_id=1393582187]
-layout_mode = 2
 
 [node name="Spacer" type="Control" parent="CenterContainer/Panel" unique_id=2101306346]
 custom_minimum_size = Vector2(0, 16)

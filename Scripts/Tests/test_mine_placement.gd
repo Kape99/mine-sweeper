@@ -22,14 +22,14 @@ func _test_full_safe_zone() -> void:
 		if cell.is_mine():
 			mines_in_zone += 1
 	assert_false(first.is_mine(), "18x18: first tapped cell is not a mine")
-	assert_eq(mines_in_zone, 0, "18x18: no mines within distance 2 of the first tap")
+	assert_eq(mines_in_zone, 0, "18x18: no mines within the 3x3 zone of the first tap")
 	assert_eq(_count_mines(board), 49, "18x18: all 49 requested mines placed")
 	board.free()
 
 
 func _test_small_board_places_all_mines() -> void:
-	# 5x5 with 16 mines is the menu's maximum; the distance-2 safe zone
-	# alone covers all 25 cells, so it has to shrink.
+	# 5x5 with 16 mines is the menu's maximum; the 3x3 safe zone covers 9
+	# cells, leaving exactly 16 candidates — it just barely doesn't shrink.
 	var board: BaseBoard = _load_board(5, 5, 16)
 	var first: CellBase = board.board_state[2][2]
 	var started_with: Array[int] = []

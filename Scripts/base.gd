@@ -64,7 +64,6 @@ func _ready() -> void:
 	_main_menu.start_requested.connect(_load_game)
 	_main_menu.settings_requested.connect(_on_settings_pressed)
 	_main_menu.quit_requested.connect(_on_quit)
-	_main_menu.no_border_toggled.connect(_on_no_border_toggled)
 	_main_menu.wrap_mode_changed.connect(_on_wrap_mode_changed)
 
 	%BackToMenu.pressed.connect(_reset)
@@ -270,10 +269,6 @@ func _on_settings_pressed() -> void:
 
 func _on_quit() -> void:
 	get_tree().quit()
-
-
-func _on_no_border_toggled(toggled_on: bool) -> void:
-	GlobalState.no_border = toggled_on
 
 
 func _on_wrap_mode_changed(wrap: bool) -> void:

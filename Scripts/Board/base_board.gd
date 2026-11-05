@@ -34,10 +34,11 @@ const PAN_MARGIN: float = 100.0
 ## Number of interactive cells to pre-create per variant at startup.
 const POOL_PREWARM: int = 200
 
-## Preferred radius of the mine-free zone around the first tapped cell.
-## Shrinks automatically (down to just the tapped cell) when the board is
-## too small to fit the requested mines outside it.
-const SAFE_ZONE_DISTANCE: int = 2
+## Preferred radius of the mine-free zone around the first tapped cell
+## (1 = the 3×3 neighborhood, as in classic Minesweeper clones). Shrinks
+## automatically (down to just the tapped cell) when the board is too
+## small to fit the requested mines outside it.
+const SAFE_ZONE_DISTANCE: int = 1
 
 @export var cols: int = 10
 @export var rows: int = 10

@@ -4,7 +4,6 @@ extends Control
 signal start_requested
 signal settings_requested
 signal quit_requested
-signal no_border_toggled(enabled: bool)
 signal wrap_mode_changed(wrap: bool)
 
 const BOARD_TYPE_NAMES: PackedStringArray = ["Triangle", "Square", "Hexagon"]
@@ -13,14 +12,12 @@ const BOARD_MODE_NAMES: PackedStringArray = ["Classic", "Wrap"]
 @onready var _board_type_label: Label = $CenterContainer/Panel/BoardTypeRow/BoardTypeLabel
 @onready var _board_type_prev: Button = $CenterContainer/Panel/BoardTypeRow/BoardTypePrev
 @onready var _board_type_next: Button = $CenterContainer/Panel/BoardTypeRow/BoardTypeNext
-@onready var _rows_spin: SpinBox = $CenterContainer/Panel/RowsRow/RowsSpin
-@onready var _cols_spin: SpinBox = $CenterContainer/Panel/ColsRow/ColsSpin
-@onready var _bomb_spin: SpinBox = $CenterContainer/Panel/BombRow/BombSpin
-@onready var _seed_spin: SpinBox = $CenterContainer/Panel/SeedRow/SeedSpin
+@onready var _difficulty_label: Label = $CenterContainer/Panel/DifficultyRow/DifficultyLabel
+@onready var _difficulty_prev: Button = $CenterContainer/Panel/DifficultyRow/DifficultyPrev
+@onready var _difficulty_next: Button = $CenterContainer/Panel/DifficultyRow/DifficultyNext
 @onready var _wrap_prev: Button = $CenterContainer/Panel/WrapRow/WrapPrev
 @onready var _wrap_next: Button = $CenterContainer/Panel/WrapRow/WrapNext
 @onready var _wrap_label: Label = $CenterContainer/Panel/WrapRow/WrapLabel
-@onready var _no_border_check: CheckBox = $CenterContainer/Panel/NoBorderRow/NoBorderCheck
 @onready var _start_button: Button = $CenterContainer/Panel/StartButton
 @onready var _settings_button: Button = $CenterContainer/Panel/SettingsButton
 @onready var _quit_button: Button = $CenterContainer/Panel/QuitButton
@@ -31,38 +28,29 @@ func _ready() -> void:
 	_connect_signals()
 
 
+func _process(_delta: float) -> void:
+	# The debug settings (Settings screen) edit the raw board values while
+	# this menu sits hidden in place; its process mode is restored before
+	# it shows again, so this re-syncs the difficulty label on return.
+	var difficulty: String = GlobalState.get_difficulty()
+	if _difficulty_label.text != difficulty:
+		_difficulty_label.text = difficulty
+
+
 func _connect_signals() -> void:
 	_board_type_prev.pressed.connect(_on_board_type_prev)
 	_board_type_next.pressed.connect(_on_board_type_next)
-	_rows_spin.value_changed.connect(_on_rows_changed)
-	_cols_spin.value_changed.connect(_on_cols_changed)
-	_bomb_spin.value_changed.connect(_on_bomb_changed)
-	_seed_spin.value_changed.connect(_on_seed_changed)
+	_difficulty_prev.pressed.connect(_on_difficulty_prev)
+	_difficulty_next.pressed.connect(_on_difficulty_next)
 	_wrap_prev.pressed.connect(_on_wrap_prev)
 	_wrap_next.pressed.connect(_on_wrap_next)
-	_no_border_check.toggled.connect(_on_no_border_toggled)
 	_start_button.pressed.connect(_on_start)
 	_settings_button.pressed.connect(_on_settings)
 	_quit_button.pressed.connect(_on_quit)
 func _sync_from_global_state() -> void:
 	_board_type_label.text = BOARD_TYPE_NAMES[GlobalState.selected_board]
-	_rows_spin.value = GlobalState.board_rows
-	_cols_spin.value = GlobalState.board_cols
-	_update_bomb_spin_max()
-	_bomb_spin.value = minf(_bomb_spin.value, _bomb_spin.max_value)
-	GlobalState.bomb_percentage = _bomb_spin.value / 100.0
-	_seed_spin.value = GlobalState.board_seed
+	_difficulty_label.text = GlobalState.get_difficulty()
 	_wrap_label.text = BOARD_MODE_NAMES[1 if GlobalState.board_wrap else 0]
-	_no_border_check.button_pressed = GlobalState.no_border
-
-
-## Keeps bomb percentage within a conservative safe-zone budget so the
-## first-click safe zone (distance 2) is unlikely to cover all cells.
-func _update_bomb_spin_max() -> void:
-	var cells: int = GlobalState.board_rows * GlobalState.board_cols
-	var max_mines: int = maxi(1, cells - 9)
-	var max_percent: float = floorf(max_mines * 100.0 / cells)
-	_bomb_spin.max_value = clampf(max_percent, 1.0, 99.0)
 
 
 func _on_board_type_prev() -> void:
@@ -75,31 +63,21 @@ func _on_board_type_next() -> void:
 	_board_type_label.text = BOARD_TYPE_NAMES[GlobalState.selected_board]
 
 
-func _on_rows_changed(value: float) -> void:
-	GlobalState.board_rows = int(value)
-	_update_bomb_spin_max()
-	_bomb_spin.value = minf(_bomb_spin.value, _bomb_spin.max_value)
-	GlobalState.bomb_percentage = _bomb_spin.value / 100.0
+## Cycles through the difficulty presets (raw values live in the debug
+## settings; a "Custom" difficulty jumps back to the nearest preset).
+func _cycle_difficulty(step: int) -> void:
+	var idx: int = GlobalState.DIFFICULTY_NAMES.find(GlobalState.get_difficulty())
+	idx = posmod((0 if idx == -1 else idx) + step, GlobalState.DIFFICULTY_NAMES.size())
+	GlobalState.apply_difficulty(GlobalState.DIFFICULTY_NAMES[idx])
+	_difficulty_label.text = GlobalState.DIFFICULTY_NAMES[idx]
 
 
-func _on_cols_changed(value: float) -> void:
-	GlobalState.board_cols = int(value)
-	_update_bomb_spin_max()
-	_bomb_spin.value = minf(_bomb_spin.value, _bomb_spin.max_value)
-	GlobalState.bomb_percentage = _bomb_spin.value / 100.0
+func _on_difficulty_prev() -> void:
+	_cycle_difficulty(-1)
 
 
-func _on_bomb_changed(value: float) -> void:
-	GlobalState.bomb_percentage = value / 100.0
-
-
-func _on_seed_changed(value: float) -> void:
-	GlobalState.board_seed = int(value)
-
-
-func _on_no_border_toggled(enabled: bool) -> void:
-	GlobalState.no_border = enabled
-	no_border_toggled.emit(enabled)
+func _on_difficulty_next() -> void:
+	_cycle_difficulty(1)
 
 
 func _on_wrap_prev() -> void:

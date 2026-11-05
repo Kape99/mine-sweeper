@@ -1,6 +1,5 @@
-## Settings menu screen.
-## Currently a placeholder: no settings remain. Kept so PauseOverlay can
-## still push it.
+## Settings menu screen: timer tuning plus the raw board (debug) settings
+## the main menu hides behind its difficulty presets.
 class_name SettingsMenu
 extends Control
 
@@ -19,6 +18,12 @@ const CONTROL_MIN_HEIGHT: int = 48
 const BACK_BUTTON_TEXT: String = "← Back"
 
 var _panel: Control
+
+## Debug board controls (kept as members: the bombs max depends on the
+## rows/cols values).
+var _rows_spin: SpinBox
+var _cols_spin: SpinBox
+var _bombs_spin: SpinBox
 
 
 func _ready() -> void:
@@ -70,12 +75,71 @@ func _build_ui() -> void:
 	_panel.add_child(_make_row("Double tap ms", _make_slider(float(Settings.double_tap_window_ms), 150.0, 2000.0, 50.0,
 		func(v): Settings.double_tap_window_ms = int(v))))
 
+	_build_debug_section()
+
 	# --- Back button ---
 	var back: Button = Button.new()
 	back.text = BACK_BUTTON_TEXT
 	back.custom_minimum_size = Vector2(200, CONTROL_MIN_HEIGHT)
 	back.pressed.connect(_on_back_pressed)
 	_panel.add_child(back)
+
+
+## Raw board settings: dimensions, bomb density and seed. Changing them
+## makes the main menu's difficulty read "Custom" until it matches a
+## preset again.
+func _build_debug_section() -> void:
+	_panel.add_child(HSeparator.new())
+	_panel.add_child(_make_section_header("Debug board"))
+
+	_rows_spin = _make_spin(GlobalState.board_rows, 5.0, 50.0)
+	_rows_spin.value_changed.connect(_on_debug_dimensions_changed)
+	_panel.add_child(_make_row("Rows", _rows_spin))
+
+	_cols_spin = _make_spin(GlobalState.board_cols, 5.0, 50.0)
+	_cols_spin.value_changed.connect(_on_debug_dimensions_changed)
+	_panel.add_child(_make_row("Cols", _cols_spin))
+
+	_bombs_spin = _make_spin(GlobalState.bomb_percentage * 100.0, 1.0, 99.0)
+	_bombs_spin.suffix = "%"
+	_bombs_spin.value_changed.connect(_on_debug_bombs_changed)
+	_panel.add_child(_make_row("Bombs", _bombs_spin))
+	_update_debug_bomb_max()
+
+	var seed_spin: SpinBox = _make_spin(GlobalState.board_seed, 0.0, 999999.0)
+	seed_spin.value_changed.connect(func(v: float): GlobalState.board_seed = int(v))
+	_panel.add_child(_make_row("Seed", seed_spin))
+
+
+func _make_spin(value: float, min_val: float, max_val: float) -> SpinBox:
+	var s: SpinBox = SpinBox.new()
+	s.min_value = min_val
+	s.max_value = max_val
+	s.step = 1
+	s.rounded = true
+	s.value = value
+	return s
+
+
+func _on_debug_dimensions_changed(_value: float) -> void:
+	GlobalState.board_rows = int(_rows_spin.value)
+	GlobalState.board_cols = int(_cols_spin.value)
+	_update_debug_bomb_max()
+
+
+func _on_debug_bombs_changed(value: float) -> void:
+	GlobalState.bomb_percentage = value / 100.0
+
+
+## Keeps bomb percentage within a conservative safe-zone budget so the
+## first-click safe zone (3×3) is unlikely to cover all cells.
+func _update_debug_bomb_max() -> void:
+	var cells: int = GlobalState.board_rows * GlobalState.board_cols
+	var max_mines: int = maxi(1, cells - 9)
+	var max_percent: float = floorf(max_mines * 100.0 / cells)
+	_bombs_spin.max_value = clampf(max_percent, 1.0, 99.0)
+	_bombs_spin.value = minf(_bombs_spin.value, _bombs_spin.max_value)
+	GlobalState.bomb_percentage = _bombs_spin.value / 100.0
 
 
 func _on_back_pressed() -> void:

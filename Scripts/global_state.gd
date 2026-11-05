@@ -9,17 +9,25 @@ var is_defusing: bool = false
 ## Index of the currently selected board shape (0 = Triangle, 1 = Square, 2 = Hexagon).
 var selected_board: int = 1
 
-## Custom board dimensions, bomb density, and random seed.
-var board_rows: int = 18
-var board_cols: int = 18
-var bomb_percentage: float = 0.15  # 0.0 - 1.0
+## Difficulty presets shown in the main menu, in cycle order. Each value
+## is [rows, cols, bomb percentage 0–1]. Board settings not matching any
+## preset report as "Custom" (see [method get_difficulty]).
+const DIFFICULTY_NAMES: PackedStringArray = ["Easy", "Medium", "Hard"]
+const DIFFICULTY_PRESETS: Dictionary = {
+	"Easy": [9, 9, 0.12],
+	"Medium": [16, 16, 0.16],
+	"Hard": [24, 24, 0.20],
+}
+
+## Custom board dimensions, bomb density, and random seed. Editable raw
+## in the debug settings; defaults are the Medium preset.
+var board_rows: int = 16
+var board_cols: int = 16
+var bomb_percentage: float = 0.16  # 0.0 - 1.0
 var board_seed: int = 0  # 0 = random, non-zero = repeatable
 
 ## Whether the board wraps on itself (toroidal) or has hard edges (classic).
 var board_wrap: bool = true
-
-## Whether board cells should render without a visible border.
-var no_border: bool = false
 
 ## Available color schemes. Each value is [background, main, secondary, accent].
 var color_schemes: Dictionary = {
@@ -62,3 +70,20 @@ func _ready() -> void:
 ## Returns mine count computed from board dimensions and bomb percentage.
 func get_mine_count() -> int:
 	return maxi(1, roundi(board_rows * board_cols * bomb_percentage))
+
+
+## Applies a named difficulty preset to the board settings.
+func apply_difficulty(difficulty: String) -> void:
+	var preset: Array = DIFFICULTY_PRESETS[difficulty]
+	board_rows = preset[0]
+	board_cols = preset[1]
+	bomb_percentage = preset[2]
+
+
+## Name of the preset matching the current board settings, or "Custom".
+func get_difficulty() -> String:
+	for difficulty: String in DIFFICULTY_NAMES:
+		var preset: Array = DIFFICULTY_PRESETS[difficulty]
+		if board_rows == preset[0] and board_cols == preset[1] and is_equal_approx(bomb_percentage, preset[2]):
+			return difficulty
+	return "Custom"
