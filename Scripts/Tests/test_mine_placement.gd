@@ -11,6 +11,7 @@ func run() -> void:
 	_test_small_board_places_all_mines()
 	_test_reveal_waves_overlap()
 	_test_wrong_defuse_marked()
+	_test_seeded_game_starts_at_center()
 	BaseBoard.clear_pools()
 
 
@@ -78,6 +79,36 @@ func _test_wrong_defuse_marked() -> void:
 	assert_eq(right._cell_triangle.modulate, GlobalState.secondary_color,
 		"Correctly flagged mine keeps its normal look")
 	board.free()
+
+
+func _test_seeded_game_starts_at_center() -> void:
+	var prev_seed: String = GlobalState.board_seed
+	GlobalState.board_seed = "ZURU7"
+	var a: BaseBoard = _load_board(10, 10, 15)
+	assert_true(a._is_game_started, "Seeded game starts immediately (no first tap needed)")
+	assert_true(a.board_state[5][5].is_explored(), "Seeded game: the center cell is the explored start")
+	assert_false(a.board_state[5][5].is_mine(), "Seeded game: the center start is safe")
+	var a_mines: Array[Vector2i] = _mine_coords(a)
+	a.free()
+
+	var b: BaseBoard = _load_board(10, 10, 15)
+	assert_eq(_mine_coords(b), a_mines, "Same seed, same center start: identical mine layout")
+	b.free()
+
+	GlobalState.board_seed = ""
+	var c: BaseBoard = _load_board(10, 10, 15)
+	assert_false(c._is_game_started, "Empty seed (random) waits for the first tap as usual")
+	c.free()
+	GlobalState.board_seed = prev_seed
+
+
+func _mine_coords(board: BaseBoard) -> Array[Vector2i]:
+	var coords: Array[Vector2i] = []
+	for row: int in board.rows:
+		for col: int in board.cols:
+			if board.board_state[row][col].is_mine():
+				coords.append(Vector2i(col, row))
+	return coords
 
 
 func _count_mines(board: BaseBoard) -> int:

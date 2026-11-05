@@ -167,10 +167,12 @@ func _load_game() -> void:
 	# with the defuse button stays hidden until then.
 	GlobalState.is_defusing = true
 	_defuse_button.button_pressed = true
-	_board.start_game(GlobalState.board_cols, GlobalState.board_rows, mine_count, GlobalState.board_wrap)
+	# Connect before start_game: a seeded game auto-starts (opens the
+	# center cell) from inside it, and on_game_started must not be missed.
 	_board.on_game_started.connect(_game_started)
 	_board.on_defuse_changed.connect(_defused_changed)
 	_board.on_game_finished.connect(_game_finished)
+	_board.start_game(GlobalState.board_cols, GlobalState.board_rows, mine_count, GlobalState.board_wrap)
 
 	_main_menu.visible = false
 	# Center camera on the board and configure bounds based on mode.

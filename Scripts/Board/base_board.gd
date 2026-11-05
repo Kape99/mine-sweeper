@@ -223,6 +223,11 @@ func start_game(p_cols: int, p_rows: int, p_mines: int, p_wrap: bool = true) -> 
 		# Keep the requested mine density on the enlarged board.
 		mines = roundi(p_mines * float(cols * rows) / float(p_cols * p_rows))
 	_to_be_explored = rows * cols - mines
+	# A seeded game is meant to be shared: the mine layout is deterministic
+	# for a given first cell, so open the most central one right away —
+	# every player gets the same guaranteed-safe start.
+	if not GlobalState.board_seed.is_empty():
+		_on_cell_open_requested(board_state[rows / 2][cols / 2])
 
 
 ## Clears the board and sets it up for a [param p_cols] × [param p_rows]
@@ -860,8 +865,11 @@ func _place_mines(cell: CellBase) -> void:
 	var valid_indices: Array[int] = _get_mine_candidates(cell)
 
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	if GlobalState.board_seed != 0:
-		rng.seed = GlobalState.board_seed
+	var seed_value: int = GlobalState.get_seed_value()
+	if seed_value != 0:
+		rng.seed = seed_value
+	else:
+		rng.randomize()
 	# Fisher-Yates shuffle with seeded RNG for repeatable layouts
 	for i: int in range(valid_indices.size() - 1, 0, -1):
 		var j: int = rng.randi_range(0, i)

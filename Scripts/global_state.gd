@@ -24,7 +24,10 @@ const DIFFICULTY_PRESETS: Dictionary = {
 var board_rows: int = 16
 var board_cols: int = 16
 var bomb_percentage: float = 0.16  # 0.0 - 1.0
-var board_seed: int = 0  # 0 = random, non-zero = repeatable
+## Seed for a shared, repeatable board, as a short alphanumeric string
+## (e.g. "ZURU7"). Empty = random board each game. A non-empty seed
+## gives everyone the same layout and the same center opening.
+var board_seed: String = ""
 
 ## Whether the board wraps on itself (toroidal) or has hard edges (classic).
 var board_wrap: bool = true
@@ -70,6 +73,12 @@ func _ready() -> void:
 ## Returns mine count computed from board dimensions and bomb percentage.
 func get_mine_count() -> int:
 	return maxi(1, roundi(board_rows * board_cols * bomb_percentage))
+
+
+## Numeric seed derived from [member board_seed] for the RNG, or 0 when
+## the game should be random (empty seed).
+func get_seed_value() -> int:
+	return absi(board_seed.hash()) if not board_seed.is_empty() else 0
 
 
 ## Applies a named difficulty preset to the board settings.

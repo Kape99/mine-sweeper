@@ -102,10 +102,6 @@ func _build_debug_section() -> void:
 	_panel.add_child(_make_row("Bombs", _bombs_spin))
 	_update_debug_bomb_max()
 
-	var seed_spin: SpinBox = _make_spin(GlobalState.board_seed, 0.0, 999999.0)
-	seed_spin.value_changed.connect(func(v: float): GlobalState.board_seed = int(v))
-	_panel.add_child(_make_row("Seed", seed_spin))
-
 
 func _make_spin(value: float, min_val: float, max_val: float) -> SpinBox:
 	var s: SpinBox = SpinBox.new()
