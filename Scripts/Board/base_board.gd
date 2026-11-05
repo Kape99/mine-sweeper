@@ -645,6 +645,7 @@ func _handle_explored(_cell: CellBase) -> void:
 	_explored += 1
 	_sync_display_to_copies(_cell)
 	if _to_be_explored == _explored:
+		_reveal_wrong_defuses()
 		on_game_finished.emit(true, 0)
 
 
@@ -660,6 +661,7 @@ func _handle_defuse(_cell: CellBase, is_defused: bool) -> void:
 func _handle_explosion(_cell: CellBase) -> void:
 	if not _is_game_over:
 		_is_game_over = true
+		_reveal_wrong_defuses()
 		on_game_finished.emit(false, 0.0)
 		_reveal_mines_from(_cell)
 		_sync_display_to_copies(_cell)
@@ -685,6 +687,17 @@ func _create_reveal_tween() -> Tween:
 	var new_tween: Tween = create_tween()
 	_active_tweens.append(new_tween)
 	return new_tween
+
+
+## At game over (win or loss), highlights every flagged cell that held
+## no mine, so the player sees which of their flags were mistakes.
+func _reveal_wrong_defuses() -> void:
+	for row: int in rows:
+		for col: int in cols:
+			var cell: CellBase = board_state[row][col]
+			if cell.is_defused() and not cell.is_mine():
+				cell.mark_wrongly_defused()
+				_sync_display_to_copies(cell)
 
 
 func _reveal_mines_from(origin: CellBase) -> void:

@@ -67,8 +67,13 @@ func run() -> void:
 	base._handle_back_button()
 	base._game_finished(false, 0.0)
 	await _settle()
+	var final_screen: Control = base.get_node("GUI/Screen/FinalScreen")
+	assert_eq(final_screen.mouse_filter, Control.MOUSE_FILTER_IGNORE,
+		"End screen lets input through outside its panel (board stays pannable)")
 	var panel: Control = base.get_node("GUI/Screen/FinalScreen/BlurPanel")
-	_assert_centered(panel, screen, "End screen panel")
+	_assert_centered_x(panel, screen, "End screen panel")
+	assert_true(panel.get_global_rect().end.y < screen.get_center().y,
+		"End screen panel sits in the upper half, leaving the board visible")
 	var back: Control = base.get_node("%BackToMenu")
 	assert_true(absf(back.get_global_rect().get_center().x - panel.get_global_rect().get_center().x) <= CENTER_TOLERANCE
 		and panel.get_global_rect().encloses(back.get_global_rect()),

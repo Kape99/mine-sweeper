@@ -48,6 +48,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_handle_drag(event as InputEventScreenDrag)
 	elif event is InputEventMouseButton:
 		_handle_mouse_wheel(event as InputEventMouseButton)
+	elif event is InputEventMouseMotion:
+		_handle_mouse_drag(event as InputEventMouseMotion)
 
 
 func _handle_touch(event: InputEventScreenTouch) -> void:
@@ -79,6 +81,15 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 		zoom = (zoom * delta_scale).clamp(MIN_ZOOM, MAX_ZOOM)
 		_clamp_offset()
 		_touch_points[event.index] = new_point
+
+
+## Mouse-drag panning — the desktop equivalent of the one-finger touch
+## pan. A drag moves beyond the tap threshold, so it never triggers a
+## cell tap on release.
+func _handle_mouse_drag(event: InputEventMouseMotion) -> void:
+	if event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+		offset -= event.relative / zoom.x
+		_clamp_offset()
 
 
 func _handle_mouse_wheel(event: InputEventMouseButton) -> void:

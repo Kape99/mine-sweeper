@@ -10,6 +10,7 @@ func run() -> void:
 	_test_full_safe_zone()
 	_test_small_board_places_all_mines()
 	_test_reveal_waves_overlap()
+	_test_wrong_defuse_marked()
 	BaseBoard.clear_pools()
 
 
@@ -52,6 +53,30 @@ func _test_reveal_waves_overlap() -> void:
 	assert_true(first.is_valid(), "Starting a second reveal wave keeps the first one running")
 	board.clear()
 	assert_false(first.is_valid() or second.is_valid(), "clear() stops all reveal waves")
+	board.free()
+
+
+func _test_wrong_defuse_marked() -> void:
+	var board: BaseBoard = _load_board(10, 10, 10)
+	board._first_move(board.board_state[0][0])
+	var wrong: CellBase = null
+	var right: CellBase = null
+	for row: int in board.rows:
+		for col: int in board.cols:
+			var cell: CellBase = board.board_state[row][col]
+			if cell.is_mine() and right == null:
+				right = cell
+			elif not cell.is_mine() and cell != board.board_state[0][0] and wrong == null:
+				wrong = cell
+	wrong.defuse()
+	right.defuse()
+	board._reveal_wrong_defuses()
+	assert_eq(wrong._cell_icon.modulate, CellBase.WRONG_DEFUSE_COLOR,
+		"Wrongly flagged cell's flag turns red at game over")
+	assert_eq(wrong._cell_triangle.modulate, GlobalState.secondary_color,
+		"Wrongly flagged cell keeps its normal fill")
+	assert_eq(right._cell_triangle.modulate, GlobalState.secondary_color,
+		"Correctly flagged mine keeps its normal look")
 	board.free()
 
 

@@ -15,6 +15,10 @@ const LONG_PRESS_THRESHOLD_MS: int = 400
 ## Chosen to be clearly distinct from all scheme colors.
 const NEIGHBOR_HIGHLIGHT_COLOR: Color = Color(0.0, 0.7, 1.0, 1.0)
 
+## Icon color of a flagged cell revealed at game over as a mistake (no
+## mine under it): the flag turns red, the cell fill stays untouched.
+const WRONG_DEFUSE_COLOR: Color = Color.RED
+
 ## How much larger the tap-collision shape is than the visible fill shape,
 ## expressed as a uniform scale from the fill polygon's centroid. Keeps the
 ## touch target slightly bigger than what's drawn without hand-authoring a
@@ -189,6 +193,14 @@ func set_display(bg_color: Color, content_color: Color, icon: Texture2D = null, 
 	_cell_icon.modulate = content_color
 	_cell_icon.texture = icon
 	_cell_text.text = text
+
+
+## Marks a flagged cell as a mistake at game over: it held no mine. The
+## flag icon turns red; the cell fill stays as it is. No-op on any other
+## cell (correctly flagged mines stay as they are).
+func mark_wrongly_defused() -> void:
+	if _cell_state == CellState.DEFUSED and not is_mine():
+		set_icon(FLAG_ICON, WRONG_DEFUSE_COLOR)
 
 
 ## Temporarily highlights this cell as a neighbor of a held revealed cell.
