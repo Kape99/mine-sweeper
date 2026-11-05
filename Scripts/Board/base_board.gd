@@ -537,8 +537,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_display_tap(cell: CellBase, pos: Vector2) -> void:
 	var now: int = Time.get_ticks_msec()
 	var is_double_tap: bool = (
-		Settings.use_double_tap
-		and _display_pending_cell == cell
+		_display_pending_cell == cell
 		and now - _display_pending_tap_time <= Settings.double_tap_window_ms
 		and _display_pending_tap_position.distance_to(pos) < Settings.tap_threshold
 	)
@@ -546,10 +545,9 @@ func _on_display_tap(cell: CellBase, pos: Vector2) -> void:
 		_display_pending_cell = null
 		_on_cell_open_requested(cell)
 		return
-	if Settings.use_double_tap:
-		_display_pending_cell = cell
-		_display_pending_tap_time = now
-		_display_pending_tap_position = pos
+	_display_pending_cell = cell
+	_display_pending_tap_time = now
+	_display_pending_tap_position = pos
 	_on_cell_pressed(cell, cell.nearby)
 
 
@@ -748,9 +746,10 @@ func _on_cell_pressed(cell: CellBase, _p_nearby: int) -> void:
 			_chord_reveal(logical_cell)
 		else:
 			logical_cell.defuse()
-	elif not Settings.use_double_tap:
+	else:
+		# Normal mode: a single tap opens. A double tap also opens (and
+		# works in any mode) via [method _on_cell_open_requested].
 		_open_cell(logical_cell)
-	# else: normal mode with double tap on — a single tap waits for the second.
 
 
 ## Double tap: always opens the cell, in any mode. A flag is removed first —

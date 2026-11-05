@@ -1,8 +1,9 @@
 ## Regression: in defuse mode a tap must toggle defuse exactly once.
 ## If cell.defuse() were invoked twice per tap (once in cell.gd and once in
 ## BaseBoard._on_cell_pressed, or once per emulated touch+mouse event), the
-## cell would end un-flagged. Also covers double tap (always opens) and the
-## first tap of a game (always opens, single or double).
+## cell would end un-flagged. Also covers the tap model: single tap runs
+## the mode action (open in normal mode, flag in defuse mode), double tap
+## always opens, and the first tap of a game always opens.
 extends TestCase
 
 const SQUARE_SCENE: String = "res://Scenes/Board/square_board.tscn"
@@ -21,46 +22,42 @@ func _ready() -> void:
 
 func run() -> void:
 	_build_events()
-	var prev_double_tap: bool = Settings.use_double_tap
 
-	_test_first_tap(false, false, "single tap, double tap off")
-	_test_first_tap(true, false, "single tap, double tap on")
-	_test_first_tap(true, true, "double tap")
+	_test_first_tap(false, "single tap")
+	_test_first_tap(true, "double tap")
 
 	var board: BaseBoard = _started_board()
 
-	# --- Double tap off: every defuse-mode tap toggles once ---
-	Settings.use_double_tap = false
+	# --- Every defuse-mode tap toggles exactly once ---
 	GlobalState.is_defusing = true
 	var cell: CellBase = board.board_state[1][1]
-
+	# Wait out the double-tap window between taps so each counts as a
+	# single (a second tap inside the window is a double tap, which opens).
 	_tap(cell)
 	assert_true(cell.is_defused(), "Defuse mode tap defuses exactly once (cell flagged)")
+	await wait_wall_ms(Settings.double_tap_window_ms + 50)
 	_tap(cell)
 	assert_false(cell.is_defused(), "Second defuse mode tap toggles back (defuse called once)")
 
 	# Real input: with input pointing emulation, one physical tap reaches the
 	# cell as BOTH a touch event and a mouse-button event.
+	await wait_wall_ms(Settings.double_tap_window_ms + 50)
 	_emulated_tap(cell)
 	assert_true(cell.is_defused(), "Emulated touch+mouse tap defuses exactly once")
 	cell.defuse()  # back to unknown
 
-	# --- Double tap on ---
-	Settings.use_double_tap = true
-
-	# Normal mode: single tap does nothing, even when duplicated by emulation.
+	# Normal mode: single tap opens, even when duplicated by emulation.
 	GlobalState.is_defusing = false
 	var a: CellBase = board.board_state[0][0]
 	var open_count: Array[int] = [0]
 	a.cell_open_requested.connect(func(_c: CellBase) -> void: open_count[0] += 1)
 	_emulated_tap(a)
 	assert_eq(open_count[0], 0, "Emulated touch+mouse single tap is not a double tap")
-	assert_false(a.is_explored(), "Single tap does not open with double tap on")
+	assert_true(a.is_explored(), "Normal mode: single tap opens")
 
-	# Normal mode: double tap opens.
+	# Normal mode: double tap also opens (already open here: it re-requests).
 	_emulated_tap(a)
 	assert_eq(open_count[0], 1, "Double tap requests open once")
-	assert_true(a.is_explored(), "Double tap opens in normal mode")
 
 	# Defuse mode: single tap still flags immediately.
 	GlobalState.is_defusing = true
@@ -82,7 +79,6 @@ func run() -> void:
 	assert_true(c.is_explored(), "Double tap opens a previously flagged cell")
 
 	GlobalState.is_defusing = false
-	Settings.use_double_tap = prev_double_tap
 
 	board.free()
 	BaseBoard.clear_pools()
@@ -90,8 +86,7 @@ func run() -> void:
 
 ## The first tap of a game opens the cell and starts the game, even in
 ## defuse mode, whether it's a single tap or a double tap.
-func _test_first_tap(double_tap_setting: bool, tap_twice: bool, label: String) -> void:
-	Settings.use_double_tap = double_tap_setting
+func _test_first_tap(tap_twice: bool, label: String) -> void:
 	GlobalState.is_defusing = true
 	var board: BaseBoard = load(SQUARE_SCENE).instantiate()
 	add_child(board)

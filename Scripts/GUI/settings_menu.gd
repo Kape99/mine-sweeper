@@ -68,10 +68,6 @@ func _build_ui() -> void:
 	_panel.add_child(_make_row("Long press ms", _make_slider(float(Settings.long_press_threshold_ms), 50.0, 5000.0, 50.0,
 		func(v): Settings.long_press_threshold_ms = int(v))))
 
-	var dt_row: HBoxContainer = _make_row("Double tap", _make_checkbox(Settings.use_double_tap,
-		func(v): Settings.use_double_tap = v))
-	_panel.add_child(dt_row)
-
 	_panel.add_child(_make_row("Double tap ms", _make_slider(float(Settings.double_tap_window_ms), 150.0, 2000.0, 50.0,
 		func(v): Settings.double_tap_window_ms = int(v))))
 

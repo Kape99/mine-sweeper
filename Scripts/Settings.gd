@@ -25,14 +25,8 @@ var long_press_threshold_ms: int:
 		long_press_threshold_ms = clampi(v, 50, 5000)
 		_persist("long_press_threshold_ms", long_press_threshold_ms)
 
-## Whether a double tap (instead of a single tap) opens a cell. A double tap
-## always opens, even in defuse mode or on a flagged cell.
-var use_double_tap: bool:
-	set(v):
-		use_double_tap = v
-		_persist("use_double_tap", use_double_tap)
-
-## Max time (ms) between two taps to count as a double tap.
+## Max time (ms) between two taps to count as a double tap. A double tap
+## always opens a cell, even in defuse mode or on a flagged cell.
 var double_tap_window_ms: int:
 	set(v):
 		double_tap_window_ms = clampi(v, 150, 2000)
@@ -72,19 +66,15 @@ func _load() -> void:
 
 	tap_threshold = _config.get_value(CONFIG_SECTION, "tap_threshold", 15.0)
 	long_press_threshold_ms = _config.get_value(CONFIG_SECTION, "long_press_threshold_ms", 400)
-	use_double_tap = _config.get_value(CONFIG_SECTION, "use_double_tap", true)
 	double_tap_window_ms = _config.get_value(CONFIG_SECTION, "double_tap_window_ms", 350)
 	_migrate(_config.get_value(CONFIG_SECTION, "settings_version", 0))
 
 
-## One-time upgrades for configs saved by older versions.
+## One-time upgrades for configs saved by older versions. Currently only
+## stamps the current version (no value migrations).
 func _migrate(from_version: int) -> void:
 	if from_version >= SETTINGS_VERSION:
 		return
-	if from_version < 1:
-		# v1: double tap became the default. Older installs saved the old
-		# default (off) on first launch, so switch it on once.
-		use_double_tap = true
 	_config.set_value(CONFIG_SECTION, "settings_version", SETTINGS_VERSION)
 	_save()
 
@@ -98,7 +88,6 @@ func reset_to_defaults() -> void:
 func _apply_defaults() -> void:
 	tap_threshold = 15.0
 	long_press_threshold_ms = 400
-	use_double_tap = true
 	double_tap_window_ms = 350
 	_config.set_value(CONFIG_SECTION, "settings_version", SETTINGS_VERSION)
 

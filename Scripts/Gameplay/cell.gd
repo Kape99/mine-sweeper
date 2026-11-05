@@ -43,8 +43,8 @@ var _cell_state: CellState = CellState.UNKNOWN
 ## is the mine-neighbor count (or -1 if mine).
 signal cell_pressed(cell: CellBase, p_nearby: int)
 
-## Emitted on a double tap (when [member Settings.use_double_tap] is on).
-## A double tap always opens the cell, even in defuse mode or when flagged.
+## Emitted on a double tap. A double tap always opens the cell, even in
+## defuse mode or when flagged.
 signal cell_open_requested(cell: CellBase)
 
 ## Emitted when a non-mine cell transitions to explored state.
@@ -313,7 +313,7 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 		_long_press_triggered = false
 		_touch_dragged = false
 		# Clear a stale pending tap when a new press begins.
-		if Settings.use_double_tap and _pending_tap_time > 0:
+		if _pending_tap_time > 0:
 			var now: int = Time.get_ticks_msec()
 			if now - _pending_tap_time > Settings.double_tap_window_ms:
 				_pending_tap_time = 0
@@ -350,8 +350,7 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 		if within_threshold:
 			var now: int = Time.get_ticks_msec()
 			var is_double_tap: bool = (
-				Settings.use_double_tap
-				and _pending_tap_time > 0
+				_pending_tap_time > 0
 				and now - _pending_tap_time <= Settings.double_tap_window_ms
 				and _pending_tap_position.distance_to(event.position) < Settings.tap_threshold
 			)
@@ -360,12 +359,11 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 				_pending_tap_time = 0
 				cell_open_requested.emit(self)
 			else:
-				if Settings.use_double_tap:
-					# Remember this tap; a second one within the window opens.
-					_pending_tap_time = now
-					_pending_tap_position = event.position
-				# The board decides what a single tap does (open, flag, or
-				# nothing) so that logic lives in one place:
+				# Remember this tap; a second one within the window opens.
+				_pending_tap_time = now
+				_pending_tap_position = event.position
+				# The board decides what a single tap does (open or flag, by
+				# mode) so that logic lives in one place:
 				# BaseBoard._on_cell_pressed.
 				cell_pressed.emit(self, nearby)
 			get_viewport().set_input_as_handled()
