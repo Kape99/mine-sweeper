@@ -1,10 +1,12 @@
 ## Infinite scrolling board with toroidal (wrap-around) topology.
 ## A single logical board (cols × rows) of interactive cells is the source
-## of truth. In wrap mode it is surrounded by the 8 other tiles of a
-## [constant TILE_GRID_SIZE] × [constant TILE_GRID_SIZE] block of visual
-## copies, drawn by a [BoardCopyRenderer] straight from the logical cells
+## of truth. In wrap mode it is surrounded by a block of visual copies,
+## drawn by a [BoardCopyRenderer] straight from the logical cells
 ## (no node per copied cell), so the camera always has buffer content
-## around it. When the camera drifts past a single board's edge, the whole
+## around it. The block size is computed per axis from the viewport size
+## and the camera's minimum zoom (see [method _get_tile_grid_counts]), so
+## the copies cover the visible area at any zoom. When the camera drifts
+## past a single board's edge, the whole
 ## block is shifted by one board dimension — giving seamless infinite
 ## scrolling without ever spawning or freeing nodes during gameplay.
 class_name BaseBoard
@@ -15,9 +17,12 @@ const REVEAL_DELAY_FACTOR: float = 0.02
 const GRID_H_SEPARATION: int = 4
 const GRID_V_SEPARATION: int = 4
 
-## Number of tile copies per axis surrounding (and including) the logical
-## board. 3 means a 3×3 block — one ring of buffer tiles around the center.
-const TILE_GRID_SIZE: int = 3
+## Minimum number of tile copies per axis surrounding (and including) the
+## logical board. 3 means a 3×3 block — one ring of buffer tiles around
+## the center. The actual grid is computed per axis from the viewport size
+## and the camera's minimum zoom (see [method _get_tile_grid_counts]) and
+## is never smaller than this.
+const MIN_TILE_GRID_SIZE: int = 3
 
 ## Fraction of a single board's size that triggers a recenter.
 const RECENTER_THRESHOLD: float = 0.5
@@ -63,6 +68,9 @@ var _tile: Control = null
 
 ## Draws the wrap-mode copies around [member _tile]; null in classic mode.
 var _copy_renderer: BoardCopyRenderer = null
+
+## Tile grid size (per axis, odd) the current copies were built for.
+var _tile_grid_counts: Vector2i = Vector2i.ZERO
 
 var _cell_size: Vector2 = Vector2.ZERO
 var _explored: int = 0
@@ -390,23 +398,66 @@ func _add_cell(index: int) -> void:
 	board_state[row].append(cell_instance)
 
 
-## Adds the renderer that draws the 8 copies around the tile (wrap mode).
+## Adds the renderer that draws the copies around the tile (wrap mode).
 ## Only done once every cell exists, since it draws from all of them.
 func _add_copy_renderer(hidden: bool) -> void:
+	_tile_grid_counts = _get_tile_grid_counts()
+	_create_copy_renderer(_get_copy_offsets(_tile_grid_counts), hidden)
+	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
+		get_viewport().size_changed.connect(_on_viewport_size_changed)
+
+
+func _create_copy_renderer(offsets: Array[Vector2], hidden: bool) -> void:
 	_copy_renderer = BoardCopyRenderer.new()
 	_board_node.add_child(_copy_renderer)
 	# First child, so the copies draw beneath the interactive tile.
 	_board_node.move_child(_copy_renderer, 0)
-	_copy_renderer.setup(self, _get_copy_offsets(), hidden)
+	_copy_renderer.setup(self, offsets, hidden)
 
 
-## Offsets of the 8 copies around the logical tile, in board-node space.
-func _get_copy_offsets() -> Array[Vector2]:
+## Tiles needed per axis (odd, ≥ [constant MIN_TILE_GRID_SIZE]) so the copy
+## block covers the whole viewport at any zoom, plus the recenter drift.
+## Worst case is the camera's minimum zoom (largest visible world rect).
+## Between recenters the camera may drift up to [constant RECENTER_THRESHOLD]
+## × board from the block's center, so the block must extend half the view
+## plus half a board from its center on every side: n/2 × board ≥ view/2 +
+## board/2, i.e. n ≥ 1 + view/board.
+func _get_tile_grid_counts() -> Vector2i:
 	var board_size: Vector2 = get_board_size()
-	var half: int = TILE_GRID_SIZE / 2
+	var view: Vector2 = get_viewport().get_visible_rect().size / CameraController.MIN_ZOOM
+	return Vector2i(
+		_odd(maxi(MIN_TILE_GRID_SIZE, ceili(1.0 + view.x / board_size.x))),
+		_odd(maxi(MIN_TILE_GRID_SIZE, ceili(1.0 + view.y / board_size.y)))
+	)
+
+
+## Smallest odd integer ≥ [param n].
+static func _odd(n: int) -> int:
+	return n if n % 2 == 1 else n + 1
+
+
+## The copy grid is sized for the viewport: if the viewport grew enough to
+## need a larger grid, rebuild the copies. A shrink needs no rebuild —
+## extra copies are harmless (viewport culling skips the off-screen ones).
+func _on_viewport_size_changed() -> void:
+	if _copy_renderer == null:
+		return
+	var needed: Vector2i = _get_tile_grid_counts()
+	if needed.x <= _tile_grid_counts.x and needed.y <= _tile_grid_counts.y:
+		return
+	_copy_renderer.free()
+	_tile_grid_counts = needed
+	_create_copy_renderer(_get_copy_offsets(needed), false)
+
+
+## Offsets of the copies around the logical tile, in board-node space.
+## [param counts] is the odd per-axis tile count (including the center).
+func _get_copy_offsets(counts: Vector2i) -> Array[Vector2]:
+	var board_size: Vector2 = get_board_size()
+	var half: Vector2i = counts / 2
 	var offsets: Array[Vector2] = []
-	for dy: int in range(-half, half + 1):
-		for dx: int in range(-half, half + 1):
+	for dy: int in range(-half.y, half.y + 1):
+		for dx: int in range(-half.x, half.x + 1):
 			if dx != 0 or dy != 0:
 				offsets.append(Vector2(dx * board_size.x, dy * board_size.y))
 	return offsets

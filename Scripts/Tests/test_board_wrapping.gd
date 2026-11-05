@@ -18,7 +18,7 @@ func run() -> void:
 
 func _test_square() -> void:
 	var wrap: BaseBoard = _load_board(SQUARE_SCENE, 9, 12, 15, true)
-	assert_eq(_copy_count(wrap), 8, "Square wrap: draws 8 copies around the logical tile")
+	_assert_copy_coverage(wrap, "Square")
 	var corner: CellBase = wrap.board_state[0][0]
 	assert_eq(wrap._get_nearby_cells(corner, 1).size(), 8,
 		"Square wrap: corner (0,0) has 8 wrapped neighbors")
@@ -34,7 +34,7 @@ func _test_square() -> void:
 
 func _test_hexagon() -> void:
 	var wrap: BaseBoard = _load_board(HEX_SCENE, 9, 13, 15, true)
-	assert_eq(_copy_count(wrap), 8, "Hex wrap: draws 8 copies around the logical tile")
+	_assert_copy_coverage(wrap, "Hex")
 	assert_eq(wrap.board_state.size(), 14, "Hex wrap: odd row count (13) is rounded up to 14")
 	assert_eq(_count_asymmetric_pairs(wrap), 0, "Hex wrap: neighbor relation is symmetric across the seam")
 	wrap.free()
@@ -52,7 +52,7 @@ func _test_hexagon() -> void:
 
 func _test_triangle() -> void:
 	var wrap: BaseBoard = _load_board(TRIANGLE_SCENE, 11, 13, 15, true)
-	assert_eq(_copy_count(wrap), 8, "Triangle wrap: draws 8 copies around the logical tile")
+	_assert_copy_coverage(wrap, "Triangle")
 	assert_eq(Vector2i(wrap.cols, wrap.rows), Vector2i(12, 14), "Triangle wrap: odd 11x13 is rounded up to 12x14")
 	assert_eq(_count_asymmetric_pairs(wrap), 0, "Triangle wrap: neighbor relation is symmetric across the seam")
 	wrap.free()
@@ -74,6 +74,28 @@ func _test_triangle() -> void:
 ## Number of copies drawn around the logical tile (0 in classic mode).
 func _copy_count(board: BaseBoard) -> int:
 	return board._copy_renderer.get_offsets().size() if board._copy_renderer else 0
+
+
+## The copy grid is computed from the viewport size and the camera's
+## minimum zoom: per axis, n × board ≥ view + board (block covers the
+## zoomed-out viewport plus the half-board recenter drift), n odd and at
+## least MIN_TILE_GRID_SIZE, and n the smallest such odd size.
+func _assert_copy_coverage(board: BaseBoard, shape: String) -> void:
+	var counts: Vector2i = board._tile_grid_counts
+	assert_eq(_copy_count(board), counts.x * counts.y - 1,
+		"%s wrap: every tile of the %dx%d block but the center is a copy" % [shape, counts.x, counts.y])
+	assert_true(counts.x % 2 == 1 and counts.y % 2 == 1,
+		"%s wrap: copy grid is odd (centered on the logical tile)" % shape)
+	assert_true(counts.x >= BaseBoard.MIN_TILE_GRID_SIZE and counts.y >= BaseBoard.MIN_TILE_GRID_SIZE,
+		"%s wrap: at least one ring of copies" % shape)
+	var view: Vector2 = board.get_viewport().get_visible_rect().size / CameraController.MIN_ZOOM
+	var board_size: Vector2 = board.get_board_size()
+	assert_true(counts.x * board_size.x >= view.x + board_size.x and
+		counts.y * board_size.y >= view.y + board_size.y,
+		"%s wrap: block covers the min-zoom viewport plus recenter drift" % shape)
+	assert_true((counts.x - 2) * board_size.x < view.x + board_size.x and
+		(counts.y - 2) * board_size.y < view.y + board_size.y,
+		"%s wrap: grid is the smallest odd size covering the viewport" % shape)
 
 
 ## Number of (a, b) pairs where b is a neighbor of a but a is not a
