@@ -87,9 +87,17 @@ theme_override_constants/separation = 20
 
 [node name="MainTitle" type="Label" parent="GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer" unique_id=1240398921]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.08, 0.1, 0.09, 1)
 theme_override_font_sizes/font_size = 32
 text = "Oh no!
 Try again"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RecapLabel" type="Label" parent="GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.08, 0.1, 0.09, 1)
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -108,6 +116,9 @@ offset_right = 80.0
 offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_colors/font_hover_color = Color(0.08, 0.1, 0.09, 1)
+theme_override_colors/font_pressed_color = Color(0.08, 0.1, 0.09, 1)
+theme_override_colors/font_color = Color(0.08, 0.1, 0.09, 1)
 text = "Back to Menu"
 
 [node name="ScreensContainer" type="Control" parent="GUI" unique_id=1715830744]

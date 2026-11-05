@@ -67,6 +67,9 @@ func run() -> void:
 	base._handle_back_button()
 	base._game_finished(false, 0.0)
 	await _settle()
+	assert_false((hud as BoardGUI)._timer_running, "Timer stops at game over")
+	var recap: Label = base.get_node("GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer/RecapLabel")
+	assert_true(recap.text.contains("mines found"), "End screen recaps mines found and time")
 	var final_screen: Control = base.get_node("GUI/Screen/FinalScreen")
 	assert_eq(final_screen.mouse_filter, Control.MOUSE_FILTER_IGNORE,
 		"End screen lets input through outside its panel (board stays pannable)")

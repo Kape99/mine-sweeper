@@ -692,6 +692,17 @@ func _create_reveal_tween() -> Tween:
 	return new_tween
 
 
+## Number of correctly flagged mines (flags on safe cells don't count).
+func count_defused_mines() -> int:
+	var count: int = 0
+	for row: int in rows:
+		for col: int in cols:
+			var cell: CellBase = board_state[row][col]
+			if cell.is_defused() and cell.is_mine():
+				count += 1
+	return count
+
+
 ## At game over (win or loss), highlights every flagged cell that held
 ## no mine, so the player sees which of their flags were mistakes.
 func _reveal_wrong_defuses() -> void:

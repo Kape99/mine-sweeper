@@ -11,6 +11,7 @@ extends Node
 @onready var _defuse_button: TextureButton = $GUI/Screen/BoardGUI/DefuseButton
 @onready var _final_screen: Control = $GUI/Screen/FinalScreen
 @onready var _final_title: Label = $GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer/MainTitle
+@onready var _final_recap: Label = $GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer/RecapLabel
 
 var _triangle_board_scene: PackedScene = load("res://Scenes/Board/triangle_board.tscn")
 var _square_board_scene: PackedScene = load("res://Scenes/Board/square_board.tscn")
@@ -149,6 +150,12 @@ func _take_board() -> BaseBoard:
 
 func _game_finished(is_win: bool, _time: float) -> void:
 	_final_title.text = "Good job!" if is_win else "Oh no!"
+	_board_gui.stop_timer()
+	var time_text: String = BoardGUI.format_time(_board_gui.elapsed_seconds())
+	if is_win:
+		_final_recap.text = "All %d mines found in %s" % [_board.mines, time_text]
+	else:
+		_final_recap.text = "%d of %d mines found in %s" % [_board.count_defused_mines(), _board.mines, time_text]
 	_board_gui.visible = false
 	_final_screen.visible = true
 
@@ -189,6 +196,7 @@ func _defused_changed(defused: int) -> void:
 
 func _game_started(mine_count: int) -> void:
 	_board_gui.visible = true
+	_board_gui.start_timer()
 	_board_gui.total_mines = mine_count
 
 
