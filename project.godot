@@ -43,6 +43,7 @@ project/assembly_name="Mine-Sweaper"
 
 [gui]
 
+theme/custom="res://Asset/soft_light.tres"
 theme/custom_font="res://Asset/Font/Anton-Regular.ttf"
 
 [input_devices]

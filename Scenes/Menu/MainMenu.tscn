@@ -19,7 +19,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.05, 0.05, 0.05, 0.75)
+color = Color(0.7263406, 0.63909066, 0.40182054, 0.7490196)
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1389279100]
 layout_mode = 1
@@ -36,9 +36,8 @@ alignment = 1
 
 [node name="BoardTypeRow" type="HBoxContainer" parent="CenterContainer/Panel" unique_id=2022636972]
 layout_mode = 2
-alignment = 1
 
-[node name="BoardTypeDesc" type="Label" parent="CenterContainer/Panel/BoardTypeRow"]
+[node name="BoardTypeDesc" type="Label" parent="CenterContainer/Panel/BoardTypeRow" unique_id=1524047742]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "Board:"
@@ -52,6 +51,7 @@ text = "◀"
 
 [node name="BoardTypeLabel" type="Label" parent="CenterContainer/Panel/BoardTypeRow" unique_id=112533404]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Square"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -61,38 +61,37 @@ custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 text = "▶"
 
-[node name="DifficultyRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+[node name="DifficultyRow" type="HBoxContainer" parent="CenterContainer/Panel" unique_id=512919141]
 layout_mode = 2
-alignment = 1
 
-[node name="DifficultyDesc" type="Label" parent="CenterContainer/Panel/DifficultyRow"]
+[node name="DifficultyDesc" type="Label" parent="CenterContainer/Panel/DifficultyRow" unique_id=1901434017]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "Difficulty:"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="DifficultyPrev" type="Button" parent="CenterContainer/Panel/DifficultyRow"]
+[node name="DifficultyPrev" type="Button" parent="CenterContainer/Panel/DifficultyRow" unique_id=1797110717]
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 text = "◀"
 
-[node name="DifficultyLabel" type="Label" parent="CenterContainer/Panel/DifficultyRow"]
+[node name="DifficultyLabel" type="Label" parent="CenterContainer/Panel/DifficultyRow" unique_id=98949026]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Medium"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DifficultyNext" type="Button" parent="CenterContainer/Panel/DifficultyRow"]
+[node name="DifficultyNext" type="Button" parent="CenterContainer/Panel/DifficultyRow" unique_id=1723776107]
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 text = "▶"
 
 [node name="WrapRow" type="HBoxContainer" parent="CenterContainer/Panel" unique_id=475272870]
 layout_mode = 2
-alignment = 1
 
-[node name="WrapDesc" type="Label" parent="CenterContainer/Panel/WrapRow"]
+[node name="WrapDesc" type="Label" parent="CenterContainer/Panel/WrapRow" unique_id=547287247]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "Mode:"
@@ -106,6 +105,7 @@ text = "◀"
 
 [node name="WrapLabel" type="Label" parent="CenterContainer/Panel/WrapRow" unique_id=332662638]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Wrap"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -115,23 +115,23 @@ custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 text = "▶"
 
-[node name="SeedRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+[node name="SeedRow" type="HBoxContainer" parent="CenterContainer/Panel" unique_id=328367562]
 layout_mode = 2
-alignment = 1
 
-[node name="SeedDesc" type="Label" parent="CenterContainer/Panel/SeedRow"]
+[node name="SeedDesc" type="Label" parent="CenterContainer/Panel/SeedRow" unique_id=499029837]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "Seed:"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="SeedEdit" type="LineEdit" parent="CenterContainer/Panel/SeedRow"]
+[node name="SeedEdit" type="LineEdit" parent="CenterContainer/Panel/SeedRow" unique_id=695912607]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
-max_length = 8
-placeholder_text = "random"
+size_flags_horizontal = 3
 tooltip_text = "Empty = random board. A short code (e.g. ZURU7) shares the same board and the same center opening with everyone."
+placeholder_text = "random"
+max_length = 8
 
 [node name="Spacer" type="Control" parent="CenterContainer/Panel" unique_id=2101306346]
 custom_minimum_size = Vector2(0, 16)
