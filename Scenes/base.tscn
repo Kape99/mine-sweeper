@@ -3,14 +3,10 @@
 [ext_resource type="Script" uid="uid://db8af8c4fg0hu" path="res://Scripts/base.gd" id="1_smbv4"]
 [ext_resource type="Script" uid="uid://b2ugdxodenifl" path="res://Scripts/GUI/camera_controller.gd" id="2_buixl"]
 [ext_resource type="Script" uid="uid://o0l5mdlumj4c" path="res://Scenes/Screen.gd" id="3_wqvgk"]
+[ext_resource type="PackedScene" uid="uid://1p2fnfw5xeax" path="res://Scenes/final_screen.tscn" id="7_48and"]
 [ext_resource type="PackedScene" uid="uid://2ff3i6tuwxtr" path="res://Scenes/board_gui.tscn" id="9_rp1dr"]
-[ext_resource type="Shader" uid="uid://cjaqkscqnotlx" path="res://Asset/blur.gdshader" id="15_t7wxk"]
 [ext_resource type="Script" uid="uid://bmbpmlmqovo0v" path="res://Scripts/GUI/screen_manager.gd" id="16_screen_mgr"]
 [ext_resource type="PackedScene" uid="uid://cktrketomxyd5" path="res://Scenes/Menu/MainMenu.tscn" id="17_main_menu"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_e68ls"]
-shader = ExtResource("15_t7wxk")
-shader_parameter/lod = 20.0
 
 [node name="Base" type="Node" unique_id=2023769458]
 script = ExtResource("1_smbv4")
@@ -50,73 +46,8 @@ layout_mode = 2
 visible = false
 layout_mode = 2
 
-[node name="FinalScreen" type="Control" parent="GUI/Screen" unique_id=468645982]
-visible = false
+[node name="FinalScreen" parent="GUI/Screen" unique_id=1567671020 instance=ExtResource("7_48and")]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-mouse_filter = 2
-
-[node name="BlurPanel" type="ColorRect" parent="GUI/Screen/FinalScreen" unique_id=1502116424]
-material = SubResource("ShaderMaterial_e68ls")
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -200.0
-offset_top = 72.0
-offset_right = 200.0
-offset_bottom = 312.0
-grow_horizontal = 2
-grow_vertical = 0
-color = Color(0.263128, 0.415405, 0.358476, 0.85)
-
-[node name="CenterContainer" type="CenterContainer" parent="GUI/Screen/FinalScreen/BlurPanel" unique_id=1786245545]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="GUI/Screen/FinalScreen/BlurPanel/CenterContainer" unique_id=1915265250]
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="MainTitle" type="Label" parent="GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer" unique_id=1240398921]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.08, 0.1, 0.09, 1)
-theme_override_font_sizes/font_size = 32
-text = "Oh no!
-Try again"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="RecapLabel" type="Label" parent="GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer" unique_id=682082882]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.08, 0.1, 0.09, 1)
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="BackToMenu" type="Button" parent="GUI/Screen/FinalScreen/BlurPanel" unique_id=687136296]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 44)
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -80.0
-offset_top = -60.0
-offset_right = 80.0
-offset_bottom = -16.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_colors/font_color = Color(0.08, 0.1, 0.09, 1)
-theme_override_colors/font_pressed_color = Color(0.08, 0.1, 0.09, 1)
-theme_override_colors/font_hover_color = Color(0.08, 0.1, 0.09, 1)
-text = "Back to Menu"
 
 [node name="ScreensContainer" type="Control" parent="GUI" unique_id=1715830744]
 unique_name_in_owner = true

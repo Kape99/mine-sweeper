@@ -149,6 +149,14 @@ func _on_request_completed(result: int, response_code: int, _headers: PackedStri
 
 func _start_daily(date: String) -> void:
 	_set_seed(date)
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	var seed_value: int = GlobalState.get_seed_value()
+	rng.seed = seed_value
+	GlobalState.board_wrap = true
+	GlobalState.selected_board = rng.randi_range(0,BOARD_TYPE_NAMES.size() - 1)
+	GlobalState.board_rows = rng.randi_range(30,50)
+	GlobalState.board_cols = rng.randi_range(30,50)
+	GlobalState.bomb_percentage = rng.randf_range(0.10, 0.20)
 	start_requested.emit()
 
 func _on_settings() -> void:

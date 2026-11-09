@@ -10,8 +10,6 @@ extends Node
 @onready var _camera: CameraController = $Camera
 @onready var _defuse_button: TextureButton = $GUI/Screen/BoardGUI/DefuseButton
 @onready var _final_screen: Control = $GUI/Screen/FinalScreen
-@onready var _final_title: Label = $GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer/MainTitle
-@onready var _final_recap: Label = $GUI/Screen/FinalScreen/BlurPanel/CenterContainer/VBoxContainer/RecapLabel
 
 var _triangle_board_scene: PackedScene = load("res://Scenes/Board/triangle_board.tscn")
 var _square_board_scene: PackedScene = load("res://Scenes/Board/square_board.tscn")
@@ -67,7 +65,7 @@ func _ready() -> void:
 	_main_menu.quit_requested.connect(_on_quit)
 	_main_menu.wrap_mode_changed.connect(_on_wrap_mode_changed)
 
-	%BackToMenu.pressed.connect(_reset)
+	_final_screen.reset.connect(_reset)
 
 	# Show the main menu through ScreenManager so Settings can hide it
 	# in-place and restore it on back.
@@ -149,13 +147,8 @@ func _take_board() -> BaseBoard:
 
 
 func _game_finished(is_win: bool, _time: float) -> void:
-	_final_title.text = "Good job!" if is_win else "Oh no!"
 	_board_gui.stop_timer()
-	var time_text: String = BoardGUI.format_time(_board_gui.elapsed_seconds())
-	if is_win:
-		_final_recap.text = "All %d mines found in %s" % [_board.mines, time_text]
-	else:
-		_final_recap.text = "%d of %d mines found in %s" % [_board.count_defused_mines(), _board.mines, time_text]
+	_final_screen.game_finished(is_win, _board_gui.elapsed_seconds(), _board.mines, _board.count_defused_mines())
 	_board_gui.visible = false
 	_final_screen.visible = true
 
@@ -182,6 +175,7 @@ func _load_game() -> void:
 	_board.start_game(GlobalState.board_cols, GlobalState.board_rows, mine_count, GlobalState.board_wrap)
 
 	_main_menu.visible = false
+	_final_screen.visible = false
 	# Center camera on the board and configure bounds based on mode.
 	if GlobalState.board_wrap:
 		_camera.reset_view()  # clears any stale bounds from a previous game

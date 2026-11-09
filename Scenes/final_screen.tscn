@@ -1,0 +1,96 @@
+[gd_scene format=3 uid="uid://1p2fnfw5xeax"]
+
+[ext_resource type="Shader" uid="uid://cjaqkscqnotlx" path="res://Asset/blur.gdshader" id="1_8xhws"]
+[ext_resource type="Script" uid="uid://cng2ttsbob2nc" path="res://Scenes/final_screen.gd" id="1_vi8pr"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_e68ls"]
+shader = ExtResource("1_8xhws")
+shader_parameter/lod = 20.0
+
+[node name="FinalScreen" type="Control" unique_id=1567671020]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
+script = ExtResource("1_vi8pr")
+
+[node name="BlurPanel" type="ColorRect" parent="." unique_id=200379401]
+material = SubResource("ShaderMaterial_e68ls")
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 72.0
+offset_right = 200.0
+offset_bottom = 312.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.263128, 0.415405, 0.358476, 0.85)
+
+[node name="CenterContainer" type="CenterContainer" parent="BlurPanel" unique_id=605110380]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="BlurPanel/CenterContainer" unique_id=479480242]
+layout_mode = 2
+
+[node name="MainTitle" type="Label" parent="BlurPanel/CenterContainer/VBoxContainer" unique_id=765490695]
+layout_mode = 2
+text = "Oh no!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RecapLabel" type="Label" parent="BlurPanel/CenterContainer/VBoxContainer" unique_id=1543657969]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.08, 0.1, 0.09, 1)
+text = "Test"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LeaderBoard" type="BoxContainer" parent="BlurPanel/CenterContainer/VBoxContainer" unique_id=347281850]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Username" type="TextEdit" parent="BlurPanel/CenterContainer/VBoxContainer/LeaderBoard" unique_id=1011274547]
+custom_minimum_size = Vector2(160, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+placeholder_text = "Name
+"
+
+[node name="ScoreButton" type="Button" parent="BlurPanel/CenterContainer/VBoxContainer/LeaderBoard" unique_id=302471577]
+layout_mode = 2
+text = "Send score"
+
+[node name="BackToMenu" type="Button" parent="BlurPanel" unique_id=1004342417]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -49.0
+offset_top = -39.0
+offset_right = 49.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.08, 0.1, 0.09, 1)
+theme_override_colors/font_pressed_color = Color(0.08, 0.1, 0.09, 1)
+theme_override_colors/font_hover_color = Color(0.08, 0.1, 0.09, 1)
+text = "Back to Menu"
+metadata/_edit_use_anchors_ = true
