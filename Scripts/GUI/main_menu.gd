@@ -20,11 +20,15 @@ const BOARD_MODE_NAMES: PackedStringArray = ["Classic", "Wrap"]
 @onready var _wrap_label: Label = $CenterContainer/Panel/WrapRow/WrapLabel
 @onready var _seed_edit: LineEdit = $CenterContainer/Panel/SeedRow/SeedEdit
 @onready var _start_button: Button = $CenterContainer/Panel/StartButton
+@onready var _daily_button: Button = $CenterContainer/Panel/DailyChallenge
+@onready var _https: HTTPRequest = $CenterContainer/Panel/DailyChallenge/HTTPRequest
 @onready var _settings_button: Button = $CenterContainer/Panel/SettingsButton
 @onready var _quit_button: Button = $CenterContainer/Panel/QuitButton
 
 
 func _ready() -> void:
+	_apply_theme_colors()
+	GlobalState.theme_changed.connect(_apply_theme_colors)
 	_sync_from_global_state()
 	_connect_signals()
 
@@ -47,6 +51,8 @@ func _connect_signals() -> void:
 	_wrap_next.pressed.connect(_on_wrap_next)
 	_seed_edit.text_changed.connect(_on_seed_changed)
 	_start_button.pressed.connect(_on_start)
+	_daily_button.pressed.connect(_on_daily)
+	_https.request_completed.connect(_on_request_completed)
 	_settings_button.pressed.connect(_on_settings)
 	_quit_button.pressed.connect(_on_quit)
 func _sync_from_global_state() -> void:
@@ -54,6 +60,10 @@ func _sync_from_global_state() -> void:
 	_difficulty_label.text = GlobalState.get_difficulty()
 	_wrap_label.text = BOARD_MODE_NAMES[1 if GlobalState.board_wrap else 0]
 	_seed_edit.text = GlobalState.board_seed
+
+func _set_seed(text: String) -> void:
+	# Store normalized so "test7" and "TEST7 " share the same board.
+	GlobalState.board_seed = text.strip_edges().to_upper()
 
 
 func _on_board_type_prev() -> void:
@@ -96,13 +106,20 @@ func _on_wrap_next() -> void:
 
 
 func _on_seed_changed(text: String) -> void:
-	# Store normalized so "zuru7" and "ZURU7 " share the same board.
-	GlobalState.board_seed = text.strip_edges().to_upper()
-
+	_set_seed(text)
 
 func _on_start() -> void:
 	start_requested.emit()
 
+func _on_daily() -> void:
+	_seed_edit.clear()
+	_https.request("https://timeapi.io/api/v1/time/current/utc")
+
+func _on_request_completed(result, response_code, headers, body):
+	var json = JSON.parse_string(body.get_string_from_utf8())
+	var time : String = json["utc_time"]
+	_set_seed(time.split("T")[0])
+	start_requested.emit()
 
 func _on_settings() -> void:
 	settings_requested.emit()

@@ -19,7 +19,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.7263406, 0.63909066, 0.40182054, 0.7490196)
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1389279100]
 layout_mode = 1
@@ -141,6 +140,13 @@ layout_mode = 2
 custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
 text = "PLAY"
+
+[node name="DailyChallenge" type="Button" parent="CenterContainer/Panel" unique_id=1459383377]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "CHALLENGE"
+
+[node name="HTTPRequest" type="HTTPRequest" parent="CenterContainer/Panel/DailyChallenge" unique_id=285439928]
 
 [node name="SettingsButton" type="Button" parent="CenterContainer/Panel" unique_id=1554730487]
 custom_minimum_size = Vector2(220, 44)
