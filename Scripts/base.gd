@@ -58,7 +58,7 @@ func _ready() -> void:
 
 	_board_gui.reset.connect(_reset)
 	_board_gui.pause_requested.connect(_on_pause_requested)
-	_defuse_button.modulate = GlobalState.accent_color
+	_defuse_button.modulate = GlobalState.scheme.accent
 	_defuse_button.toggled.connect(_toggle_defuse)
 
 	# Connect to the fresh MainMenu's intent signals.

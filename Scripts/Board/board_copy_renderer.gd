@@ -122,6 +122,7 @@ func get_cell_visual(cell: CellBase) -> Dictionary:
 		"fill": cell.get_fill_color(),
 		"text": cell.get_text(),
 		"text_modulate": cell.get_text_modulate(),
+		"font_size": cell.get_text_font_size(),
 		"icon": cell.get_icon(),
 		"icon_modulate": cell.get_icon_modulate(),
 	}
@@ -164,7 +165,8 @@ func _draw_cell(canvas: CanvasItem, cell: CellBase) -> void:
 ## the font ascent), as in Label's own draw code.
 func _draw_text(canvas: CanvasItem, layout: Dictionary, cell: CellBase, text: String) -> void:
 	var font: Font = layout.font
-	var font_size: int = layout.font_size
+	# Per cell, not from the cached layout: number size varies with the count.
+	var font_size: int = cell.get_text_font_size()
 	var rect: Rect2 = cell.get_text_rect()
 	canvas.draw_set_transform(cell.position + layout.content_xform * _snap(rect.position))
 	var text_width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x

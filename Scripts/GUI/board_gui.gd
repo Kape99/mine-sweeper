@@ -39,8 +39,13 @@ var _elapsed_seconds: int = 0
 
 
 func _ready() -> void:
-	$ColorRect.color = GlobalState.accent_color
-	_score_box.modulate = GlobalState.background_color
+	$ColorRect.color = GlobalState.scheme.accent
+	# Set the text color directly: the UI theme gives labels a dark font
+	# color, so tinting with modulate could only ever darken it.
+	_score_box.modulate = Color.WHITE
+	for label: Label in [_score_tracker, _timer_label]:
+		label.add_theme_color_override("font_color", GlobalState.scheme.hud_text)
+	$ColorRect/ScoreBox/MineIcon.modulate = GlobalState.scheme.hud_text
 
 
 func _process(_delta: float) -> void:

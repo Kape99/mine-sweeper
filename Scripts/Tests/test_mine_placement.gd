@@ -72,11 +72,11 @@ func _test_wrong_defuse_marked() -> void:
 	wrong.defuse()
 	right.defuse()
 	board._reveal_wrong_defuses()
-	assert_eq(wrong._cell_icon.modulate, CellBase.WRONG_DEFUSE_COLOR,
-		"Wrongly flagged cell's flag turns red at game over")
-	assert_eq(wrong._cell_triangle.modulate, GlobalState.secondary_color,
+	assert_eq(wrong._cell_icon.modulate, GlobalState.scheme.danger,
+		"Wrongly flagged cell's flag turns the danger color at game over")
+	assert_eq(wrong._cell_triangle.modulate, GlobalState.scheme.unrevealed,
 		"Wrongly flagged cell keeps its normal fill")
-	assert_eq(right._cell_triangle.modulate, GlobalState.secondary_color,
+	assert_eq(right._cell_triangle.modulate, GlobalState.scheme.unrevealed,
 		"Correctly flagged mine keeps its normal look")
 	board.free()
 

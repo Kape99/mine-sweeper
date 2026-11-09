@@ -27,6 +27,7 @@ config/icon="res://Asset/Icons/Icon.svg"
 
 GlobalState="*res://Scripts/global_state.gd"
 Settings="*res://Scripts/Settings.gd"
+Talo="*uid://bpmdn8oc34pg7"
 
 [display]
 
@@ -40,6 +41,10 @@ window/handheld/orientation=1
 [dotnet]
 
 project/assembly_name="Mine-Sweaper"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/talo/plugin.cfg")
 
 [gui]
 

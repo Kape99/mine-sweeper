@@ -9,6 +9,7 @@ signal wrap_mode_changed(wrap: bool)
 const BOARD_TYPE_NAMES: PackedStringArray = ["Triangle", "Square", "Hexagon"]
 const BOARD_MODE_NAMES: PackedStringArray = ["Classic", "Wrap"]
 
+@onready var _background: ColorRect = $Background
 @onready var _board_type_label: Label = $CenterContainer/Panel/BoardTypeRow/BoardTypeLabel
 @onready var _board_type_prev: Button = $CenterContainer/Panel/BoardTypeRow/BoardTypePrev
 @onready var _board_type_next: Button = $CenterContainer/Panel/BoardTypeRow/BoardTypeNext
@@ -23,6 +24,7 @@ const BOARD_MODE_NAMES: PackedStringArray = ["Classic", "Wrap"]
 @onready var _daily_button: Button = $CenterContainer/Panel/DailyChallenge
 @onready var _https: HTTPRequest = $CenterContainer/Panel/DailyChallenge/HTTPRequest
 @onready var _settings_button: Button = $CenterContainer/Panel/SettingsButton
+@onready var _test: Button = $CenterContainer/Panel/test
 @onready var _quit_button: Button = $CenterContainer/Panel/QuitButton
 
 
@@ -31,6 +33,12 @@ func _ready() -> void:
 	GlobalState.theme_changed.connect(_apply_theme_colors)
 	_sync_from_global_state()
 	_connect_signals()
+
+
+## Colors the menu from the active color scheme: the same backdrop as the
+## game screen. Re-run whenever the scheme changes.
+func _apply_theme_colors() -> void:
+	_background.color = GlobalState.scheme.background
 
 
 func _process(_delta: float) -> void:
@@ -54,6 +62,7 @@ func _connect_signals() -> void:
 	_daily_button.pressed.connect(_on_daily)
 	_https.request_completed.connect(_on_request_completed)
 	_settings_button.pressed.connect(_on_settings)
+	_test.pressed.connect(_on_test)
 	_quit_button.pressed.connect(_on_quit)
 func _sync_from_global_state() -> void:
 	_board_type_label.text = BOARD_TYPE_NAMES[GlobalState.selected_board]
@@ -124,6 +133,8 @@ func _on_request_completed(result, response_code, headers, body):
 func _on_settings() -> void:
 	settings_requested.emit()
 
+func _on_test() -> void:
+	var res := await Talo.player_auth.register("test", "test")
 
 func _on_quit() -> void:
 	quit_requested.emit()

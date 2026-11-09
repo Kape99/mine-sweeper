@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ColorScheme" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/color_scheme.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+background = Color(0.835294, 0.870588, 0.913725, 1)
+unrevealed = Color(0.541176, 0.678431, 0.968627, 1)
+revealed = Color(1, 1, 1, 1)
+flag = Color(0.0941176, 0.133333, 0.188235, 1)
+danger = Color(0.847059, 0.2, 0.290196, 1)
+highlight = Color(1, 0.878431, 0.4, 1)
+number_light = Color(0.356863, 0.552941, 0.996078, 1)
+number_dark = Color(0.427451, 0.156863, 0.85098, 1)
+accent = Color(0.729412, 0.815686, 0.976471, 1)
+hud_text = Color(0.0941176, 0.133333, 0.188235, 1)

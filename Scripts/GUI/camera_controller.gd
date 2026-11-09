@@ -86,7 +86,13 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 ## Mouse-drag panning — the desktop equivalent of the one-finger touch
 ## pan. A drag moves beyond the tap threshold, so it never triggers a
 ## cell tap on release.
+## Skipped while a touch is down: with touch emulation (from mouse on
+## desktop, or to mouse on phones) one physical drag arrives as both a
+## screen drag and a mouse motion, and [method _handle_drag] already
+## pans for it. Handling both would pan twice as fast.
 func _handle_mouse_drag(event: InputEventMouseMotion) -> void:
+	if not _touch_points.is_empty():
+		return
 	if event.button_mask & MOUSE_BUTTON_MASK_LEFT:
 		offset -= event.relative / zoom.x
 		_clamp_offset()

@@ -33,6 +33,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Write Talo settings
+        # settings.cfg holds the Talo access key, so it's gitignored; build
+        # it from the committed template and the TALO_ACCESS_KEY secret.
+        env:
+          TALO_ACCESS_KEY: ${{ secrets.TALO_ACCESS_KEY }}
+        run: |
+          test -n "$TALO_ACCESS_KEY" || { echo "::error::TALO_ACCESS_KEY secret is not set"; exit 1; }
+          awk '/^access_key=/ { print "access_key=\"" ENVIRON["TALO_ACCESS_KEY"] "\""; next } { print }' \
+            addons/talo/settings.example.cfg > addons/talo/settings.cfg
+
       - name: Compute version
         id: version
         env:
@@ -157,7 +167,7 @@ jobs:
           dedicated_server=false
           custom_features=""
           export_filter="all_resources"
-          include_filter=""
+          include_filter="addons/talo/settings.cfg"
           exclude_filter=""
           export_path="build/${AAB_NAME}.aab"
           encryption_include_filters=""

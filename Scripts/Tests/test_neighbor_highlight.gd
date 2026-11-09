@@ -13,7 +13,7 @@ func _ready() -> void:
 
 func _is_highlighted(cell: CellBase) -> bool:
 	var color: Color = cell._cell_triangle.modulate
-	return color.is_equal_approx(CellBase.NEIGHBOR_HIGHLIGHT_COLOR)
+	return color.is_equal_approx(GlobalState.scheme.highlight)
 
 
 func run() -> void:

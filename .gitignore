@@ -46,3 +46,7 @@ android
 *.keystore
 keystore
 .kystore
+
+# Talo access key: written from the TALO_ACCESS_KEY secret in CI.
+# Copy addons/talo/settings.example.cfg to settings.cfg and fill it in locally.
+addons/talo/settings.cfg

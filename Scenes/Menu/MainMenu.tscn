@@ -19,6 +19,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+color = Color(0.835294, 0.870588, 0.913725, 1)
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1389279100]
 layout_mode = 1
@@ -152,6 +153,12 @@ text = "CHALLENGE"
 custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
 text = "SETTINGS"
+
+[node name="test" type="Button" parent="CenterContainer/Panel" unique_id=1653057669]
+visible = false
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "test"
 
 [node name="QuitButton" type="Button" parent="CenterContainer/Panel" unique_id=2016858339]
 custom_minimum_size = Vector2(220, 44)

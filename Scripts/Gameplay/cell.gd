@@ -11,19 +11,18 @@ const TAP_THRESHOLD: float = 15.0
 ## Read from Settings.long_press_threshold_ms at runtime.
 const LONG_PRESS_THRESHOLD_MS: int = 400
 
-## Visual highlight color for neighbors of a held revealed cell.
-## Chosen to be clearly distinct from all scheme colors.
-const NEIGHBOR_HIGHLIGHT_COLOR: Color = Color(0.0, 0.7, 1.0, 1.0)
-
-## Icon color of a flagged cell revealed at game over as a mistake (no
-## mine under it): the flag turns red, the cell fill stays untouched.
-const WRONG_DEFUSE_COLOR: Color = Color.RED
-
 ## How much larger the tap-collision shape is than the visible fill shape,
 ## expressed as a uniform scale from the fill polygon's centroid. Keeps the
 ## touch target slightly bigger than what's drawn without hand-authoring a
 ## second polygon per cell shape.
 const COLLISION_SCALE: float = 1.1
+
+## Font size of a "1". Higher counts grow toward [constant NUMBER_FONT_SIZE_MAX]
+## (see [method number_font_size]), so busier cells stand out.
+const NUMBER_FONT_SIZE_MIN: int = 14
+
+## Font size of the highest count ([constant ColorScheme.MAX_COUNT]).
+const NUMBER_FONT_SIZE_MAX: int = 22
 
 const FLAG_ICON: Texture2D = preload("res://Asset/Icons/flag.svg")
 const MINE_ICON: Texture2D = preload("res://Asset/Icons/mine.svg")
@@ -106,9 +105,10 @@ func reset_state() -> void:
 	_touch_pressed = false
 	_long_press_triggered = false
 	_pending_tap_time = 0
-	set_display(GlobalState.secondary_color, GlobalState.main_color)
+	set_display(GlobalState.scheme.unrevealed, GlobalState.scheme.flag)
 	_cell_icon.texture = null
 	_cell_text.text = ""
+	_cell_text.remove_theme_font_size_override("font_size")
 
 
 ## Derives the tap-collision polygon from the visible fill polygon by
@@ -153,11 +153,11 @@ func defuse() -> void:
 		return
 	if _cell_state == CellState.UNKNOWN:
 		_cell_state = CellState.DEFUSED
-		set_display(GlobalState.secondary_color, GlobalState.main_color, FLAG_ICON)
+		set_display(GlobalState.scheme.unrevealed, GlobalState.scheme.flag, FLAG_ICON)
 		cell_defused.emit(self, true)
 	else:
 		_cell_state = CellState.UNKNOWN
-		set_display(GlobalState.secondary_color, GlobalState.main_color)
+		set_display(GlobalState.scheme.unrevealed, GlobalState.scheme.flag)
 		cell_defused.emit(self, false)
 
 
@@ -167,13 +167,21 @@ func explore() -> void:
 		return
 	_cell_state = CellState.EXPLORED
 	if is_mine():
-		set_display(Color.RED, Color.WHITE)
+		set_display(GlobalState.scheme.danger, Color.WHITE)
 		set_icon(MINE_ICON, Color.WHITE)
 		cell_exploded.emit(self)
 	else:
 		var text: String = str(nearby) if nearby > 0 else ""
-		set_display(GlobalState.main_color, GlobalState.secondary_color, null, text)
+		_cell_text.add_theme_font_size_override("font_size", number_font_size(nearby))
+		set_display(GlobalState.scheme.revealed, GlobalState.scheme.get_number_color(nearby), null, text)
 		cell_explored.emit(self)
+
+
+## Font size for a cell showing [param count] nearby mines: grows from
+## [constant NUMBER_FONT_SIZE_MIN] at 1 to [constant NUMBER_FONT_SIZE_MAX]
+## at [constant ColorScheme.MAX_COUNT], in step with the number color.
+static func number_font_size(count: int) -> int:
+	return roundi(lerpf(NUMBER_FONT_SIZE_MIN, NUMBER_FONT_SIZE_MAX, ColorScheme.number_level(count)))
 
 
 ## Returns [code]true[/code] if this cell has already been explored.
@@ -196,26 +204,26 @@ func set_display(bg_color: Color, content_color: Color, icon: Texture2D = null, 
 
 
 ## Marks a flagged cell as a mistake at game over: it held no mine. The
-## flag icon turns red; the cell fill stays as it is. No-op on any other
+## flag icon turns the scheme's danger color; the cell fill stays as it is. No-op on any other
 ## cell (correctly flagged mines stay as they are).
 func mark_wrongly_defused() -> void:
 	if _cell_state == CellState.DEFUSED and not is_mine():
-		set_icon(FLAG_ICON, WRONG_DEFUSE_COLOR)
+		set_icon(FLAG_ICON, GlobalState.scheme.danger)
 
 
 ## Temporarily highlights this cell as a neighbor of a held revealed cell.
 func set_neighbor_highlight(enabled: bool) -> void:
 	if enabled:
-		_cell_triangle.modulate = NEIGHBOR_HIGHLIGHT_COLOR
+		_cell_triangle.modulate = GlobalState.scheme.highlight
 	else:
 		# Restore colors based on current state without touching icon/text.
 		match _cell_state:
 			CellState.DEFUSED:
-				_cell_triangle.modulate = GlobalState.secondary_color
+				_cell_triangle.modulate = GlobalState.scheme.unrevealed
 			CellState.EXPLORED:
-				_cell_triangle.modulate = Color.RED if is_mine() else GlobalState.main_color
+				_cell_triangle.modulate = GlobalState.scheme.danger if is_mine() else GlobalState.scheme.revealed
 			_:
-				_cell_triangle.modulate = GlobalState.secondary_color
+				_cell_triangle.modulate = GlobalState.scheme.unrevealed
 
 
 ## Overrides only the icon texture and its color. Used when the icon color
@@ -238,6 +246,10 @@ func get_text() -> String:
 
 
 ## Modulate applied to the text.
+func get_text_font_size() -> int:
+	return _cell_text.get_theme_font_size("font_size")
+
+
 func get_text_modulate() -> Color:
 	return _cell_text.modulate
 
