@@ -8,6 +8,10 @@ signal wrap_mode_changed(wrap: bool)
 
 const BOARD_TYPE_NAMES: PackedStringArray = ["Triangle", "Square", "Hexagon"]
 const BOARD_MODE_NAMES: PackedStringArray = ["Classic", "Wrap"]
+## Server UTC time, so the daily seed doesn't depend on the device clock.
+const DAILY_TIME_URL: String = "https://timeapi.io/api/v1/time/current/utc"
+## Seconds to wait for the time server before using the device's date.
+const DAILY_TIME_TIMEOUT: float = 3.0
 
 @onready var _background: ColorRect = $Background
 @onready var _board_type_label: Label = $CenterContainer/Panel/BoardTypeRow/BoardTypeLabel
@@ -33,6 +37,7 @@ func _ready() -> void:
 	GlobalState.theme_changed.connect(_apply_theme_colors)
 	_sync_from_global_state()
 	_connect_signals()
+	_https.timeout = DAILY_TIME_TIMEOUT
 
 
 ## Colors the menu from the active color scheme: the same backdrop as the
@@ -121,13 +126,29 @@ func _on_start() -> void:
 	start_requested.emit()
 
 func _on_daily() -> void:
+	# Ignore repeat presses while the date request is still pending.
+	if _https.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		return
 	_seed_edit.clear()
-	_https.request("https://timeapi.io/api/v1/time/current/utc")
+	# Web builds can't reach the time API (it sends no CORS headers), so they
+	# use the device clock straight away. Elsewhere, if the request can't
+	# even be sent, fall back the same way.
+	if OS.has_feature("web") or _https.request(DAILY_TIME_URL) != OK:
+		_start_daily(Time.get_date_string_from_system(true))
 
-func _on_request_completed(result, response_code, headers, body):
-	var json = JSON.parse_string(body.get_string_from_utf8())
-	var time : String = json["utc_time"]
-	_set_seed(time.split("T")[0])
+func _on_request_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	# Any failure (no network, missing Android INTERNET permission, timeout,
+	# unexpected payload) falls back to the device's UTC date, so the daily
+	# challenge always starts.
+	var date: String = Time.get_date_string_from_system(true)
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		var json: Variant = JSON.parse_string(body.get_string_from_utf8())
+		if json is Dictionary and json.get("utc_time") is String:
+			date = (json["utc_time"] as String).split("T")[0]
+	_start_daily(date)
+
+func _start_daily(date: String) -> void:
+	_set_seed(date)
 	start_requested.emit()
 
 func _on_settings() -> void:

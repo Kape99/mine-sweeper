@@ -212,6 +212,7 @@ jobs:
           screen/support_large=true
           screen/support_xlarge=true
           permissions/custom_permissions=PackedStringArray()
+          permissions/internet=true
           EOF
           cat export_presets.cfg
 

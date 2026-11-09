@@ -208,6 +208,7 @@ jobs:
           screen/support_xlarge=true
           permissions/custom_permissions=PackedStringArray()
           permissions/vibrate=true
+          permissions/internet=true
           EOF
 
       - name: Import project
