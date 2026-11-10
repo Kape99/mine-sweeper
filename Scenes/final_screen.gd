@@ -35,6 +35,7 @@ func _reset() -> void:
 func _submit_score() -> void:
 	var res := await Talo.players.identify(TALO_SERVICE, _player_edit.text)
 	var res2 := await Talo.leaderboards.add_entry(TALO_LEADERBOARD, time)
+	_show_leaderboard()
 
 
 func _show_leaderboard() -> void:
