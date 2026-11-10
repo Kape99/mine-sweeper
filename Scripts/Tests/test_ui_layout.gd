@@ -30,7 +30,7 @@ func run() -> void:
 	var gui_root: Control = base.get_node("GUI/Screen")
 	assert_eq(gui_root.get_global_rect(), screen, "GUI/Screen covers the whole viewport")
 
-	base._load_game()
+	base._load_game(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, "")
 	base._board._on_cell_pressed(base._board.board_state[5][5], 0)
 	await _settle()
 	var hud: Control = base.get_node("GUI/Screen/BoardGUI")
@@ -77,7 +77,7 @@ func run() -> void:
 	_assert_centered_x(panel, screen, "End screen panel")
 	assert_true(panel.get_global_rect().end.y < screen.get_center().y,
 		"End screen panel sits in the upper half, leaving the board visible")
-	var back: Control = base.get_node("%BackToMenu")
+	var back: Control = base.get_node("GUI/Screen/FinalScreen/BlurPanel/BackToMenu")
 	assert_true(absf(back.get_global_rect().get_center().x - panel.get_global_rect().get_center().x) <= CENTER_TOLERANCE
 		and panel.get_global_rect().encloses(back.get_global_rect()),
 		"End screen 'Back to Menu' is centered inside the panel")
@@ -86,7 +86,7 @@ func run() -> void:
 	for wrap: bool in [false, true]:
 		base._reset()
 		GlobalState.board_wrap = wrap
-		base._load_game()
+		base._load_game(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, "")
 		await _settle()
 		var tile: Control = base._board._tile
 		var on_screen: Rect2 = tile.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, tile.size)

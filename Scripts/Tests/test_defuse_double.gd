@@ -29,7 +29,7 @@ func run() -> void:
 	var board: BaseBoard = _started_board()
 
 	# --- Every defuse-mode tap toggles exactly once ---
-	GlobalState.is_defusing = true
+	board.set_defusing(true)
 	var cell: CellBase = board.board_state[1][1]
 	# Wait out the double-tap window between taps so each counts as a
 	# single (a second tap inside the window is a double tap, which opens).
@@ -47,7 +47,7 @@ func run() -> void:
 	cell.defuse()  # back to unknown
 
 	# Normal mode: single tap opens, even when duplicated by emulation.
-	GlobalState.is_defusing = false
+	board.set_defusing(false)
 	var a: CellBase = board.board_state[0][0]
 	var open_count: Array[int] = [0]
 	a.cell_open_requested.connect(func(_c: CellBase) -> void: open_count[0] += 1)
@@ -60,7 +60,7 @@ func run() -> void:
 	assert_eq(open_count[0], 1, "Double tap requests open once")
 
 	# Defuse mode: single tap still flags immediately.
-	GlobalState.is_defusing = true
+	board.set_defusing(true)
 	var b: CellBase = board.board_state[0][1]
 	_tap(b)
 	assert_true(b.is_defused(), "Defuse mode single tap flags immediately with double tap on")
@@ -78,7 +78,7 @@ func run() -> void:
 	_tap(c)
 	assert_true(c.is_explored(), "Double tap opens a previously flagged cell")
 
-	GlobalState.is_defusing = false
+	board.set_defusing(false)
 
 	board.free()
 	BaseBoard.clear_pools()
@@ -87,17 +87,15 @@ func run() -> void:
 ## The first tap of a game opens the cell and starts the game, even in
 ## defuse mode, whether it's a single tap or a double tap.
 func _test_first_tap(tap_twice: bool, label: String) -> void:
-	GlobalState.is_defusing = true
 	var board: BaseBoard = load(SQUARE_SCENE).instantiate()
 	add_child(board)
-	board.start_game(3, 3, 0, true)
+	board.start_game(3, 3, 0, true, "")
 	var cell: CellBase = board.board_state[1][1]
 	_emulated_tap(cell)
 	if tap_twice:
 		_emulated_tap(cell)
 	assert_true(board._is_game_started and cell.is_explored(), "First %s opens and starts the game in defuse mode" % label)
 	assert_false(cell.is_defused(), "First %s does not flag" % label)
-	GlobalState.is_defusing = false
 	board.free()
 	BaseBoard.clear_pools()
 

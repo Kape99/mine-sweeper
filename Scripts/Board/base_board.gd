@@ -89,6 +89,8 @@ var _active_tweens: Array[Tween] = []
 ## board has hard edges, the camera is clamped to the board bounds, and
 ## neighbor lookups stop at the edge.
 var _wrap_mode: bool = true
+var _is_defusing: bool = false
+var _seed: String = ""
 
 ## Long-press tracking for taps on wrap-mode display copies.
 var _display_touch_active: bool = false
@@ -213,7 +215,7 @@ func clear() -> void:
 ## Starts a game. If the board was already built for these dimensions with
 ## [method prepare] (e.g. in the background while the menu was open), that
 ## build is reused; otherwise the board is built now, in one go.
-func start_game(p_cols: int, p_rows: int, p_mines: int, p_wrap: bool = true) -> void:
+func start_game(p_cols: int, p_rows: int, p_mines: int, p_wrap: bool = true, p_seed: String = "") -> void:
 	if not is_prepared_for(p_cols, p_rows, p_wrap):
 		prepare(p_cols, p_rows, p_wrap)
 	build_step(-1)
@@ -223,11 +225,18 @@ func start_game(p_cols: int, p_rows: int, p_mines: int, p_wrap: bool = true) -> 
 		# Keep the requested mine density on the enlarged board.
 		mines = roundi(p_mines * float(cols * rows) / float(p_cols * p_rows))
 	_to_be_explored = rows * cols - mines
+	_is_defusing = true
+	_seed = p_seed
 	# A seeded game is meant to be shared: the mine layout is deterministic
 	# for a given first cell, so open the most central one right away —
 	# every player gets the same guaranteed-safe start.
-	if not GlobalState.board_seed.is_empty():
+	if not p_seed.is_empty():
 		_on_cell_open_requested(board_state[rows / 2][cols / 2])
+
+
+## Updates the defuse mode during an active game.
+func set_defusing(is_defusing: bool) -> void:
+	_is_defusing = is_defusing
 
 
 ## Clears the board and sets it up for a [param p_cols] × [param p_rows]
@@ -742,7 +751,7 @@ func _reveal_mines_from(origin: CellBase) -> void:
 
 func _first_move(starting_cell: CellBase) -> void:
 	_is_game_started = true
-	_place_mines(starting_cell)
+	_place_mines(starting_cell, _seed)
 	on_game_started.emit(mines)
 
 
@@ -757,7 +766,7 @@ func _on_cell_pressed(cell: CellBase, _p_nearby: int) -> void:
 		_on_cell_open_requested(cell)
 		return
 	var logical_cell: CellBase = _get_center_cell(cell)
-	if GlobalState.is_defusing:
+	if _is_defusing:
 		if logical_cell.is_explored() and logical_cell.nearby > 0:
 			_chord_reveal(logical_cell)
 		else:
@@ -872,11 +881,11 @@ func _explore_nearby(cell: CellBase) -> void:
 		).set_delay(REVEAL_DELAY_FACTOR)
 
 
-func _place_mines(cell: CellBase) -> void:
+func _place_mines(cell: CellBase, seed: String) -> void:
 	var valid_indices: Array[int] = _get_mine_candidates(cell)
 
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	var seed_value: int = GlobalState.get_seed_value()
+	var seed_value: int = absi(seed.hash()) if not seed.is_empty() else 0
 	if seed_value != 0:
 		rng.seed = seed_value
 	else:

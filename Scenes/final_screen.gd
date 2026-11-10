@@ -6,6 +6,8 @@ extends Control
 @onready var _player_edit: TextEdit = $BlurPanel/CenterContainer/VBoxContainer/LeaderBoard/Username
 @onready var _score_button: Button = $BlurPanel/CenterContainer/VBoxContainer/LeaderBoard/ScoreButton
 
+@export var _entry: PackedScene
+
 ## Emitted when the player presses the reset button.
 signal reset
 
@@ -30,7 +32,16 @@ func game_finished(is_win: bool, _time: int, _mines: int, _defused: int) -> void
 func _reset() -> void:
 	reset.emit()
 
-func _show_leaderboard() -> void:
+func _submit_score() -> void:
 	var res := await Talo.players.identify(TALO_SERVICE, _player_edit.text)
 	var res2 := await Talo.leaderboards.add_entry(TALO_LEADERBOARD, time)
+
+
+func _show_leaderboard() -> void:
+	var leaderboard = await Talo.leaderboards.get_entries(TALO_LEADERBOARD)
+	for result in leaderboard.entries:
+		var entry: Entry = _entry.instantiate()
+		entry.set_entry("suca", result)
+
+
 	

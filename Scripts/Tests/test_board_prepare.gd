@@ -87,7 +87,7 @@ func _test_menu_prepares_next_board() -> void:
 	prepared = await _wait_for_prepared(base)
 	assert_true(prepared != null and prepared.rows == 10, "Changing the size rebuilds the background board")
 
-	base._load_game()
+	base._load_game(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, "")
 	assert_eq(base._board, prepared, "Start uses the background board")
 	assert_eq(base._prepared_board, null, "Background slot is empty during the game")
 	assert_eq(base._board.modulate, Color.WHITE, "Board is visible once the game starts")

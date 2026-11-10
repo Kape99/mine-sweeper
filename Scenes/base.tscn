@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" uid="uid://db8af8c4fg0hu" path="res://Scripts/base.gd" id="1_smbv4"]
 [ext_resource type="Script" uid="uid://b2ugdxodenifl" path="res://Scripts/GUI/camera_controller.gd" id="2_buixl"]
-[ext_resource type="Script" uid="uid://o0l5mdlumj4c" path="res://Scenes/Screen.gd" id="3_wqvgk"]
-[ext_resource type="PackedScene" uid="uid://1p2fnfw5xeax" path="res://Scenes/final_screen.tscn" id="7_48and"]
-[ext_resource type="PackedScene" uid="uid://2ff3i6tuwxtr" path="res://Scenes/board_gui.tscn" id="9_rp1dr"]
+[ext_resource type="Script" uid="uid://o0l5mdlumj4c" path="res://Scripts/Screen.gd" id="3_wqvgk"]
+[ext_resource type="PackedScene" uid="uid://1p2fnfw5xeax" path="res://Scenes/Menu/final_screen.tscn" id="7_48and"]
+[ext_resource type="PackedScene" uid="uid://2ff3i6tuwxtr" path="res://Scenes/Menu/board_gui.tscn" id="9_rp1dr"]
 [ext_resource type="Script" uid="uid://bmbpmlmqovo0v" path="res://Scripts/GUI/screen_manager.gd" id="16_screen_mgr"]
 [ext_resource type="PackedScene" uid="uid://cktrketomxyd5" path="res://Scenes/Menu/MainMenu.tscn" id="17_main_menu"]
 

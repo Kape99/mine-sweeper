@@ -123,5 +123,5 @@ func _count_mines(board: BaseBoard) -> int:
 func _load_board(cols: int, rows: int, mines: int) -> BaseBoard:
 	var board: BaseBoard = load(SQUARE_SCENE).instantiate()
 	add_child(board)
-	board.start_game(cols, rows, mines, false)
+	board.start_game(cols, rows, mines, false, GlobalState.board_seed)
 	return board
