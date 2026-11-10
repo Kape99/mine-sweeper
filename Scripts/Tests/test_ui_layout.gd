@@ -77,7 +77,7 @@ func run() -> void:
 	_assert_centered_x(panel, screen, "End screen panel")
 	assert_true(panel.get_global_rect().end.y < screen.get_center().y,
 		"End screen panel sits in the upper half, leaving the board visible")
-	var back: Control = base.get_node("%BackToMenu")
+	var back: Control = base.get_node("GUI/Screen/FinalScreen/BlurPanel/BackToMenu")
 	assert_true(absf(back.get_global_rect().get_center().x - panel.get_global_rect().get_center().x) <= CENTER_TOLERANCE
 		and panel.get_global_rect().encloses(back.get_global_rect()),
 		"End screen 'Back to Menu' is centered inside the panel")

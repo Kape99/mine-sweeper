@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://bmu7iywpivm2r"]
+
+[ext_resource type="Script" uid="uid://lxdpwq8ssk53" path="res://Scripts/GUI/entry.gd" id="1_xsdkm"]
+
+[node name="Entry" type="HBoxContainer" unique_id=155319972]
+script = ExtResource("1_xsdkm")
+
+[node name="PlayerID" type="Label" parent="." unique_id=661831374]
+layout_mode = 2
+size_flags_vertical = 1
+text = "PlayerID"
+
+[node name="VSeparator" type="VSeparator" parent="." unique_id=1637918552]
+layout_mode = 2
+size_flags_horizontal = 10
+
+[node name="Score" type="Label" parent="." unique_id=311885781]
+layout_mode = 2
+size_flags_horizontal = 8
+text = "Score"
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1845041279]
+layout_mode = 2
