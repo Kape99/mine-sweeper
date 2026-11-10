@@ -28,6 +28,7 @@ func game_finished(is_win: bool, _time: int, _mines: int, _defused: int) -> void
 		_final_recap.text = "All %d mines found in %s" % [_mines, time_text]
 	else:
 		_final_recap.text = "%d of %d mines found in %s" % [_defused, _mines, time_text]
+	_show_leaderboard()
 
 func _reset() -> void:
 	reset.emit()
