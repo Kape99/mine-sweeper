@@ -13,6 +13,11 @@ const DAILY_TIME_URL: String = "https://timeapi.io/api/v1/time/current/utc"
 ## Seconds to wait for the time server before using the device's date.
 const DAILY_TIME_TIMEOUT: float = 3.0
 
+const DAILY_MIN_SIZE : int = 10
+const DAILY_MAX_SIZE : int = 25
+const DAILY_MIN_MINES : int = 10
+const DAILY_MAX_MINES : int = 20
+
 @onready var _background: ColorRect = $Background
 @onready var _board_type_label: Label = $CenterContainer/Panel/BoardTypeRow/BoardTypeLabel
 @onready var _board_type_prev: Button = $CenterContainer/Panel/BoardTypeRow/BoardTypePrev
@@ -153,10 +158,10 @@ func _start_daily(date: String) -> void:
 	var seed_value: int = GlobalState.get_seed_value()
 	rng.seed = seed_value
 	GlobalState.board_wrap = true
-	GlobalState.selected_board = rng.randi_range(0,BOARD_TYPE_NAMES.size() - 1)
-	GlobalState.board_rows = rng.randi_range(30,50)
-	GlobalState.board_cols = rng.randi_range(30,50)
-	GlobalState.bomb_percentage = rng.randf_range(0.10, 0.20)
+	GlobalState.selected_board = rng.randi_range(0,BOARD_TYPE_NAMES.size() -1)
+	GlobalState.board_rows = rng.randi_range(DAILY_MIN_SIZE,DAILY_MAX_SIZE)
+	GlobalState.board_cols = rng.randi_range(DAILY_MIN_SIZE,DAILY_MAX_SIZE)
+	GlobalState.bomb_percentage = rng.randf_range(DAILY_MIN_MINES, DAILY_MAX_MINES)
 	start_requested.emit()
 
 func _on_settings() -> void:

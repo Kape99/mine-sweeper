@@ -132,7 +132,7 @@ func _discard_prepared_board() -> void:
 
 ## Returns the background board if it was built for the current settings
 ## (finishing it if needed happens in start_game), or a new board.
-func _take_board() -> BaseBoard:
+func _take_board(board_idx: int) -> BaseBoard:
 	if _prepared_board and _prepared_key == _get_prepare_key():
 		var board: BaseBoard = _prepared_board
 		_prepared_board = null
@@ -141,7 +141,7 @@ func _take_board() -> BaseBoard:
 		board.process_mode = Node.PROCESS_MODE_INHERIT
 		return board
 	_discard_prepared_board()
-	var new_board: BaseBoard = _board_scenes[GlobalState.selected_board].instantiate()
+	var new_board: BaseBoard = _board_scenes[board_idx].instantiate()
 	add_child(new_board)
 	return new_board
 
@@ -156,11 +156,10 @@ func _game_finished(is_win: bool, _time: float) -> void:
 func _toggle_defuse(is_active: bool) -> void:
 	GlobalState.is_defusing = is_active
 
-
 ## Instantiates the selected board, starts a new game, and switches to gameplay view.
-func _load_game() -> void:
-	_board = _take_board()
-	var mine_count: int = GlobalState.get_mine_count()
+func _load_game(board: int, cols: int, rows: int, mine_perc: float, board_wrap: bool) -> void:
+	_board = _take_board(board)
+	var mine_count: int =  maxi(1, roundi(rows * cols * mine_perc))
 
 	# Games start in defuse mode. The first tap always opens a cell (see
 	# BaseBoard._on_cell_pressed), so the game can start even though the HUD
@@ -172,7 +171,7 @@ func _load_game() -> void:
 	_board.on_game_started.connect(_game_started)
 	_board.on_defuse_changed.connect(_defused_changed)
 	_board.on_game_finished.connect(_game_finished)
-	_board.start_game(GlobalState.board_cols, GlobalState.board_rows, mine_count, GlobalState.board_wrap)
+	_board.start_game(cols, rows, mine_count, board_wrap)
 
 	_main_menu.visible = false
 	_final_screen.visible = false
