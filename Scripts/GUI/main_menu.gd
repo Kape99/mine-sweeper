@@ -1,7 +1,7 @@
 class_name MainMenu
 extends Control
 
-signal start_requested
+signal start_requested(board: int, cols: int, rows: int, mine_perc: float, board_wrap: bool, board_seed: String)
 signal settings_requested
 signal quit_requested
 signal wrap_mode_changed(wrap: bool)
@@ -15,8 +15,8 @@ const DAILY_TIME_TIMEOUT: float = 3.0
 
 const DAILY_MIN_SIZE : int = 10
 const DAILY_MAX_SIZE : int = 25
-const DAILY_MIN_MINES : int = 10
-const DAILY_MAX_MINES : int = 20
+const DAILY_MIN_MINES : float = 0.10
+const DAILY_MAX_MINES : float = 0.20
 
 @onready var _background: ColorRect = $Background
 @onready var _board_type_label: Label = $CenterContainer/Panel/BoardTypeRow/BoardTypeLabel
@@ -128,7 +128,7 @@ func _on_seed_changed(text: String) -> void:
 	_set_seed(text)
 
 func _on_start() -> void:
-	start_requested.emit()
+	start_requested.emit(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, GlobalState.board_seed)
 
 func _on_daily() -> void:
 	# Ignore repeat presses while the date request is still pending.
@@ -157,12 +157,12 @@ func _start_daily(date: String) -> void:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	var seed_value: int = GlobalState.get_seed_value()
 	rng.seed = seed_value
-	GlobalState.board_wrap = true
-	GlobalState.selected_board = rng.randi_range(0,BOARD_TYPE_NAMES.size() -1)
-	GlobalState.board_rows = rng.randi_range(DAILY_MIN_SIZE,DAILY_MAX_SIZE)
-	GlobalState.board_cols = rng.randi_range(DAILY_MIN_SIZE,DAILY_MAX_SIZE)
-	GlobalState.bomb_percentage = rng.randf_range(DAILY_MIN_MINES, DAILY_MAX_MINES)
-	start_requested.emit()
+	var board_wrap: bool = true
+	var selected_board: int = rng.randi_range(0, BOARD_TYPE_NAMES.size() - 1)
+	var board_rows: int = rng.randi_range(DAILY_MIN_SIZE, DAILY_MAX_SIZE)
+	var board_cols: int = rng.randi_range(DAILY_MIN_SIZE, DAILY_MAX_SIZE)
+	var bomb_percentage: float = rng.randf_range(DAILY_MIN_MINES, DAILY_MAX_MINES)
+	start_requested.emit(selected_board, board_cols, board_rows, bomb_percentage, board_wrap, GlobalState.board_seed)
 
 func _on_settings() -> void:
 	settings_requested.emit()

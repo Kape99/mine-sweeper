@@ -18,7 +18,7 @@ func run() -> void:
 	await get_tree().process_frame
 	var sm: ScreenManager = base.get_node("ScreenManager")
 
-	base._load_game()
+	base._load_game(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, "")
 	var board: BaseBoard = base._board
 
 	# Resume

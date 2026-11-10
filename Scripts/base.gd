@@ -155,9 +155,11 @@ func _game_finished(is_win: bool, _time: float) -> void:
 
 func _toggle_defuse(is_active: bool) -> void:
 	GlobalState.is_defusing = is_active
+	if _board:
+		_board.set_defusing(is_active)
 
 ## Instantiates the selected board, starts a new game, and switches to gameplay view.
-func _load_game(board: int, cols: int, rows: int, mine_perc: float, board_wrap: bool) -> void:
+func _load_game(board: int, cols: int, rows: int, mine_perc: float, board_wrap: bool, board_seed: String = "") -> void:
 	_board = _take_board(board)
 	var mine_count: int =  maxi(1, roundi(rows * cols * mine_perc))
 
@@ -171,7 +173,7 @@ func _load_game(board: int, cols: int, rows: int, mine_perc: float, board_wrap: 
 	_board.on_game_started.connect(_game_started)
 	_board.on_defuse_changed.connect(_defused_changed)
 	_board.on_game_finished.connect(_game_finished)
-	_board.start_game(cols, rows, mine_count, board_wrap)
+	_board.start_game(cols, rows, mine_count, board_wrap, board_seed)
 
 	_main_menu.visible = false
 	_final_screen.visible = false
@@ -226,7 +228,7 @@ func return_to_menu() -> void:
 ## Public wrapper used by PauseOverlay to restart the current game.
 func restart_game() -> void:
 	_reset()
-	_load_game()
+	_load_game(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, GlobalState.board_seed)
 
 
 func _unhandled_input(event: InputEvent) -> void:
