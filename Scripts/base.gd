@@ -43,6 +43,19 @@ var _prepared_key: Array = []
 var _pending_key: Array = []
 var _pending_key_since: int = 0
 
+## Arguments of the running game's [method _load_game] call, for restarts.
+var _game_args: Array = []
+
+## Whether the running game is the daily challenge (the only mode with a
+## leaderboard).
+var _is_daily: bool = false
+
+## When [member _carry_timer] is set, the next game's timer counts from
+## [member _carry_timer_start] ([method Time.get_ticks_msec] time) instead
+## of from zero. Set by a daily restart, so retrying keeps the clock running.
+var _carry_timer: bool = false
+var _carry_timer_start: int = 0
+
 
 func _ready() -> void:
 	_board_scenes = {
@@ -51,10 +64,10 @@ func _ready() -> void:
 		2: _hexagon_board_scene,
 	}
 	# Clean up static cell pools on exit so off-tree pooled nodes don't leak RIDs.
-	get_tree().root.tree_exiting.connect(BaseBoard.clear_pools)
+	if not get_tree().root.tree_exiting.is_connected(BaseBoard.clear_pools):
+		get_tree().root.tree_exiting.connect(BaseBoard.clear_pools)
 	_camera.reset_view()
 
-	_board_gui.reset.connect(_reset)
 	_board_gui.pause_requested.connect(_on_pause_requested)
 	_defuse_button.modulate = GlobalState.scheme.accent
 	_defuse_button.toggled.connect(_toggle_defuse)
@@ -66,6 +79,7 @@ func _ready() -> void:
 	_main_menu.wrap_mode_changed.connect(_on_wrap_mode_changed)
 
 	_final_screen.reset.connect(_reset)
+	_final_screen.continue_requested.connect(restart_game)
 
 	# Show the main menu through ScreenManager so Settings can hide it
 	# in-place and restore it on back.
@@ -81,16 +95,17 @@ func _process(_delta: float) -> void:
 		_prepare_board_step()
 
 
-## Everything a freshly built board depends on. Cell colors are set when
-## cells are created, so the color scheme is part of it.
+## Everything a freshly built board depends on, for the menu's current
+## settings. Cell colors are set when cells are created, so the color
+## scheme is part of it.
 func _get_prepare_key() -> Array:
-	return [
-		GlobalState.selected_board,
-		GlobalState.board_cols,
-		GlobalState.board_rows,
-		GlobalState.board_wrap,
-		GlobalState.selected_scheme,
-	]
+	return _make_prepare_key(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.board_wrap)
+
+
+## Same as [method _get_prepare_key], for explicit board settings (e.g. a
+## daily challenge, whose settings don't come from the menu).
+func _make_prepare_key(board: int, cols: int, rows: int, board_wrap: bool) -> Array:
+	return [board, cols, rows, board_wrap, GlobalState.selected_scheme]
 
 
 ## Advances the background build of the next board by one frame's budget.
@@ -130,10 +145,11 @@ func _discard_prepared_board() -> void:
 	_prepared_key = []
 
 
-## Returns the background board if it was built for the current settings
-## (finishing it if needed happens in start_game), or a new board.
-func _take_board(board_idx: int) -> BaseBoard:
-	if _prepared_board and _prepared_key == _get_prepare_key():
+## Returns the background board if it was built for exactly these settings
+## (finishing it if needed happens in start_game), or a new board. The
+## settings are the game's, not the menu's: a daily challenge picks its own.
+func _take_board(board_idx: int, cols: int, rows: int, board_wrap: bool) -> BaseBoard:
+	if _prepared_board and _prepared_key == _make_prepare_key(board_idx, cols, rows, board_wrap):
 		var board: BaseBoard = _prepared_board
 		_prepared_board = null
 		_prepared_key = []
@@ -148,7 +164,7 @@ func _take_board(board_idx: int) -> BaseBoard:
 
 func _game_finished(is_win: bool, _time: float) -> void:
 	_board_gui.stop_timer()
-	_final_screen.game_finished(is_win, _board_gui.elapsed_seconds(), _board.mines, _board.count_defused_mines())
+	_final_screen.game_finished(is_win, _board_gui.elapsed_seconds(), _board.mines, _board.count_defused_mines(), _is_daily)
 	_board_gui.visible = false
 	_final_screen.visible = true
 
@@ -159,8 +175,11 @@ func _toggle_defuse(is_active: bool) -> void:
 		_board.set_defusing(is_active)
 
 ## Instantiates the selected board, starts a new game, and switches to gameplay view.
-func _load_game(board: int, cols: int, rows: int, mine_perc: float, board_wrap: bool, board_seed: String = "") -> void:
-	_board = _take_board(board)
+func _load_game(board: int, cols: int, rows: int, mine_perc: float, board_wrap: bool, board_seed: String = "", is_daily: bool = false) -> void:
+	# Remembered so a restart replays this exact game, not the menu's settings.
+	_game_args = [board, cols, rows, mine_perc, board_wrap, board_seed, is_daily]
+	_is_daily = is_daily
+	_board = _take_board(board, cols, rows, board_wrap)
 	var mine_count: int =  maxi(1, roundi(rows * cols * mine_perc))
 
 	# Games start in defuse mode. The first tap always opens a cell (see
@@ -178,7 +197,7 @@ func _load_game(board: int, cols: int, rows: int, mine_perc: float, board_wrap: 
 	_main_menu.visible = false
 	_final_screen.visible = false
 	# Center camera on the board and configure bounds based on mode.
-	if GlobalState.board_wrap:
+	if board_wrap:
 		_camera.reset_view()  # clears any stale bounds from a previous game
 		_camera.offset = _board.get_content_size() / 2.0
 	else:
@@ -191,7 +210,11 @@ func _defused_changed(defused: int) -> void:
 
 func _game_started(mine_count: int) -> void:
 	_board_gui.visible = true
-	_board_gui.start_timer()
+	if _carry_timer:
+		_board_gui.resume_timer(_carry_timer_start)
+	else:
+		_board_gui.start_timer()
+	_carry_timer = false
 	_board_gui.total_mines = mine_count
 
 
@@ -225,10 +248,22 @@ func return_to_menu() -> void:
 	_reset()
 
 
-## Public wrapper used by PauseOverlay to restart the current game.
+## Public wrapper used by PauseOverlay to restart the current game with the
+## same settings it was started with (a daily restarts the same daily).
+##
+## A daily (restarted from the pause menu, or continued after a defeat)
+## keeps its timer running: retries until the win all count toward the
+## time submitted to the leaderboard. A daily always starts itself (it
+## opens its seeded center cell), so the carried start is used right away.
 func restart_game() -> void:
+	var args: Array = _game_args
+	if _is_daily:
+		_carry_timer = true
+		_carry_timer_start = _board_gui.timer_start_msec()
 	_reset()
-	_load_game(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, GlobalState.board_seed)
+	if args.is_empty():
+		return
+	_load_game.callv(args)
 
 
 func _unhandled_input(event: InputEvent) -> void:

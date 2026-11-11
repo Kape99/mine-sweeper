@@ -1,10 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://2ff3i6tuwxtr"]
+[gd_scene load_steps=5 format=3 uid="uid://2ff3i6tuwxtr"]
 
 [ext_resource type="Script" path="res://Scripts/GUI/board_gui.gd" id="1_vdnex"]
 [ext_resource type="Texture2D" uid="uid://b02ssfrvb6agc" path="res://Asset/Icons/mine_button.svg" id="2_x8sex"]
 [ext_resource type="Texture2D" uid="uid://cqghprgxdo207" path="res://Asset/Icons/mine.svg" id="3_jh2k8"]
 [ext_resource type="Texture2D" uid="uid://c8b8ytvm6tvf6" path="res://Asset/Icons/flower_button.svg" id="3_n6ckf"]
-[ext_resource type="StyleBox" uid="uid://dfbwulumv8xih" path="res://Asset/transparent.stylebox" id="5_rt0ux"]
 
 [node name="BoardGUI" type="Control"]
 layout_mode = 3
@@ -49,23 +48,6 @@ offset_bottom = 48.0
 grow_horizontal = 0
 focus_mode = 0
 text = "II"
-
-[node name="Reset" type="Button" parent="."]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -66.0
-offset_top = 25.0
-offset_right = -23.0
-offset_bottom = 48.0
-grow_horizontal = 0
-focus_mode = 0
-theme_override_styles/normal = ExtResource("5_rt0ux")
-theme_override_styles/hover = ExtResource("5_rt0ux")
-theme_override_styles/pressed = ExtResource("5_rt0ux")
-text = "Reset
-"
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 1
@@ -118,4 +100,3 @@ text = "0:00"
 vertical_alignment = 1
 
 [connection signal="pressed" from="PauseButton" to="." method="_on_pause_pressed"]
-[connection signal="pressed" from="Reset" to="." method="_on_reset_pressed"]

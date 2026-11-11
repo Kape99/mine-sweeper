@@ -61,6 +61,12 @@ text = "Test"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Continue" type="Button" parent="BlurPanel/CenterContainer/VBoxContainer" unique_id=1872304615]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Continue"
+
 [node name="LeaderBoard" type="BoxContainer" parent="BlurPanel/CenterContainer/VBoxContainer" unique_id=347281850]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2

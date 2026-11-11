@@ -1,7 +1,7 @@
 class_name MainMenu
 extends Control
 
-signal start_requested(board: int, cols: int, rows: int, mine_perc: float, board_wrap: bool, board_seed: String)
+signal start_requested(board: int, cols: int, rows: int, mine_perc: float, board_wrap: bool, board_seed: String, is_daily: bool)
 signal settings_requested
 signal quit_requested
 signal wrap_mode_changed(wrap: bool)
@@ -128,13 +128,12 @@ func _on_seed_changed(text: String) -> void:
 	_set_seed(text)
 
 func _on_start() -> void:
-	start_requested.emit(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, GlobalState.board_seed)
+	start_requested.emit(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, GlobalState.board_seed, false)
 
 func _on_daily() -> void:
 	# Ignore repeat presses while the date request is still pending.
 	if _https.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
 		return
-	_seed_edit.clear()
 	# Web builds can't reach the time API (it sends no CORS headers), so they
 	# use the device clock straight away. Elsewhere, if the request can't
 	# even be sent, fall back the same way.
@@ -152,17 +151,20 @@ func _on_request_completed(result: int, response_code: int, _headers: PackedStri
 			date = (json["utc_time"] as String).split("T")[0]
 	_start_daily(date)
 
+## Starts the daily challenge for [param date] (YYYY-MM-DD). The date is the
+## seed for both the board settings and the mine layout. It's passed to the
+## game only, never stored in [member GlobalState.board_seed], so the menu's
+## own seed (and the next PLAY) are left as the player set them.
 func _start_daily(date: String) -> void:
-	_set_seed(date)
+	var daily_seed: String = date.strip_edges().to_upper()
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	var seed_value: int = GlobalState.get_seed_value()
-	rng.seed = seed_value
+	rng.seed = absi(daily_seed.hash())
 	var board_wrap: bool = true
 	var selected_board: int = rng.randi_range(0, BOARD_TYPE_NAMES.size() - 1)
 	var board_rows: int = rng.randi_range(DAILY_MIN_SIZE, DAILY_MAX_SIZE)
 	var board_cols: int = rng.randi_range(DAILY_MIN_SIZE, DAILY_MAX_SIZE)
 	var bomb_percentage: float = rng.randf_range(DAILY_MIN_MINES, DAILY_MAX_MINES)
-	start_requested.emit(selected_board, board_cols, board_rows, bomb_percentage, board_wrap, GlobalState.board_seed)
+	start_requested.emit(selected_board, board_cols, board_rows, bomb_percentage, board_wrap, daily_seed, true)
 
 func _on_settings() -> void:
 	settings_requested.emit()

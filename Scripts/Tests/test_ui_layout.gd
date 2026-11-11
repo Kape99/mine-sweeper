@@ -37,8 +37,8 @@ func run() -> void:
 	assert_true(hud.visible and hud.get_global_rect() == screen, "HUD covers the whole viewport")
 	_assert_centered_x(hud.get_node("ColorRect"), screen, "HUD score box")
 	_assert_centered_x(hud.get_node("DefuseButton"), screen, "HUD defuse button")
-	for button: String in ["PauseButton", "Reset"]:
-		assert_true(screen.encloses(hud.get_node(button).get_global_rect()), "HUD %s is fully on screen" % button)
+	assert_true(screen.encloses(hud.get_node("PauseButton").get_global_rect()), "HUD PauseButton is fully on screen")
+	assert_false(hud.has_node("Reset"), "HUD has no Reset button")
 
 	var blockers: Dictionary = _blocking_controls(base, screen)
 	var stray: Array[String] = []
