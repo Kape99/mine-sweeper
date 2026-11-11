@@ -566,27 +566,40 @@ func _on_display_tap(cell: CellBase, pos: Vector2) -> void:
 
 
 ## Finds the logical cell under a position on a non-center display tile.
+## Hit-tests the cells' real tap shapes rather than their layout rects:
+## hex and triangle shapes are offset from the rect (the hex stagger is
+## baked into the cell scenes) and overlap their neighbors, so a plain
+## grid lookup picks the wrong cell. Candidates come from every tile,
+## including the center one, because shapes spill across tile seams; if
+## the best hit is on the center tile, its own Area2D handles the tap.
 func _find_display_logical_cell(global_pos: Vector2) -> CellBase:
 	var canvas_pos: Vector2 = get_viewport().canvas_transform.affine_inverse() * global_pos
-	var board_size: Vector2 = get_board_size()
 	var board_origin: Vector2 = _board_node.global_position
 	var cell_step: Vector2 = Vector2(
 		_cell_size.x + GRID_H_SEPARATION,
 		_cell_size.y + GRID_V_SEPARATION
 	)
 
-	for offset: Vector2 in _copy_renderer.get_offsets():
-		var tile_origin: Vector2 = board_origin + offset
-		var local_pos: Vector2 = canvas_pos - tile_origin
-		if local_pos.x < 0 or local_pos.y < 0:
-			continue
-		if local_pos.x >= board_size.x or local_pos.y >= board_size.y:
-			continue
-		var col: int = int(local_pos.x / cell_step.x)
-		var row: int = int(local_pos.y / cell_step.y)
-		if col >= 0 and col < cols and row >= 0 and row < rows:
-			return board_state[row][col]
-	return null
+	var best_cell: CellBase = null
+	var best_offset: Vector2 = Vector2.ZERO
+	var best_distance: float = INF
+	var tile_offsets: Array[Vector2] = [Vector2.ZERO]
+	tile_offsets.append_array(_copy_renderer.get_offsets())
+	for offset: Vector2 in tile_offsets:
+		var local_pos: Vector2 = canvas_pos - (board_origin + offset)
+		var col: int = floori(local_pos.x / cell_step.x)
+		var row: int = floori(local_pos.y / cell_step.y)
+		for r: int in range(maxi(row - 1, 0), mini(row + 2, rows)):
+			for c: int in range(maxi(col - 1, 0), mini(col + 2, cols)):
+				var cell: CellBase = board_state[r][c]
+				var distance: float = cell.get_tap_distance(local_pos - cell.position)
+				if distance >= 0.0 and distance < best_distance:
+					best_cell = cell
+					best_offset = offset
+					best_distance = distance
+	if best_offset == Vector2.ZERO:
+		return null
+	return best_cell
 
 
 ## Called every frame from the main controller with the camera's current

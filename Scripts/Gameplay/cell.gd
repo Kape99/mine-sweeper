@@ -131,6 +131,28 @@ func _bind_collision_shape() -> void:
 	_cell_collision.polygon = scaled
 
 
+## Hit-tests [param local_pos] — a point in this cell's own space, i.e.
+## relative to [member Control.position] inside its tile — against the
+## tap-collision shape. Returns the distance from the shape's centroid, or
+## [code]-1.0[/code] when the point is outside it. Lets wrap-mode copies
+## resolve taps with the same shape as the real Area2D, which for hex and
+## triangle cells is offset from (and overlaps) the cell's layout rect.
+func get_tap_distance(local_pos: Vector2) -> float:
+	var shape: PackedVector2Array = _cell_collision.polygon
+	if shape.is_empty():
+		return -1.0
+	var to_shape: Transform2D = (
+		get_global_transform().affine_inverse() * _cell_collision.get_global_transform()
+	).affine_inverse()
+	var point: Vector2 = to_shape * local_pos
+	if not Geometry2D.is_point_in_polygon(point, shape):
+		return -1.0
+	var centroid: Vector2 = Vector2.ZERO
+	for vertex: Vector2 in shape:
+		centroid += vertex
+	return point.distance_to(centroid / shape.size())
+
+
 ## Permanently marks this cell as a mine. Irreversible.
 func mark_as_mine() -> void:
 	nearby = -1
