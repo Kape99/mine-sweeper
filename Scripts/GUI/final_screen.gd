@@ -3,7 +3,7 @@ extends Control
 @onready var _final_title: Label = $BlurPanel/CenterContainer/VBoxContainer/MainTitle
 @onready var _final_recap: Label = $BlurPanel/CenterContainer/VBoxContainer/RecapLabel
 @onready var _leaderboard_box: BoxContainer = $BlurPanel/CenterContainer/VBoxContainer/LeaderBoard
-@onready var _player_edit: TextEdit = $BlurPanel/CenterContainer/VBoxContainer/LeaderBoard/Username
+@onready var _player_edit: LineEdit =$BlurPanel/CenterContainer/VBoxContainer/LeaderBoard/Username
 @onready var _score_button: Button = $BlurPanel/CenterContainer/VBoxContainer/LeaderBoard/ScoreButton
 @onready var _leaderboard_scroll: ScrollContainer = $BlurPanel/CenterContainer/VBoxContainer/ScrollContainer
 @onready var _leaderboard: VBoxContainer = $BlurPanel/CenterContainer/VBoxContainer/ScrollContainer/Leaderboard
@@ -24,6 +24,8 @@ func _ready() -> void:
 	%BackToMenu.pressed.connect(_reset)
 	%Continue.pressed.connect(continue_requested.emit)
 	_score_button.pressed.connect(_submit_score)
+	_player_edit.text_submitted.connect(func(_name: String) -> void: _submit_score())
+	WebTextInput.attach(_player_edit, "Your name")
 	$BlurPanel.gui_input.connect(_on_panel_gui_input)
 
 ## Wheel and pan-gesture events pass through MOUSE_FILTER_STOP controls

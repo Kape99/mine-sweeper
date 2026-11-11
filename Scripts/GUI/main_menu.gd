@@ -42,6 +42,7 @@ func _ready() -> void:
 	GlobalState.theme_changed.connect(_apply_theme_colors)
 	_sync_from_global_state()
 	_connect_signals()
+	WebTextInput.attach(_seed_edit, "Seed (empty = random board)")
 	_https.timeout = DAILY_TIME_TIMEOUT
 
 
