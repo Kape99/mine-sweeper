@@ -1,13 +1,21 @@
+## Main menu, built around two actions: today's daily challenge (with the
+## player's time and rank) and PLAY, which starts a game with the last
+## settings. The settings themselves live in the New game sheet, opened
+## from the summary line under PLAY; account and settings sit in the top
+## bar.
 class_name MainMenu
 extends Control
 
 signal start_requested(board: int, cols: int, rows: int, mine_perc: float, board_wrap: bool, board_seed: String, is_daily: bool)
+signal new_game_requested
 signal settings_requested
-signal quit_requested
-signal wrap_mode_changed(wrap: bool)
+signal account_requested
+
+const FinalScreen = preload("res://Scripts/GUI/final_screen.gd")
 
 const BOARD_TYPE_NAMES: PackedStringArray = ["Triangle", "Square", "Hexagon"]
 const BOARD_MODE_NAMES: PackedStringArray = ["Classic", "Wrap"]
+const MONTH_NAMES: PackedStringArray = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 ## Server UTC time, so the daily seed doesn't depend on the device clock.
 const DAILY_TIME_URL: String = "https://timeapi.io/api/v1/time/current/utc"
 ## Seconds to wait for the time server before using the device's date.
@@ -18,32 +26,32 @@ const DAILY_MAX_SIZE : int = 25
 const DAILY_MIN_MINES : float = 0.10
 const DAILY_MAX_MINES : float = 0.20
 
+const PANEL: String = "Margin/Layout/CenterContainer/Panel"
+
 @onready var _background: ColorRect = $Background
-@onready var _board_type_label: Label = $CenterContainer/Panel/BoardTypeRow/BoardTypeLabel
-@onready var _board_type_prev: Button = $CenterContainer/Panel/BoardTypeRow/BoardTypePrev
-@onready var _board_type_next: Button = $CenterContainer/Panel/BoardTypeRow/BoardTypeNext
-@onready var _difficulty_label: Label = $CenterContainer/Panel/DifficultyRow/DifficultyLabel
-@onready var _difficulty_prev: Button = $CenterContainer/Panel/DifficultyRow/DifficultyPrev
-@onready var _difficulty_next: Button = $CenterContainer/Panel/DifficultyRow/DifficultyNext
-@onready var _wrap_prev: Button = $CenterContainer/Panel/WrapRow/WrapPrev
-@onready var _wrap_next: Button = $CenterContainer/Panel/WrapRow/WrapNext
-@onready var _wrap_label: Label = $CenterContainer/Panel/WrapRow/WrapLabel
-@onready var _seed_edit: LineEdit = $CenterContainer/Panel/SeedRow/SeedEdit
-@onready var _start_button: Button = $CenterContainer/Panel/StartButton
-@onready var _daily_button: Button = $CenterContainer/Panel/DailyChallenge
-@onready var _https: HTTPRequest = $CenterContainer/Panel/DailyChallenge/HTTPRequest
-@onready var _settings_button: Button = $CenterContainer/Panel/SettingsButton
-@onready var _test: Button = $CenterContainer/Panel/test
-@onready var _quit_button: Button = $CenterContainer/Panel/QuitButton
+@onready var _account_button: Button = $Margin/Layout/TopBar/AccountButton
+@onready var _settings_button: Button = $Margin/Layout/TopBar/SettingsButton
+@onready var _daily_info: Label = get_node(PANEL + "/DailyCard/DailyBox/DailyInfo")
+@onready var _daily_status: Label = get_node(PANEL + "/DailyCard/DailyBox/DailyStatus")
+@onready var _daily_button: Button = get_node(PANEL + "/DailyCard/DailyBox/DailyButton")
+@onready var _https: HTTPRequest = get_node(PANEL + "/DailyCard/DailyBox/DailyButton/HTTPRequest")
+@onready var _start_button: Button = get_node(PANEL + "/PlayBox/PlayButton")
+@onready var _game_summary: Button = get_node(PANEL + "/PlayBox/GameSummary")
+
+## Bumped on every daily status refresh, so a slow answer for an older
+## refresh (e.g. from before logging out) is dropped.
+var _daily_request_id: int = 0
 
 
 func _ready() -> void:
 	_apply_theme_colors()
 	GlobalState.theme_changed.connect(_apply_theme_colors)
-	_sync_from_global_state()
 	_connect_signals()
-	WebTextInput.attach(_seed_edit, "Seed (empty = random board)")
 	_https.timeout = DAILY_TIME_TIMEOUT
+	_account_button.text = _account_text()
+	_game_summary.text = _summary_text()
+	_update_daily_info()
+	_refresh_daily_status()
 
 
 ## Colors the menu from the active color scheme: the same backdrop as the
@@ -53,83 +61,118 @@ func _apply_theme_colors() -> void:
 
 
 func _process(_delta: float) -> void:
-	# The debug settings (Settings screen) edit the raw board values while
-	# this menu sits hidden in place; its process mode is restored before
-	# it shows again, so this re-syncs the difficulty label on return.
-	var difficulty: String = GlobalState.get_difficulty()
-	if _difficulty_label.text != difficulty:
-		_difficulty_label.text = difficulty
+	# The New game sheet and the debug settings edit the board settings, and
+	# the Account screen logs in and out, while this menu waits hidden in
+	# place (Talo also restores a saved session at startup). Its process mode
+	# is restored before it shows again, so this re-syncs on return.
+	var summary: String = _summary_text()
+	if _game_summary.text != summary:
+		_game_summary.text = summary
+	var account: String = _account_text()
+	if _account_button.text != account:
+		_account_button.text = account
+		_refresh_daily_status()
 
 
 func _connect_signals() -> void:
-	_board_type_prev.pressed.connect(_on_board_type_prev)
-	_board_type_next.pressed.connect(_on_board_type_next)
-	_difficulty_prev.pressed.connect(_on_difficulty_prev)
-	_difficulty_next.pressed.connect(_on_difficulty_next)
-	_wrap_prev.pressed.connect(_on_wrap_prev)
-	_wrap_next.pressed.connect(_on_wrap_next)
-	_seed_edit.text_changed.connect(_on_seed_changed)
-	_start_button.pressed.connect(_on_start)
+	_account_button.pressed.connect(account_requested.emit)
+	_settings_button.pressed.connect(settings_requested.emit)
 	_daily_button.pressed.connect(_on_daily)
 	_https.request_completed.connect(_on_request_completed)
-	_settings_button.pressed.connect(_on_settings)
-	_test.pressed.connect(_on_test)
-	_quit_button.pressed.connect(_on_quit)
-func _sync_from_global_state() -> void:
-	_board_type_label.text = BOARD_TYPE_NAMES[GlobalState.selected_board]
-	_difficulty_label.text = GlobalState.get_difficulty()
-	_wrap_label.text = BOARD_MODE_NAMES[1 if GlobalState.board_wrap else 0]
-	_seed_edit.text = GlobalState.board_seed
-
-func _set_seed(text: String) -> void:
-	# Store normalized so "test7" and "TEST7 " share the same board.
-	GlobalState.board_seed = text.strip_edges().to_upper()
+	_start_button.pressed.connect(_on_start)
+	_game_summary.pressed.connect(new_game_requested.emit)
+	# Back from a game: the player may have just sent a new time.
+	visibility_changed.connect(func() -> void:
+		if visible:
+			_update_daily_info()
+			_refresh_daily_status())
 
 
-func _on_board_type_prev() -> void:
-	GlobalState.selected_board = posmod(GlobalState.selected_board - 1, BOARD_TYPE_NAMES.size())
-	_board_type_label.text = BOARD_TYPE_NAMES[GlobalState.selected_board]
+func _account_text() -> String:
+	return AccountMenu.player_name().to_upper() if AccountMenu.is_logged_in() else "LOG IN"
 
 
-func _on_board_type_next() -> void:
-	GlobalState.selected_board = posmod(GlobalState.selected_board + 1, BOARD_TYPE_NAMES.size())
-	_board_type_label.text = BOARD_TYPE_NAMES[GlobalState.selected_board]
+## One line describing what PLAY starts, e.g. "Square · Medium · Wrap".
+func _summary_text() -> String:
+	var parts: PackedStringArray = [
+		BOARD_TYPE_NAMES[GlobalState.selected_board],
+		GlobalState.get_difficulty(),
+		BOARD_MODE_NAMES[1 if GlobalState.board_wrap else 0],
+	]
+	if not GlobalState.board_seed.is_empty():
+		parts.append("Seed " + GlobalState.board_seed)
+	return " · ".join(parts) + "  ›"
 
-
-## Cycles through the difficulty presets (raw values live in the debug
-## settings; a "Custom" difficulty jumps back to the nearest preset).
-func _cycle_difficulty(step: int) -> void:
-	var idx: int = GlobalState.DIFFICULTY_NAMES.find(GlobalState.get_difficulty())
-	idx = posmod((0 if idx == -1 else idx) + step, GlobalState.DIFFICULTY_NAMES.size())
-	GlobalState.apply_difficulty(GlobalState.DIFFICULTY_NAMES[idx])
-	_difficulty_label.text = GlobalState.DIFFICULTY_NAMES[idx]
-
-
-func _on_difficulty_prev() -> void:
-	_cycle_difficulty(-1)
-
-
-func _on_difficulty_next() -> void:
-	_cycle_difficulty(1)
-
-
-func _on_wrap_prev() -> void:
-	GlobalState.board_wrap = not GlobalState.board_wrap
-	_wrap_label.text = BOARD_MODE_NAMES[1 if GlobalState.board_wrap else 0]
-	wrap_mode_changed.emit(GlobalState.board_wrap)
-
-
-func _on_wrap_next() -> void:
-	GlobalState.board_wrap = not GlobalState.board_wrap
-	_wrap_label.text = BOARD_MODE_NAMES[1 if GlobalState.board_wrap else 0]
-	wrap_mode_changed.emit(GlobalState.board_wrap)
-
-
-func _on_seed_changed(text: String) -> void:
-	_set_seed(text)
 
 func _on_start() -> void:
 	start_requested.emit(GlobalState.selected_board, GlobalState.board_cols, GlobalState.board_rows, GlobalState.bomb_percentage, GlobalState.board_wrap, GlobalState.board_seed, false)
+
+
+# --- Daily challenge ---------------------------------------------------------
+
+## Board settings of the daily challenge for [param date] (YYYY-MM-DD). The
+## date seeds both these settings and the mine layout.
+static func daily_settings(date: String) -> Dictionary:
+	var daily_seed: String = date.strip_edges().to_upper()
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = absi(daily_seed.hash())
+	# Draw order matters: changing it changes every past and future daily.
+	var board: int = rng.randi_range(0, BOARD_TYPE_NAMES.size() - 1)
+	var rows: int = rng.randi_range(DAILY_MIN_SIZE, DAILY_MAX_SIZE)
+	var cols: int = rng.randi_range(DAILY_MIN_SIZE, DAILY_MAX_SIZE)
+	var mine_perc: float = rng.randf_range(DAILY_MIN_MINES, DAILY_MAX_MINES)
+	return { seed = daily_seed, board = board, rows = rows, cols = cols, mine_perc = mine_perc }
+
+
+## Shows today's date and board on the card, from the device's UTC date
+## (the same fallback the daily itself uses).
+func _update_daily_info() -> void:
+	var date: String = Time.get_date_string_from_system(true)
+	var daily: Dictionary = daily_settings(date)
+	var parts: PackedStringArray = date.split("-")
+	var day_label: String = date
+	if parts.size() == 3:
+		day_label = "%s %d" % [MONTH_NAMES[clampi(parts[1].to_int() - 1, 0, 11)], parts[2].to_int()]
+	_daily_info.text = "%s · %s · %d × %d" % [day_label, BOARD_TYPE_NAMES[daily.board], daily.cols, daily.rows]
+
+
+## Shows the player's time and rank for today, if they've sent one. The
+## leaderboard resets daily, so its live entries are all from today.
+func _refresh_daily_status() -> void:
+	_daily_request_id += 1
+	var request_id: int = _daily_request_id
+	if not AccountMenu.is_logged_in():
+		_daily_status.text = "Log in to join the leaderboard"
+		return
+	var alias_id: int = Talo.current_alias.id
+	_daily_status.text = "Checking your time..."
+
+	# The first page holds everyone near the top; its positions are ranks.
+	var page: LeaderboardsAPI.EntriesPage = await Talo.leaderboards.get_entries(FinalScreen.TALO_LEADERBOARD)
+	if request_id != _daily_request_id:
+		return
+	if page == null:
+		_daily_status.text = "Leaderboard offline"
+		return
+	for entry: TaloLeaderboardEntry in page.entries:
+		if entry.player_alias and entry.player_alias.id == alias_id:
+			_daily_status.text = "Your time: %s · #%d" % [BoardGUI.format_time(int(entry.score)), entry.position + 1]
+			return
+	if page.is_last_page:
+		_daily_status.text = "Not played yet today"
+		return
+
+	# Further down: look up just this player's entry, without a rank.
+	var options := LeaderboardsAPI.GetEntriesOptions.new()
+	options.alias_id = alias_id
+	var mine: LeaderboardsAPI.EntriesPage = await Talo.leaderboards.get_entries(FinalScreen.TALO_LEADERBOARD, options)
+	if request_id != _daily_request_id:
+		return
+	if mine == null or mine.entries.is_empty():
+		_daily_status.text = "Not played yet today"
+	else:
+		_daily_status.text = "Your time: %s" % BoardGUI.format_time(int(mine.entries[0].score))
+
 
 func _on_daily() -> void:
 	# Ignore repeat presses while the date request is still pending.
@@ -152,26 +195,9 @@ func _on_request_completed(result: int, response_code: int, _headers: PackedStri
 			date = (json["utc_time"] as String).split("T")[0]
 	_start_daily(date)
 
-## Starts the daily challenge for [param date] (YYYY-MM-DD). The date is the
-## seed for both the board settings and the mine layout. It's passed to the
-## game only, never stored in [member GlobalState.board_seed], so the menu's
-## own seed (and the next PLAY) are left as the player set them.
+## Starts the daily challenge for [param date] (YYYY-MM-DD). The date is
+## passed to the game only, never stored in [member GlobalState.board_seed],
+## so the player's own settings (and the next PLAY) are left as they were.
 func _start_daily(date: String) -> void:
-	var daily_seed: String = date.strip_edges().to_upper()
-	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	rng.seed = absi(daily_seed.hash())
-	var board_wrap: bool = true
-	var selected_board: int = rng.randi_range(0, BOARD_TYPE_NAMES.size() - 1)
-	var board_rows: int = rng.randi_range(DAILY_MIN_SIZE, DAILY_MAX_SIZE)
-	var board_cols: int = rng.randi_range(DAILY_MIN_SIZE, DAILY_MAX_SIZE)
-	var bomb_percentage: float = rng.randf_range(DAILY_MIN_MINES, DAILY_MAX_MINES)
-	start_requested.emit(selected_board, board_cols, board_rows, bomb_percentage, board_wrap, daily_seed, true)
-
-func _on_settings() -> void:
-	settings_requested.emit()
-
-func _on_test() -> void:
-	var res := await Talo.player_auth.register("test", "test")
-
-func _on_quit() -> void:
-	quit_requested.emit()
+	var daily: Dictionary = daily_settings(date)
+	start_requested.emit(daily.board, daily.cols, daily.rows, daily.mine_perc, true, daily.seed, true)

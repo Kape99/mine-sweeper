@@ -26,6 +26,11 @@ var _history: Array[String] = []
 ## the history stack is empty.
 var _dismissed_screen: Control = null
 
+## Whether [member _dismissed_screen] was visible when it was hidden. The
+## main menu stays the current screen (but hidden) during a game, so an
+## overlay opened from the end screen must not make it visible on pop.
+var _dismissed_visible: bool = true
+
 
 func _ready() -> void:
 	_tween = create_tween()
@@ -49,6 +54,7 @@ func push(screen: Control, animated: bool = true, dismiss_current: bool = true) 
 		else:
 			# Hide current in-place (no history entry, no destroy)
 			_dismissed_screen = _current
+			_dismissed_visible = _current.visible
 			_current.modulate = Color(1, 1, 1, 0)
 			_current.process_mode = Control.PROCESS_MODE_DISABLED
 	_show_screen(screen, animated)
@@ -69,6 +75,7 @@ func pop() -> bool:
 			var restored: Control = _dismissed_screen
 			_dismissed_screen = null
 			_show_screen(restored, false)
+			restored.visible = _dismissed_visible
 			restored.modulate = Color(1, 1, 1, 1)
 			restored.process_mode = Control.PROCESS_MODE_INHERIT
 		return true

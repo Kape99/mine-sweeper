@@ -75,11 +75,15 @@ func _ready() -> void:
 	# Connect to the fresh MainMenu's intent signals.
 	_main_menu.start_requested.connect(_load_game)
 	_main_menu.settings_requested.connect(_on_settings_pressed)
-	_main_menu.quit_requested.connect(_on_quit)
-	_main_menu.wrap_mode_changed.connect(_on_wrap_mode_changed)
+	_main_menu.account_requested.connect(_on_account_pressed)
+	_main_menu.new_game_requested.connect(_on_new_game_pressed)
 
+	# Hidden until a game ends. The main menu covers it, but overlays that
+	# hide the menu in place (Settings, New game, Account) would show it.
+	_final_screen.visible = false
 	_final_screen.reset.connect(_reset)
 	_final_screen.continue_requested.connect(restart_game)
+	_final_screen.login_requested.connect(_on_account_pressed)
 
 	# Show the main menu through ScreenManager so Settings can hide it
 	# in-place and restore it on back.
@@ -281,8 +285,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func _handle_back_button() -> void:
 	var sm: ScreenManager = $ScreenManager
 	var current: Control = sm.get_current_screen()
-	if current is SettingsMenu:
-		# Back out of Settings to whatever opened it (MainMenu or PauseOverlay).
+	if current is SettingsMenu or current is AccountMenu or current is NewGameMenu:
+		# Back out of Settings/Account/New game to whatever opened it
+		# (MainMenu, PauseOverlay or the end screen).
 		sm.pop()
 	elif _board:
 		# Gameplay is active — toggle pause
@@ -307,9 +312,23 @@ func _on_settings_pressed() -> void:
 	)
 
 
-func _on_quit() -> void:
-	get_tree().quit()
+## Opens the Account screen over the main menu or the end screen (which
+## sits under the screens container, so it stays visible behind it).
+func _on_account_pressed() -> void:
+	var sm: ScreenManager = $ScreenManager
+	sm.push(
+		load("res://Scenes/Menu/AccountMenu.tscn").instantiate(),
+		true,
+		false  # dismiss_current=false — keep the screen below alive
+	)
 
 
-func _on_wrap_mode_changed(wrap: bool) -> void:
-	GlobalState.board_wrap = wrap
+## Opens the New game sheet over the main menu. Its PLAY closes the sheet
+## and starts a game with the settings it saved.
+func _on_new_game_pressed() -> void:
+	var sm: ScreenManager = $ScreenManager
+	var sheet: NewGameMenu = load("res://Scenes/Menu/NewGameMenu.tscn").instantiate()
+	sheet.play_requested.connect(func() -> void:
+		sm.pop()
+		_main_menu._on_start())
+	sm.push(sheet, true, false)  # dismiss_current=false — keep MainMenu alive

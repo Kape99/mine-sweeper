@@ -72,17 +72,11 @@ custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_vertical = 4
 
-[node name="Username" type="LineEdit" parent="BlurPanel/CenterContainer/VBoxContainer/LeaderBoard" unique_id=1011274547]
-custom_minimum_size = Vector2(160, 30)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 15
-placeholder_text = "Name"
-max_length = 20
-
 [node name="ScoreButton" type="Button" parent="BlurPanel/CenterContainer/VBoxContainer/LeaderBoard" unique_id=302471577]
 layout_mode = 2
-text = "Send score"
+size_flags_horizontal = 3
+text = "Log in to send score"
+text_overrun_behavior = 3
 
 [node name="ScrollContainer" type="ScrollContainer" parent="BlurPanel/CenterContainer/VBoxContainer" unique_id=1221674776]
 custom_minimum_size = Vector2(0, 100)

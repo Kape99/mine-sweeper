@@ -1,0 +1,49 @@
+name: Tests
+
+on: push
+
+env:
+  GODOT_VERSION: 4.7.2
+  PACKAGE_NAME: com.minesweeper.game
+  APP_NAME: Mine Sweeper
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write Talo settings
+        # settings.cfg holds the Talo access key, so it's gitignored; build
+        # it from the committed template and the TALO_ACCESS_KEY secret.
+        env:
+          TALO_ACCESS_KEY: ${{ secrets.TALO_ACCESS_KEY }}
+        run: |
+          test -n "$TALO_ACCESS_KEY" || { echo "::error::TALO_ACCESS_KEY secret is not set"; exit 1; }
+          awk '/^access_key=/ { print "access_key=\"" ENVIRON["TALO_ACCESS_KEY"] "\""; next } { print }' \
+            addons/talo/settings.example.cfg > addons/talo/settings.cfg
+
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+          key: godot-${{ env.GODOT_VERSION }}
+
+      - name: Download Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          base="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          mkdir -p ~/godot
+          wget -q "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -O "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+
+      - name: Configure Godot editor settings
+        run: |
+          chmod +x ~/godot/godot
+          echo "$HOME/godot" >> "$GITHUB_PATH"
+
+      - name: Run Tests
+        run:
