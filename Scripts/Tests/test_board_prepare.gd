@@ -17,6 +17,7 @@ func run() -> void:
 	_test_stepped_build()
 	_test_unprepared_dimensions_rebuild()
 	await _test_menu_prepares_next_board()
+	await _test_daily_uses_its_own_settings()
 	BaseBoard.clear_pools()
 
 
@@ -94,6 +95,75 @@ func _test_menu_prepares_next_board() -> void:
 	var live: CellBase = base._board.board_state[3][3]
 	assert_true(base._board.can_process() and live.get_node("Area2D").can_process(),
 		"Board and its cells take input once the game starts")
+
+	base.free()
+
+
+## A daily challenge picks its own board settings: it must not reuse a
+## background board built for the menu's, must not overwrite the menu's
+## seed, and a restart must replay the same daily.
+func _test_daily_uses_its_own_settings() -> void:
+	GlobalState.selected_board = 1  # Square
+	GlobalState.board_cols = 8
+	GlobalState.board_rows = 8
+	GlobalState.board_wrap = false
+	GlobalState.board_seed = ""
+	var base: Node = load(BASE_SCENE).instantiate()
+	add_child(base)
+	var prepared: BaseBoard = await _wait_for_prepared(base)
+	assert_true(prepared != null, "Menu builds a square background board")
+
+	var date: String = "2026-11-11"
+	base._main_menu._start_daily(date)
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = absi(date.hash())
+	var expected_shape: int = rng.randi_range(0, MainMenu.BOARD_TYPE_NAMES.size() - 1)
+	var expected_scene: String = base._board_scenes[expected_shape].resource_path
+	assert_eq(base._board.scene_file_path, expected_scene, "Daily uses its own board shape, not the menu's")
+	assert_true(base._board._wrap_mode, "Daily is a wrap board even though the menu is set to classic")
+	assert_eq(base._camera._board_bounds, Rect2(), "Daily camera has no classic-mode bounds")
+	assert_true(base._is_daily, "Game is flagged as the daily")
+	assert_eq(base._board._seed, date, "Daily board is seeded with the date")
+	assert_eq(GlobalState.board_seed, "", "Daily leaves the menu's seed untouched")
+
+	var dims: Vector2i = Vector2i(base._board.cols, base._board.rows)
+	var mines: int = base._board.mines
+	base.restart_game()
+	assert_eq(base._board.scene_file_path, expected_scene, "Restart keeps the daily's board shape")
+	assert_eq(Vector2i(base._board.cols, base._board.rows), dims, "Restart keeps the daily's size")
+	assert_eq(base._board.mines, mines, "Restart keeps the daily's mine count")
+	assert_eq(base._board._seed, date, "Restart keeps the daily's seed")
+	assert_true(base._is_daily, "Restarted daily is still the daily")
+
+	# Losing the daily offers Continue: the same daily again, timer running.
+	var continue_button: Button = base._final_screen.get_node("%Continue")
+	base._board_gui._timer_start_msec = Time.get_ticks_msec() - 90_000  # 1:30 in
+	base._board._handle_explosion(base._board.board_state[0][0])
+	assert_true(base._final_screen.visible and continue_button.visible, "Lost daily offers Continue")
+	continue_button.pressed.emit()
+	assert_false(base._final_screen.visible, "Continue closes the end screen")
+	assert_true(base._board_gui.visible, "Continue shows the HUD")
+	assert_true(base._is_daily and base._board._seed == date, "Continue replays the same daily")
+	assert_false(base._board._is_game_over, "Continue starts a fresh attempt")
+	assert_true(base._board_gui.elapsed_seconds() >= 90, "Continue keeps the timer running")
+	base.restart_game()
+	assert_true(base._board_gui.elapsed_seconds() >= 90, "Restarting a daily from pause keeps the timer running")
+
+	# A normal game afterwards: not a daily, no leaderboard on its end screen.
+	base._reset()
+	base._main_menu._on_start()
+	assert_false(base._is_daily, "PLAY after a daily is not a daily")
+	assert_eq(base._board._seed, "", "PLAY after a daily is not seeded")
+	base._game_finished(true, 0.0)
+	assert_false(base._final_screen._leaderboard_box.visible, "Non-daily win: no score submission")
+	assert_false(base._final_screen._leaderboard_scroll.visible, "Non-daily win: no leaderboard")
+	base._final_screen.game_finished(false, 10, 5, 2, false)
+	assert_false(base._final_screen._leaderboard_box.visible, "Non-daily loss: no score submission")
+	assert_false(base._final_screen.get_node("%Continue").visible, "Non-daily loss: no Continue")
+	base._board_gui._timer_start_msec = Time.get_ticks_msec() - 90_000
+	base.restart_game()
+	assert_true(base._board_gui.elapsed_seconds() < 90 or not base._board_gui._timer_running,
+		"Restarting a normal game resets the timer")
 
 	base.free()
 

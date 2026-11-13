@@ -1,14 +1,11 @@
 ## In-game HUD displaying the defused mines counter, the game timer, and
-## a reset button.
+## a pause button.
 class_name BoardGUI
 extends Control
 
 @onready var _score_box: Control = $ColorRect/ScoreBox
 @onready var _score_tracker: Label = $ColorRect/ScoreBox/ScoreTracker
 @onready var _timer_label: Label = $ColorRect/ScoreBox/TimerLabel
-
-## Emitted when the player presses the reset button.
-signal reset
 
 ## Emitted when the player presses the pause button.
 signal pause_requested
@@ -55,7 +52,14 @@ func _process(_delta: float) -> void:
 
 ## Starts the game timer from zero. Called when the game starts.
 func start_timer() -> void:
-	_timer_start_msec = Time.get_ticks_msec()
+	resume_timer(Time.get_ticks_msec())
+
+
+## Starts the timer counting from [param start_msec], an earlier
+## [method Time.get_ticks_msec] time (see [method timer_start_msec]), so a
+## new game can continue a previous one's time.
+func resume_timer(start_msec: int) -> void:
+	_timer_start_msec = start_msec
 	_elapsed_seconds = 0
 	_timer_running = true
 	_update_timer()
@@ -65,6 +69,11 @@ func start_timer() -> void:
 func stop_timer() -> void:
 	_elapsed_seconds = elapsed_seconds()
 	_timer_running = false
+
+
+## When the current timer started ([method Time.get_ticks_msec] time).
+func timer_start_msec() -> int:
+	return _timer_start_msec
 
 
 ## Seconds on the game timer: live while running, frozen once stopped.
@@ -85,10 +94,6 @@ func _update_timer() -> void:
 
 func _update_score() -> void:
 	_score_tracker.text = "%d/%d" % [defused_mines, total_mines]
-
-
-func _on_reset_pressed() -> void:
-	reset.emit()
 
 
 func _on_pause_pressed() -> void:

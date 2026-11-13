@@ -9,4 +9,4 @@ func set_entry(player_id: String, score: String) -> void:
 	var time : int = score.to_int()
 	var minutes : int = time / 60
 	var seconds : int = time % 60
-	_score_label.text = "%d:%d" % [minutes, seconds]
+	_score_label.text = "%d:%02d" % [minutes, seconds]
