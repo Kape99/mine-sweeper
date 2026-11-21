@@ -59,9 +59,9 @@ var _carry_timer_start: int = 0
 
 func _ready() -> void:
 	_board_scenes = {
-		0: _triangle_board_scene,
-		1: _square_board_scene,
-		2: _hexagon_board_scene,
+		0: _square_board_scene,
+		1: _hexagon_board_scene,
+		2: _triangle_board_scene,
 	}
 	# Clean up static cell pools on exit so off-tree pooled nodes don't leak RIDs.
 	if not get_tree().root.tree_exiting.is_connected(BaseBoard.clear_pools):
@@ -69,7 +69,7 @@ func _ready() -> void:
 	_camera.reset_view()
 
 	_board_gui.pause_requested.connect(_on_pause_requested)
-	_defuse_button.modulate = GlobalState.scheme.accent
+	_defuse_button.modulate = GlobalState.scheme.primary
 	_defuse_button.toggled.connect(_toggle_defuse)
 
 	# Connect to the fresh MainMenu's intent signals.

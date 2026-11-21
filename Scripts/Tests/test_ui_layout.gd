@@ -18,7 +18,7 @@ func _ready() -> void:
 
 
 func run() -> void:
-	GlobalState.selected_board = 1
+	GlobalState.selected_board = 0
 	GlobalState.board_cols = 10
 	GlobalState.board_rows = 10
 	GlobalState.board_wrap = true

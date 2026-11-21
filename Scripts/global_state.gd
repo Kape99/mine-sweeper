@@ -7,7 +7,7 @@ extends Node
 var is_defusing: bool = false
 
 ## Index of the currently selected board shape (0 = Triangle, 1 = Square, 2 = Hexagon).
-var selected_board: int = 1
+var selected_board: int = 0
 
 ## Difficulty presets shown in the main menu, in cycle order. Each value
 ## is [rows, cols, bomb percentage 0–1]. Board settings not matching any

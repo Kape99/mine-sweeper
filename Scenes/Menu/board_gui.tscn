@@ -1,11 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://2ff3i6tuwxtr"]
+[gd_scene format=3 uid="uid://2ff3i6tuwxtr"]
 
-[ext_resource type="Script" path="res://Scripts/GUI/board_gui.gd" id="1_vdnex"]
+[ext_resource type="Script" uid="uid://bgvg1syje6nm3" path="res://Scripts/GUI/board_gui.gd" id="1_vdnex"]
 [ext_resource type="Texture2D" uid="uid://b02ssfrvb6agc" path="res://Asset/Icons/mine_button.svg" id="2_x8sex"]
 [ext_resource type="Texture2D" uid="uid://cqghprgxdo207" path="res://Asset/Icons/mine.svg" id="3_jh2k8"]
 [ext_resource type="Texture2D" uid="uid://c8b8ytvm6tvf6" path="res://Asset/Icons/flower_button.svg" id="3_n6ckf"]
 
-[node name="BoardGUI" type="Control"]
+[node name="BoardGUI" type="Control" unique_id=987156367]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,7 +15,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_vdnex")
 
-[node name="DefuseButton" type="TextureButton" parent="."]
+[node name="DefuseButton" type="TextureButton" parent="." unique_id=765677364]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -36,7 +36,7 @@ texture_pressed = ExtResource("3_n6ckf")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="PauseButton" type="Button" parent="."]
+[node name="PauseButton" type="Button" parent="." unique_id=2060019887]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -49,7 +49,7 @@ grow_horizontal = 0
 focus_mode = 0
 text = "II"
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="ColorRect" type="PanelContainer" parent="." unique_id=214444785]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -57,43 +57,32 @@ anchor_right = 0.5
 offset_left = -76.5
 offset_top = 11.0
 offset_right = 76.5
-offset_bottom = 51.0
+offset_bottom = 68.0
 grow_horizontal = 2
 
-[node name="ScoreBox" type="HBoxContainer" parent="ColorRect"]
+[node name="ScoreBox" type="HBoxContainer" parent="ColorRect" unique_id=779362866]
 modulate = Color(0.960784, 0.909804, 0.717647, 1)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -62.5
-offset_top = -14.0
-offset_right = 62.5
-offset_bottom = 14.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 alignment = 1
 
-[node name="ScoreTracker" type="Label" parent="ColorRect/ScoreBox"]
+[node name="ScoreTracker" type="Label" parent="ColorRect/ScoreBox" unique_id=1655995937]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "00/00"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="MineIcon" type="TextureRect" parent="ColorRect/ScoreBox"]
+[node name="MineIcon" type="TextureRect" parent="ColorRect/ScoreBox" unique_id=1929856341]
 layout_mode = 2
 size_flags_horizontal = 10
 texture = ExtResource("3_jh2k8")
 expand_mode = 2
 stretch_mode = 4
 
-[node name="VSeparator" type="VSeparator" parent="ColorRect/ScoreBox"]
+[node name="VSeparator" type="VSeparator" parent="ColorRect/ScoreBox" unique_id=600234589]
 layout_mode = 2
 
-[node name="TimerLabel" type="Label" parent="ColorRect/ScoreBox"]
+[node name="TimerLabel" type="Label" parent="ColorRect/ScoreBox" unique_id=457145193]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "0:00"

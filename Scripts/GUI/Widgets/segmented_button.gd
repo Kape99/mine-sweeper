@@ -1,4 +1,3 @@
-@tool
 class_name SegmentedButton
 extends HBoxContainer
 
@@ -21,9 +20,9 @@ signal segment_selected(index: int)
 @export var expand: bool = true
 
 ## Optional override for the active segment background. Leave alpha negative to use the scheme accent.
-@export var active_bg_override: Color = Color(-1, 0, 0, 0)
+@export var active_bg_override: Color = Color(0, 0, 0, -1)
 ## Optional override for the active segment text color. Leave alpha negative to use the scheme hud_text.
-@export var active_text_override: Color = Color(-1, 0, 0, 0)
+@export var active_text_override: Color = Color(0, 0, 0, -1)
 
 var _buttons: Array[Button] = []
 
@@ -62,7 +61,7 @@ func _apply_segment_style(btn: Button, active: bool, is_first: bool, is_last: bo
 	var accent: Color = GlobalState.scheme.accent if is_instance_valid(GlobalState) else Color.WHITE
 	var text: Color = GlobalState.scheme.hud_text if is_instance_valid(GlobalState) else Color.BLACK
 	var bg: Color = accent if active else accent.darkened(0.35)
-	var fg: Color = text if active else text.darkened(0.35)
+	var fg: Color = text if active else text.darkened(0.55)
 	if active and active_bg_override.a >= 0.0:
 		bg = active_bg_override
 	if active and active_text_override.a >= 0.0:
@@ -74,6 +73,12 @@ func _apply_segment_style(btn: Button, active: bool, is_first: bool, is_last: bo
 	style.corner_radius_bottom_left = 8 if is_first else 0
 	style.corner_radius_top_right = 8 if is_last else 0
 	style.corner_radius_bottom_right = 8 if is_last else 0
+	if active:
+		style.border_width_left = 2
+		style.border_width_top = 2
+		style.border_width_right = 2
+		style.border_width_bottom = 2
+		style.border_color = bg.darkened(0.2)
 	btn.add_theme_stylebox_override("normal", style)
 	btn.add_theme_stylebox_override("hover", _tint_style(style, 0.05))
 	btn.add_theme_stylebox_override("pressed", _tint_style(style, -0.05))

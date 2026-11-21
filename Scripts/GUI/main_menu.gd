@@ -1,4 +1,3 @@
-@tool
 class_name MainMenu
 extends Control
 
@@ -57,7 +56,7 @@ func _apply_theme_colors() -> void:
 	var inverse: Color = GlobalState.scheme.inverse_text
 
 	_board_type_segmented.active_bg_override = accent
-	_board_type_segmented.active_text_override = text
+	_board_type_segmented.active_text_override = inverse
 	_difficulty_segmented.active_bg_override = text
 	_difficulty_segmented.active_text_override = inverse
 	_edges_segmented.active_bg_override = text

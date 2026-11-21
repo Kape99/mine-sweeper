@@ -60,7 +60,7 @@ func _test_unprepared_dimensions_rebuild() -> void:
 
 
 func _test_menu_prepares_next_board() -> void:
-	GlobalState.selected_board = 1  # Square
+	GlobalState.selected_board = 0  # Square
 	GlobalState.board_cols = 8
 	GlobalState.board_rows = 8
 	GlobalState.board_wrap = false
@@ -103,7 +103,7 @@ func _test_menu_prepares_next_board() -> void:
 ## background board built for the menu's, must not overwrite the menu's
 ## seed, and a restart must replay the same daily.
 func _test_daily_uses_its_own_settings() -> void:
-	GlobalState.selected_board = 1  # Square
+	GlobalState.selected_board = 0  # Square
 	GlobalState.board_cols = 8
 	GlobalState.board_rows = 8
 	GlobalState.board_wrap = false

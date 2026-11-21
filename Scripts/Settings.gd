@@ -67,7 +67,28 @@ func _load() -> void:
 	tap_threshold = _config.get_value(CONFIG_SECTION, "tap_threshold", 15.0)
 	long_press_threshold_ms = _config.get_value(CONFIG_SECTION, "long_press_threshold_ms", 400)
 	double_tap_window_ms = _config.get_value(CONFIG_SECTION, "double_tap_window_ms", 350)
+	_load_menu_state()
 	_migrate(_config.get_value(CONFIG_SECTION, "settings_version", 0))
+
+
+## Persists the current menu selections (board type, difficulty, wrap, seed).
+func save_menu_state() -> void:
+	_config.set_value(CONFIG_SECTION, "selected_board", GlobalState.selected_board)
+	_config.set_value(CONFIG_SECTION, "board_wrap", GlobalState.board_wrap)
+	_config.set_value(CONFIG_SECTION, "board_cols", GlobalState.board_cols)
+	_config.set_value(CONFIG_SECTION, "board_rows", GlobalState.board_rows)
+	_config.set_value(CONFIG_SECTION, "bomb_percentage", GlobalState.bomb_percentage)
+	_config.set_value(CONFIG_SECTION, "board_seed", GlobalState.board_seed)
+	_save()
+
+
+func _load_menu_state() -> void:
+	GlobalState.selected_board = _config.get_value(CONFIG_SECTION, "selected_board", GlobalState.selected_board)
+	GlobalState.board_wrap = _config.get_value(CONFIG_SECTION, "board_wrap", GlobalState.board_wrap)
+	GlobalState.board_cols = _config.get_value(CONFIG_SECTION, "board_cols", GlobalState.board_cols)
+	GlobalState.board_rows = _config.get_value(CONFIG_SECTION, "board_rows", GlobalState.board_rows)
+	GlobalState.bomb_percentage = _config.get_value(CONFIG_SECTION, "bomb_percentage", GlobalState.bomb_percentage)
+	GlobalState.board_seed = _config.get_value(CONFIG_SECTION, "board_seed", GlobalState.board_seed)
 
 
 ## One-time upgrades for configs saved by older versions. Currently only
