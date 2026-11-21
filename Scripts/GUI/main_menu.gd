@@ -66,6 +66,10 @@ func _apply_theme_colors() -> void:
 	daily_card_style.corner_radius_top_right = 16
 	daily_card_style.corner_radius_bottom_right = 16
 	daily_card_style.corner_radius_bottom_left = 16
+	daily_card_style.content_margin_left = 20
+	daily_card_style.content_margin_top = 20
+	daily_card_style.content_margin_right = 20
+	daily_card_style.content_margin_bottom = 20
 	$CenterContainer/Panel/DailyCard.add_theme_stylebox_override("panel", daily_card_style)
 
 	var daily_button_style: StyleBoxFlat = StyleBoxFlat.new()
@@ -117,6 +121,10 @@ func _apply_theme_colors() -> void:
 	settings_card_style.corner_radius_top_right = 16
 	settings_card_style.corner_radius_bottom_right = 16
 	settings_card_style.corner_radius_bottom_left = 16
+	settings_card_style.content_margin_left = 16
+	settings_card_style.content_margin_top = 16
+	settings_card_style.content_margin_right = 16
+	settings_card_style.content_margin_bottom = 16
 	$CenterContainer/Panel/SettingsCard.add_theme_stylebox_override("panel", settings_card_style)
 
 	_sync_segmented_widgets()
