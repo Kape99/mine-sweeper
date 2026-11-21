@@ -79,6 +79,7 @@ alignment = 1
 
 [node name="DailyLabel" type="Label" parent="CenterContainer/Panel/DailyCard/DailyVBox" unique_id=381426665]
 layout_mode = 2
+theme_type_variation = &"InverseLabel"
 theme_override_font_sizes/font_size = 12
 text = "DAILY CHALLENGE · FRI 20 NOV"
 horizontal_alignment = 1
@@ -86,6 +87,7 @@ vertical_alignment = 1
 
 [node name="StreakBadge" type="Label" parent="CenterContainer/Panel/DailyCard/DailyVBox" unique_id=815885036]
 layout_mode = 2
+theme_type_variation = &"InverseLabel"
 theme_override_font_sizes/font_size = 12
 text = "4-day streak"
 horizontal_alignment = 1
@@ -93,6 +95,7 @@ vertical_alignment = 1
 
 [node name="DailySummary" type="Label" parent="CenterContainer/Panel/DailyCard/DailyVBox" unique_id=815885037]
 layout_mode = 2
+theme_type_variation = &"InverseLabel"
 theme_override_font_sizes/font_size = 18
 text = "Hex grid · 16×16 · 40 mines"
 horizontal_alignment = 1
@@ -114,8 +117,8 @@ text = "PLAY DAILY"
 [node name="LeaderboardButton" type="Button" parent="CenterContainer/Panel/DailyCard/DailyVBox/DailyPlayRow" unique_id=815885039]
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
+theme_type_variation = &"TrophyButton"
 theme_override_font_sizes/font_size = 20
-theme_type_variation = "TrophyButton"
 text = "🏆"
 
 [node name="Spacer1" type="Control" parent="CenterContainer/Panel" unique_id=2101306346]
@@ -134,8 +137,6 @@ layout_mode = 2
 theme_override_constants/separation = 0
 segments = PackedStringArray("■ Square", "⬡ Hex", "▲ Triangle")
 selected_index = 1
-active_bg_override = null
-active_text_override = null
 
 [node name="SpacerBoard" type="Control" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=2101306347]
 custom_minimum_size = Vector2(0, 12)
@@ -146,11 +147,10 @@ layout_mode = 2
 theme_override_constants/separation = 0
 segments = PackedStringArray("Easy", "Medium", "Hard")
 selected_index = 1
-active_bg_override = null
-active_text_override = null
 
 [node name="DifficultySummary" type="Label" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=512919140]
 layout_mode = 2
+theme_type_variation = &"MutedLabel"
 theme_override_font_sizes/font_size = 14
 text = "16×16 · 40 mines"
 horizontal_alignment = 1
@@ -178,14 +178,12 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 0
 segments = PackedStringArray("Solid", "Wrap")
 selected_index = 1
-active_bg_override = null
-active_text_override = null
 
 [node name="StartButton" type="Button" parent="CenterContainer/Panel/SettingsCard/SettingsVBox/EdgesPlayRow" unique_id=1594947662]
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
+theme_type_variation = &"PlayButton"
 theme_override_font_sizes/font_size = 16
-theme_type_variation = "PlayButton"
 text = "PLAY"
 
 [node name="Spacer5" type="Control" parent="CenterContainer/Panel" unique_id=2101306350]

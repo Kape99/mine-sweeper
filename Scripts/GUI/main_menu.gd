@@ -56,28 +56,6 @@ func _apply_theme_colors() -> void:
 	var text: Color = GlobalState.scheme.hud_text
 	var inverse: Color = GlobalState.scheme.inverse_text
 
-	_title_label.add_theme_color_override("font_color", text)
-	_settings_button.add_theme_color_override("font_color", text)
-	_account_button.add_theme_color_override("font_color", text)
-	_difficulty_summary.add_theme_color_override("font_color", text.darkened(0.25))
-
-	# Daily card is dark navy; the Theme provides the white settings card.
-	var daily_card_style: StyleBoxFlat = StyleBoxFlat.new()
-	daily_card_style.bg_color = text.darkened(0.1)
-	daily_card_style.corner_radius_top_left = 16
-	daily_card_style.corner_radius_top_right = 16
-	daily_card_style.corner_radius_bottom_right = 16
-	daily_card_style.corner_radius_bottom_left = 16
-	daily_card_style.content_margin_left = 20
-	daily_card_style.content_margin_top = 20
-	daily_card_style.content_margin_right = 20
-	daily_card_style.content_margin_bottom = 20
-	$CenterContainer/Panel/DailyCard.add_theme_stylebox_override("panel", daily_card_style)
-
-	_daily_label.add_theme_color_override("font_color", inverse)
-	_daily_summary.add_theme_color_override("font_color", inverse)
-	_streak_badge.add_theme_color_override("font_color", inverse)
-
 	_board_type_segmented.active_bg_override = accent
 	_board_type_segmented.active_text_override = text
 	_difficulty_segmented.active_bg_override = text
