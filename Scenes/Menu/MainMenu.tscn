@@ -133,6 +133,8 @@ layout_mode = 2
 theme_override_constants/separation = 0
 segments = PackedStringArray("■ Square", "⬡ Hex", "▲ Triangle")
 selected_index = 1
+active_bg_override = null
+active_text_override = null
 
 [node name="SpacerBoard" type="Control" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=2101306347]
 custom_minimum_size = Vector2(0, 12)
@@ -143,6 +145,8 @@ layout_mode = 2
 theme_override_constants/separation = 0
 segments = PackedStringArray("Easy", "Medium", "Hard")
 selected_index = 1
+active_bg_override = null
+active_text_override = null
 
 [node name="DifficultySummary" type="Label" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=512919140]
 layout_mode = 2
@@ -173,6 +177,8 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 0
 segments = PackedStringArray("Solid", "Wrap")
 selected_index = 1
+active_bg_override = null
+active_text_override = null
 
 [node name="StartButton" type="Button" parent="CenterContainer/Panel/SettingsCard/SettingsVBox/EdgesPlayRow" unique_id=1594947662]
 custom_minimum_size = Vector2(100, 40)

@@ -37,6 +37,8 @@ var board_wrap: bool = true
 var color_schemes: Dictionary = {
 	# Matches the UI theme Asset/soft_light.tres.
 	"soft_light": preload("res://Asset/ColorSchemes/soft_light.tres"),
+	# Newer theme matching the mobile-menu mockup.
+	"modern": preload("res://Asset/ColorSchemes/modern.tres"),
 	"modern_light": preload("res://Asset/ColorSchemes/modern_light.tres"),
 }
 
@@ -44,7 +46,7 @@ var color_schemes: Dictionary = {
 signal theme_changed
 
 ## Key into [member color_schemes] for the active scheme.
-var selected_scheme: String = "modern_light":
+var selected_scheme: String = "modern":
 	set(value):
 		selected_scheme = value
 		RenderingServer.set_default_clear_color(scheme.background)
