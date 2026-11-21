@@ -130,6 +130,28 @@ func _apply_theme_colors() -> void:
 	settings_card_style.content_margin_bottom = 16
 	$CenterContainer/Panel/SettingsCard.add_theme_stylebox_override("panel", settings_card_style)
 
+	var play_button_style: StyleBoxFlat = StyleBoxFlat.new()
+	play_button_style.bg_color = text
+	play_button_style.corner_radius_top_left = 10
+	play_button_style.corner_radius_top_right = 10
+	play_button_style.corner_radius_bottom_right = 10
+	play_button_style.corner_radius_bottom_left = 10
+	var play_hover: StyleBoxFlat = play_button_style.duplicate()
+	play_hover.bg_color = text.lightened(0.15)
+	var play_pressed: StyleBoxFlat = play_button_style.duplicate()
+	play_pressed.bg_color = text.darkened(0.15)
+	_start_button.add_theme_stylebox_override("normal", play_button_style)
+	_start_button.add_theme_stylebox_override("hover", play_hover)
+	_start_button.add_theme_stylebox_override("pressed", play_pressed)
+	_start_button.add_theme_color_override("font_color", inverse)
+
+	_board_type_segmented.active_bg_override = accent
+	_board_type_segmented.active_text_override = text
+	_difficulty_segmented.active_bg_override = text
+	_difficulty_segmented.active_text_override = inverse
+	_edges_segmented.active_bg_override = text
+	_edges_segmented.active_text_override = inverse
+
 	_sync_segmented_widgets()
 	_update_difficulty_summary()
 

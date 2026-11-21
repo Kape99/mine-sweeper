@@ -20,6 +20,11 @@ signal segment_selected(index: int)
 ## If true, the widget captures all horizontal space and each segment expands.
 @export var expand: bool = true
 
+## Optional override for the active segment background. Leave alpha negative to use the scheme accent.
+@export var active_bg_override: Color = Color(-1, 0, 0, 0)
+## Optional override for the active segment text color. Leave alpha negative to use the scheme hud_text.
+@export var active_text_override: Color = Color(-1, 0, 0, 0)
+
 var _buttons: Array[Button] = []
 
 
@@ -57,6 +62,10 @@ func _apply_segment_style(btn: Button, active: bool, is_first: bool, is_last: bo
 	var text: Color = GlobalState.scheme.hud_text if is_instance_valid(GlobalState) else Color.BLACK
 	var bg: Color = accent if active else accent.darkened(0.35)
 	var fg: Color = text if active else text.darkened(0.35)
+	if active and active_bg_override.a >= 0.0:
+		bg = active_bg_override
+	if active and active_text_override.a >= 0.0:
+		fg = active_text_override
 
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = bg
