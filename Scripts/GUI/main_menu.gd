@@ -49,14 +49,55 @@ func _ready() -> void:
 func _apply_theme_colors() -> void:
 	_background.color = GlobalState.scheme.background
 
+	var accent: Color = GlobalState.scheme.accent
+	var primary: Color = GlobalState.scheme.primary
+	var surface: Color = GlobalState.scheme.surface
 	var text: Color = GlobalState.scheme.hud_text
+	var inverse: Color = GlobalState.scheme.inverse_text
+
 	_title_label.add_theme_color_override("font_color", text)
 	_settings_button.add_theme_color_override("font_color", text)
 	_account_button.add_theme_color_override("font_color", text)
-	_daily_label.add_theme_color_override("font_color", text)
-	_daily_summary.add_theme_color_override("font_color", text)
-	_streak_badge.add_theme_color_override("font_color", text)
 	_difficulty_summary.add_theme_color_override("font_color", text.darkened(0.25))
+
+	var daily_card_style: StyleBoxFlat = StyleBoxFlat.new()
+	daily_card_style.bg_color = text.darkened(0.1)
+	daily_card_style.corner_radius_top_left = 16
+	daily_card_style.corner_radius_top_right = 16
+	daily_card_style.corner_radius_bottom_right = 16
+	daily_card_style.corner_radius_bottom_left = 16
+	$CenterContainer/Panel/DailyCard.add_theme_stylebox_override("panel", daily_card_style)
+
+	var daily_button_style: StyleBoxFlat = StyleBoxFlat.new()
+	daily_button_style.bg_color = primary
+	daily_button_style.corner_radius_top_left = 12
+	daily_button_style.corner_radius_top_right = 12
+	daily_button_style.corner_radius_bottom_right = 12
+	daily_button_style.corner_radius_bottom_left = 12
+	_daily_button.add_theme_stylebox_override("normal", daily_button_style)
+	_daily_button.add_theme_color_override("font_color", text)
+
+	var trophy_style: StyleBoxFlat = daily_button_style.duplicate()
+	trophy_style.bg_color = Color(0, 0, 0, 0)
+	trophy_style.border_width_left = 2
+	trophy_style.border_width_top = 2
+	trophy_style.border_width_right = 2
+	trophy_style.border_width_bottom = 2
+	trophy_style.border_color = primary
+	_leaderboard_button.add_theme_stylebox_override("normal", trophy_style)
+	_leaderboard_button.add_theme_color_override("font_color", primary)
+
+	_daily_label.add_theme_color_override("font_color", inverse)
+	_daily_summary.add_theme_color_override("font_color", inverse)
+	_streak_badge.add_theme_color_override("font_color", inverse)
+
+	var settings_card_style: StyleBoxFlat = StyleBoxFlat.new()
+	settings_card_style.bg_color = surface
+	settings_card_style.corner_radius_top_left = 16
+	settings_card_style.corner_radius_top_right = 16
+	settings_card_style.corner_radius_bottom_right = 16
+	settings_card_style.corner_radius_bottom_left = 16
+	$CenterContainer/Panel/SettingsCard.add_theme_stylebox_override("panel", settings_card_style)
 
 	_sync_segmented_widgets()
 	_update_difficulty_summary()

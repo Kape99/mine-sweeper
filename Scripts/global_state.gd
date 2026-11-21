@@ -37,13 +37,14 @@ var board_wrap: bool = true
 var color_schemes: Dictionary = {
 	# Matches the UI theme Asset/soft_light.tres.
 	"soft_light": preload("res://Asset/ColorSchemes/soft_light.tres"),
+	"modern_light": preload("res://Asset/ColorSchemes/modern_light.tres"),
 }
 
 ## Emitted after [member selected_scheme] changes, so UI can recolor itself.
 signal theme_changed
 
 ## Key into [member color_schemes] for the active scheme.
-var selected_scheme: String = "soft_light":
+var selected_scheme: String = "modern_light":
 	set(value):
 		selected_scheme = value
 		RenderingServer.set_default_clear_color(scheme.background)

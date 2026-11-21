@@ -31,8 +31,14 @@ const MAX_COUNT: int = 12
 @export var number_dark: Color = Color.BLACK
 
 @export_group("HUD")
-## Bar behind the mine counter and timer; also tints the defuse button.
+## Bar behind the mine counter and timer; also tints the defuse button and selected chips.
 @export var accent: Color = Color.WHITE
+## Primary action color (e.g. PLAY DAILY button).
+@export var primary: Color = Color.ORANGE
+## Card/surface background (e.g. settings panel).
+@export var surface: Color = Color.WHITE
+## Text color for dark surfaces (e.g. labels on the daily challenge card).
+@export var inverse_text: Color = Color.WHITE
 ## Text and icon color of the mine counter and timer, drawn over [member accent].
 @export var hud_text: Color = Color.BLACK
 
