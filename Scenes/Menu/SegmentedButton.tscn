@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://40d8vs6qkxb5"]
+
+[ext_resource type="Script" uid="uid://d2y5f8x7p3q1r" path="res://Scripts/GUI/Widgets/segmented_button.gd" id="1"]
+
+[node name="SegmentedButton" type="HBoxContainer" unique_id=1958664691]
+script = ExtResource("1")

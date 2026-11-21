@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b1c2d3e4f5g6h"]
+
+[ext_resource type="Script" path="res://Scripts/Tests/test_segmented_button.gd" id="1"]
+
+[node name="TestSegmentedButton" type="Node"]
+script = ExtResource("1")

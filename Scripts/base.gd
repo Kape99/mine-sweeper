@@ -75,7 +75,6 @@ func _ready() -> void:
 	# Connect to the fresh MainMenu's intent signals.
 	_main_menu.start_requested.connect(_load_game)
 	_main_menu.settings_requested.connect(_on_settings_pressed)
-	_main_menu.quit_requested.connect(_on_quit)
 	_main_menu.wrap_mode_changed.connect(_on_wrap_mode_changed)
 
 	_final_screen.reset.connect(_reset)

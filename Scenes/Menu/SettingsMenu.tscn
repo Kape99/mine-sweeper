@@ -9,3 +9,187 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("1")
+_rows_spin = NodePath("CenterContainer/Panel/RowsRow/RowsSpin")
+_cols_spin = NodePath("CenterContainer/Panel/ColsRow/ColsSpin")
+_bombs_spin = NodePath("CenterContainer/Panel/BombsRow/BombsSpin")
+_seed_edit = NodePath("CenterContainer/Panel/SeedRow/SeedEdit")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="VBoxContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "SETTINGS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="CenterContainer/Panel"]
+layout_mode = 2
+
+[node name="TimersHeader" type="Label" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 13
+text = "TIMERS"
+
+[node name="TapRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+
+[node name="TapLabel" type="Label" parent="CenterContainer/Panel/TapRow"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+text = "Tap threshold"
+vertical_alignment = 1
+
+[node name="TapSlider" type="HSlider" parent="CenterContainer/Panel/TapRow"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 100.0
+step = 1.0
+value = 12.0
+
+[node name="LongPressRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+
+[node name="LongPressLabel" type="Label" parent="CenterContainer/Panel/LongPressRow"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+text = "Long press ms"
+vertical_alignment = 1
+
+[node name="LongPressSlider" type="HSlider" parent="CenterContainer/Panel/LongPressRow"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 50.0
+max_value = 5000.0
+step = 50.0
+value = 500.0
+
+[node name="DoubleTapRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+
+[node name="DoubleTapLabel" type="Label" parent="CenterContainer/Panel/DoubleTapRow"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+text = "Double tap ms"
+vertical_alignment = 1
+
+[node name="DoubleTapSlider" type="HSlider" parent="CenterContainer/Panel/DoubleTapRow"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 150.0
+max_value = 2000.0
+step = 50.0
+value = 300.0
+
+[node name="HSeparator2" type="HSeparator" parent="CenterContainer/Panel"]
+layout_mode = 2
+
+[node name="DebugHeader" type="Label" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 13
+text = "DEBUG BOARD"
+
+[node name="RowsRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+
+[node name="RowsLabel" type="Label" parent="CenterContainer/Panel/RowsRow"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+text = "Rows"
+vertical_alignment = 1
+
+[node name="RowsSpin" type="SpinBox" parent="CenterContainer/Panel/RowsRow"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 5.0
+max_value = 50.0
+value = 16.0
+rounded = true
+
+[node name="ColsRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+
+[node name="ColsLabel" type="Label" parent="CenterContainer/Panel/ColsRow"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+text = "Cols"
+vertical_alignment = 1
+
+[node name="ColsSpin" type="SpinBox" parent="CenterContainer/Panel/ColsRow"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 5.0
+max_value = 50.0
+value = 16.0
+rounded = true
+
+[node name="BombsRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+
+[node name="BombsLabel" type="Label" parent="CenterContainer/Panel/BombsRow"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+text = "Bombs"
+vertical_alignment = 1
+
+[node name="BombsSpin" type="SpinBox" parent="CenterContainer/Panel/BombsRow"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 99.0
+value = 16.0
+suffix = "%"
+rounded = true
+
+[node name="SeedRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+
+[node name="SeedLabel" type="Label" parent="CenterContainer/Panel/SeedRow"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+text = "Seed"
+vertical_alignment = 1
+
+[node name="SeedEdit" type="LineEdit" parent="CenterContainer/Panel/SeedRow"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+max_length = 8
+placeholder_text = "random"
+
+[node name="BackButton" type="Button" parent="CenterContainer/Panel"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "← Back"
