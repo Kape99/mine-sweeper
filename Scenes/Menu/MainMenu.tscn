@@ -130,6 +130,7 @@ layout_mode = 2
 [node name="BoardTypeSegmented" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=957667200 instance=ExtResource("2_segbtn")]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
+segments = PackedStringArray("■ Square", "⬡ Hex", "▲ Triangle")
 selected_index = 1
 
 [node name="SpacerBoard" type="Control" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=2101306347]
@@ -138,6 +139,7 @@ layout_mode = 2
 
 [node name="DifficultySegmented" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=1241387941 instance=ExtResource("2_segbtn")]
 layout_mode = 2
+segments = PackedStringArray("Easy", "Medium", "Hard")
 selected_index = 1
 
 [node name="DifficultySummary" type="Label" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=512919140]
@@ -166,6 +168,7 @@ vertical_alignment = 1
 [node name="EdgesSegmented" parent="CenterContainer/Panel/SettingsCard/SettingsVBox/EdgesPlayRow" unique_id=2065904842 instance=ExtResource("2_segbtn")]
 layout_mode = 2
 size_flags_horizontal = 3
+segments = PackedStringArray("Solid", "Wrap")
 selected_index = 1
 
 [node name="StartButton" type="Button" parent="CenterContainer/Panel/SettingsCard/SettingsVBox/EdgesPlayRow" unique_id=1594947662]
