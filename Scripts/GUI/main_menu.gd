@@ -74,17 +74,37 @@ func _apply_theme_colors() -> void:
 	daily_button_style.corner_radius_top_right = 12
 	daily_button_style.corner_radius_bottom_right = 12
 	daily_button_style.corner_radius_bottom_left = 12
+	daily_button_style.content_margin_left = 12
+	daily_button_style.content_margin_right = 12
+	var daily_hover: StyleBoxFlat = daily_button_style.duplicate()
+	daily_hover.bg_color = primary.lightened(0.1)
+	var daily_pressed: StyleBoxFlat = daily_button_style.duplicate()
+	daily_pressed.bg_color = primary.darkened(0.1)
 	_daily_button.add_theme_stylebox_override("normal", daily_button_style)
+	_daily_button.add_theme_stylebox_override("hover", daily_hover)
+	_daily_button.add_theme_stylebox_override("pressed", daily_pressed)
 	_daily_button.add_theme_color_override("font_color", text)
 
-	var trophy_style: StyleBoxFlat = daily_button_style.duplicate()
+	var trophy_style: StyleBoxFlat = StyleBoxFlat.new()
 	trophy_style.bg_color = Color(0, 0, 0, 0)
 	trophy_style.border_width_left = 2
 	trophy_style.border_width_top = 2
 	trophy_style.border_width_right = 2
 	trophy_style.border_width_bottom = 2
 	trophy_style.border_color = primary
+	trophy_style.corner_radius_top_left = 12
+	trophy_style.corner_radius_top_right = 12
+	trophy_style.corner_radius_bottom_right = 12
+	trophy_style.corner_radius_bottom_left = 12
+	trophy_style.content_margin_left = 8
+	trophy_style.content_margin_right = 8
+	var trophy_hover: StyleBoxFlat = trophy_style.duplicate()
+	trophy_hover.bg_color = primary.darkened(0.55)
+	var trophy_pressed: StyleBoxFlat = trophy_style.duplicate()
+	trophy_pressed.bg_color = primary.darkened(0.45)
 	_leaderboard_button.add_theme_stylebox_override("normal", trophy_style)
+	_leaderboard_button.add_theme_stylebox_override("hover", trophy_hover)
+	_leaderboard_button.add_theme_stylebox_override("pressed", trophy_pressed)
 	_leaderboard_button.add_theme_color_override("font_color", primary)
 
 	_daily_label.add_theme_color_override("font_color", inverse)
