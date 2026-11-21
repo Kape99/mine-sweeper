@@ -48,7 +48,7 @@ enabled=PackedStringArray("res://addons/talo/plugin.cfg")
 
 [gui]
 
-theme/custom="res://Asset/soft_light.tres"
+theme/custom="res://Asset/ColorSchemes/soft_light.tres"
 theme/custom_font="res://Asset/Font/Anton-Regular.ttf"
 
 [input_devices]

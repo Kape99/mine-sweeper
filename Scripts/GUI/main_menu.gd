@@ -1,3 +1,4 @@
+@tool
 class_name MainMenu
 extends Control
 
@@ -39,6 +40,8 @@ const DAILY_MAX_MINES: float = 0.20
 
 func _ready() -> void:
 	_apply_theme_colors()
+	if Engine.is_editor_hint():
+		return
 	GlobalState.theme_changed.connect(_apply_theme_colors)
 	_sync_from_global_state()
 	_connect_signals()

@@ -32,12 +32,12 @@ grow_horizontal = 2
 alignment = 1
 
 [node name="AccountButton" type="Button" parent="TopBar" unique_id=381426667]
+visible = false
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_font_sizes/font_size = 20
 text = "👤"
-visible = false
 
 [node name="TitleLabel" type="Label" parent="TopBar" unique_id=391426665]
 layout_mode = 2
@@ -72,10 +72,6 @@ layout_mode = 2
 
 [node name="DailyCard" type="PanelContainer" parent="CenterContainer/Panel" unique_id=815885033]
 layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
 
 [node name="DailyVBox" type="VBoxContainer" parent="CenterContainer/Panel/DailyCard" unique_id=815885034]
 layout_mode = 2
@@ -127,10 +123,6 @@ layout_mode = 2
 
 [node name="SettingsCard" type="PanelContainer" parent="CenterContainer/Panel" unique_id=815885040]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
 
 [node name="SettingsVBox" type="VBoxContainer" parent="CenterContainer/Panel/SettingsCard" unique_id=815885041]
 layout_mode = 2
@@ -138,6 +130,7 @@ layout_mode = 2
 [node name="BoardTypeSegmented" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=957667200 instance=ExtResource("2_segbtn")]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
+theme_override_constants/separation = 0
 segments = PackedStringArray("■ Square", "⬡ Hex", "▲ Triangle")
 selected_index = 1
 
@@ -147,6 +140,7 @@ layout_mode = 2
 
 [node name="DifficultySegmented" parent="CenterContainer/Panel/SettingsCard/SettingsVBox" unique_id=1241387941 instance=ExtResource("2_segbtn")]
 layout_mode = 2
+theme_override_constants/separation = 0
 segments = PackedStringArray("Easy", "Medium", "Hard")
 selected_index = 1
 
@@ -176,6 +170,7 @@ vertical_alignment = 1
 [node name="EdgesSegmented" parent="CenterContainer/Panel/SettingsCard/SettingsVBox/EdgesPlayRow" unique_id=2065904842 instance=ExtResource("2_segbtn")]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_constants/separation = 0
 segments = PackedStringArray("Solid", "Wrap")
 selected_index = 1
 
