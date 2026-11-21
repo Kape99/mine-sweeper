@@ -38,7 +38,7 @@ var color_schemes: Dictionary = {
 	# Matches the UI theme Asset/soft_light.tres.
 	"soft_light": preload("res://Asset/ColorSchemes/soft_light.tres"),
 	# Newer theme matching the mobile-menu mockup.
-	"modern": preload("res://Asset/ColorSchemes/modern.tres"),
+	"modern": preload("res://Asset/ColorSchemes/modern_scheme.tres"),
 	"modern_light": preload("res://Asset/ColorSchemes/modern_light.tres"),
 }
 
