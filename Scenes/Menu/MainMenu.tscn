@@ -72,6 +72,10 @@ layout_mode = 2
 
 [node name="DailyCard" type="PanelContainer" parent="CenterContainer/Panel" unique_id=815885033]
 layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
 
 [node name="DailyVBox" type="VBoxContainer" parent="CenterContainer/Panel/DailyCard" unique_id=815885034]
 layout_mode = 2
@@ -118,11 +122,15 @@ theme_override_font_sizes/font_size = 20
 text = "🏆"
 
 [node name="Spacer1" type="Control" parent="CenterContainer/Panel" unique_id=2101306346]
-custom_minimum_size = Vector2(0, 16)
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 
 [node name="SettingsCard" type="PanelContainer" parent="CenterContainer/Panel" unique_id=815885040]
 layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
 [node name="SettingsVBox" type="VBoxContainer" parent="CenterContainer/Panel/SettingsCard" unique_id=815885041]
 layout_mode = 2
