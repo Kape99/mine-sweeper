@@ -53,8 +53,6 @@ func _apply_theme_colors() -> void:
 	_background.color = GlobalState.scheme.background
 
 	var accent: Color = GlobalState.scheme.accent
-	var primary: Color = GlobalState.scheme.primary
-	var surface: Color = GlobalState.scheme.surface
 	var text: Color = GlobalState.scheme.hud_text
 	var inverse: Color = GlobalState.scheme.inverse_text
 
@@ -63,6 +61,7 @@ func _apply_theme_colors() -> void:
 	_account_button.add_theme_color_override("font_color", text)
 	_difficulty_summary.add_theme_color_override("font_color", text.darkened(0.25))
 
+	# Daily card is dark navy; the Theme provides the white settings card.
 	var daily_card_style: StyleBoxFlat = StyleBoxFlat.new()
 	daily_card_style.bg_color = text.darkened(0.1)
 	daily_card_style.corner_radius_top_left = 16
@@ -75,75 +74,9 @@ func _apply_theme_colors() -> void:
 	daily_card_style.content_margin_bottom = 20
 	$CenterContainer/Panel/DailyCard.add_theme_stylebox_override("panel", daily_card_style)
 
-	var daily_button_style: StyleBoxFlat = StyleBoxFlat.new()
-	daily_button_style.bg_color = primary
-	daily_button_style.corner_radius_top_left = 12
-	daily_button_style.corner_radius_top_right = 12
-	daily_button_style.corner_radius_bottom_right = 12
-	daily_button_style.corner_radius_bottom_left = 12
-	daily_button_style.content_margin_left = 12
-	daily_button_style.content_margin_right = 12
-	var daily_hover: StyleBoxFlat = daily_button_style.duplicate()
-	daily_hover.bg_color = primary.lightened(0.1)
-	var daily_pressed: StyleBoxFlat = daily_button_style.duplicate()
-	daily_pressed.bg_color = primary.darkened(0.1)
-	_daily_button.add_theme_stylebox_override("normal", daily_button_style)
-	_daily_button.add_theme_stylebox_override("hover", daily_hover)
-	_daily_button.add_theme_stylebox_override("pressed", daily_pressed)
-	_daily_button.add_theme_color_override("font_color", text)
-
-	var trophy_style: StyleBoxFlat = StyleBoxFlat.new()
-	trophy_style.bg_color = Color(0, 0, 0, 0)
-	trophy_style.border_width_left = 2
-	trophy_style.border_width_top = 2
-	trophy_style.border_width_right = 2
-	trophy_style.border_width_bottom = 2
-	trophy_style.border_color = primary
-	trophy_style.corner_radius_top_left = 12
-	trophy_style.corner_radius_top_right = 12
-	trophy_style.corner_radius_bottom_right = 12
-	trophy_style.corner_radius_bottom_left = 12
-	trophy_style.content_margin_left = 8
-	trophy_style.content_margin_right = 8
-	var trophy_hover: StyleBoxFlat = trophy_style.duplicate()
-	trophy_hover.bg_color = primary.darkened(0.55)
-	var trophy_pressed: StyleBoxFlat = trophy_style.duplicate()
-	trophy_pressed.bg_color = primary.darkened(0.45)
-	_leaderboard_button.add_theme_stylebox_override("normal", trophy_style)
-	_leaderboard_button.add_theme_stylebox_override("hover", trophy_hover)
-	_leaderboard_button.add_theme_stylebox_override("pressed", trophy_pressed)
-	_leaderboard_button.add_theme_color_override("font_color", primary)
-
 	_daily_label.add_theme_color_override("font_color", inverse)
 	_daily_summary.add_theme_color_override("font_color", inverse)
 	_streak_badge.add_theme_color_override("font_color", inverse)
-
-	var settings_card_style: StyleBoxFlat = StyleBoxFlat.new()
-	settings_card_style.bg_color = surface
-	settings_card_style.corner_radius_top_left = 16
-	settings_card_style.corner_radius_top_right = 16
-	settings_card_style.corner_radius_bottom_right = 16
-	settings_card_style.corner_radius_bottom_left = 16
-	settings_card_style.content_margin_left = 16
-	settings_card_style.content_margin_top = 16
-	settings_card_style.content_margin_right = 16
-	settings_card_style.content_margin_bottom = 16
-	$CenterContainer/Panel/SettingsCard.add_theme_stylebox_override("panel", settings_card_style)
-
-	var play_button_style: StyleBoxFlat = StyleBoxFlat.new()
-	play_button_style.bg_color = text
-	play_button_style.corner_radius_top_left = 10
-	play_button_style.corner_radius_top_right = 10
-	play_button_style.corner_radius_bottom_right = 10
-	play_button_style.corner_radius_bottom_left = 10
-	var play_hover: StyleBoxFlat = play_button_style.duplicate()
-	play_hover.bg_color = text.lightened(0.15)
-	var play_pressed: StyleBoxFlat = play_button_style.duplicate()
-	play_pressed.bg_color = text.darkened(0.15)
-	_start_button.add_theme_stylebox_override("normal", play_button_style)
-	_start_button.add_theme_stylebox_override("hover", play_hover)
-	_start_button.add_theme_stylebox_override("pressed", play_pressed)
-	_start_button.add_theme_color_override("font_color", inverse)
 
 	_board_type_segmented.active_bg_override = accent
 	_board_type_segmented.active_text_override = text

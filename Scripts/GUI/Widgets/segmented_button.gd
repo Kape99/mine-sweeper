@@ -42,6 +42,7 @@ func _rebuild() -> void:
 		btn.text = segments[i]
 		btn.toggle_mode = true
 		btn.size_flags_horizontal = SIZE_EXPAND_FILL if expand else SIZE_SHRINK_CENTER
+		btn.theme_type_variation = "SegmentButton"
 		btn.pressed.connect(_on_button_pressed.bind(i))
 		add_child(btn)
 		_buttons.append(btn)

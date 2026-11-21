@@ -115,6 +115,7 @@ text = "PLAY DAILY"
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
+theme_type_variation = "TrophyButton"
 text = "🏆"
 
 [node name="Spacer1" type="Control" parent="CenterContainer/Panel" unique_id=2101306346]
@@ -184,6 +185,7 @@ active_text_override = null
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
+theme_type_variation = "PlayButton"
 text = "PLAY"
 
 [node name="Spacer5" type="Control" parent="CenterContainer/Panel" unique_id=2101306350]
